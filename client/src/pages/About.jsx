@@ -3,7 +3,7 @@ import './About.css';
 
 const VALUES = [
   { icon: '🤝', title: 'Community first', desc: 'Artists support artists. Every feature we build strengthens the collective.' },
-  { icon: '🎨', title: 'Creative freedom', desc: 'No gatekeeping. Every style and medium has a home here.' },
+  { icon: '🎨', title: 'Creative freedom', desc: 'No gatekeeping. Every style and medium has a home here with the art.' },
   { icon: '⭐', title: 'Fair recognition', desc: 'Artists own their work and keep the majority of what they earn.' },
   { icon: '🌍', title: 'Global inclusion', desc: 'Art has no borders. We celebrate creators from every culture.' },
 ];
@@ -18,7 +18,7 @@ const TEAM = [
 const STATS = [
   { value: '12k+', label: 'Artists worldwide', color: '#5B4BF5' },
   { value: '80+', label: 'Countries reached', color: '#FF6B9D' },
-  { value: '$200k+', label: 'Earned by artists', color: '#00BCD4' },
+  { value: '$200k+', label: 'Income genetated by artists', color: '#00BCD4' },
   { value: '48k', label: 'Artworks shared', color: '#FF6B35' },
 ];
 

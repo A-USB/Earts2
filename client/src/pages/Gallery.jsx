@@ -44,7 +44,7 @@ export default function Gallery() {
         <div className="container">
           <span className="eyebrow">Discover</span>
           <h1>Explore the Gallery</h1>
-          <p>Browse thousands of original artworks from creators worldwide</p>
+          <p>Browse thousands of artworks from Earts' creators worldwide</p>
           <div className="gallery-search">
             <Search size={18} />
             <input
