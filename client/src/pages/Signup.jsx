@@ -22,7 +22,7 @@ export default function Signup() {
     setLoading(true); setError('');
     try {
       await register(form);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) { setError(err.message); }
     finally { setLoading(false); }
   };
