@@ -42,6 +42,13 @@
 .nav-link:hover { color: var(--primary); background: var(--primary-light); }
 .nav-link.active { color: var(--primary); font-weight: 600; }
 
+.nav-link-tab {
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
 .navbar-actions {
   display: flex;
   align-items: center;
