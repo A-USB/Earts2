@@ -48,27 +48,27 @@ export default function Footer() {
           <div className="footer-cols">
             <div className="footer-col">
               <h4>EXPLORE</h4>
-              <Link to="/gallery">Discover art</Link>
-              <Link to="/gallery?category=Collections">Collections</Link>
-              <Link to="/gallery?category=Artists">Artists</Link>
-              <Link to="/gallery">Exhibitions</Link>
-              <Link to="/gallery?trending=true">Trending</Link>
+              <Link to="/dashboard">Discover art</Link>
+              <Link to="/dashboard?category=Collections">Collections</Link>
+              <Link to="/dashboard?category=Artists">Artists</Link>
+              <Link to="/dashboard">Exhibitions</Link>
+              <Link to="/dashboard?trending=true">Trending</Link>
             </div>
             <div className="footer-col">
               <h4>FOR ARTISTS</h4>
               <Link to="/signup">Start selling</Link>
-              <Link to="/products">Creator tools</Link>
-              <Link to="/products">Pricing</Link>
-              <Link to="/products">Payouts</Link>
-              <Link to="/gallery">Community</Link>
+              <Link to="/#products">Creator tools</Link>
+              <Link to="/#products">Pricing</Link>
+              <Link to="/#products">Payouts</Link>
+              <Link to="/dashboard">Community</Link>
             </div>
             <div className="footer-col">
               <h4>COMPANY</h4>
-              <Link to="/about">Our Story</Link>
-              <Link to="/about">Blog</Link>
-              <Link to="/about">Careers</Link>
-              <Link to="/about">Press kit</Link>
-              <Link to="/about">Contact Us</Link>
+              <Link to="/#about">Our Story</Link>
+              <Link to="/#about">Blog</Link>
+              <Link to="/#about">Careers</Link>
+              <Link to="/#about">Press kit</Link>
+              <Link to="/#about">Contact Us</Link>
             </div>
           </div>
         </div>
