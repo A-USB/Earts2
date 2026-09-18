@@ -1,9 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Search, Bell, Menu, X, ChevronDown } from 'lucide-react';
 import Avatar from './Avatar';
 import './Navbar.css';
+
+const HOME_SECTIONS = [
+  { id: 'home', label: 'Home' },
+  { id: 'about', label: 'About Us' },
+  { id: 'products', label: 'Our Products' },
+];
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -13,24 +19,46 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState('home');
 
-  const navLinks = [
-    { to: '/', label: 'Home' },
-    { to: '/gallery', label: 'Gallery' },
-    { to: '/about', label: 'About Us' },
-    { to: '/products', label: 'Our Products' },
-    ...(user ? [{ to: `/profile/${user.username}`, label: 'My Profile' }] : []),
-  ];
+  const onHome = location.pathname === '/';
 
-  const isActive = (to) => {
-    if (to === '/') return location.pathname === '/';
-    return location.pathname.startsWith(to);
+  // Scroll-spy: track which section of the one-page Home is in view
+  useEffect(() => {
+    if (!onHome) return;
+    const els = HOME_SECTIONS.map(s => document.getElementById(s.id)).filter(Boolean);
+    if (!els.length) return;
+    const obs = new IntersectionObserver(
+      entries => {
+        const visible = entries.filter(e => e.isIntersecting);
+        if (visible.length) {
+          const top = visible.reduce((a, b) => (a.intersectionRatio > b.intersectionRatio ? a : b));
+          setActiveSection(top.target.id);
+        }
+      },
+      { rootMargin: '-45% 0px -45% 0px', threshold: [0, 0.25, 0.5, 0.75, 1] }
+    );
+    els.forEach(el => obs.observe(el));
+    return () => obs.disconnect();
+  }, [onHome]);
+
+  const goToSection = (id) => {
+    setMenuOpen(false);
+    if (onHome) {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+      window.history.replaceState(null, '', `#${id}`);
+      setActiveSection(id);
+    } else {
+      navigate(`/#${id}`);
+    }
   };
+
+  const isProfileActive = user && location.pathname.startsWith(`/profile/${user.username}`);
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/gallery?search=${encodeURIComponent(searchQuery)}`);
+      navigate(`/dashboard?search=${encodeURIComponent(searchQuery)}`);
       setSearchOpen(false);
     }
   };
@@ -38,19 +66,36 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-inner">
-        <Link to="/" className="navbar-logo">Earts</Link>
+        <Link to={user ? '/dashboard' : '/'} className="navbar-logo">Earts</Link>
 
         <div className={`navbar-links ${menuOpen ? 'open' : ''}`}>
-          {navLinks.map(link => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className={`nav-link ${isActive(link.to) ? 'active' : ''}`}
-              onClick={() => setMenuOpen(false)}
+          {!user && HOME_SECTIONS.map(s => (
+            <button
+              key={s.id}
+              className={`nav-link nav-link-tab ${onHome && activeSection === s.id ? 'active' : ''}`}
+              onClick={() => goToSection(s.id)}
             >
-              {link.label}
-            </Link>
+              {s.label}
+            </button>
           ))}
+          {user && (
+            <>
+              <Link
+                to="/dashboard"
+                className={`nav-link ${location.pathname.startsWith('/dashboard') ? 'active' : ''}`}
+                onClick={() => setMenuOpen(false)}
+              >
+                Dashboard
+              </Link>
+              <Link
+                to={`/profile/${user.username}`}
+                className={`nav-link ${isProfileActive ? 'active' : ''}`}
+                onClick={() => setMenuOpen(false)}
+              >
+                My Profile
+              </Link>
+            </>
+          )}
         </div>
 
         <div className="navbar-actions">
@@ -91,7 +136,7 @@ export default function Navbar() {
                         <Link to={`/profile/${user.username}`} onClick={() => setDropdownOpen(false)}>My Profile</Link>
                         <Link to="/upload" onClick={() => setDropdownOpen(false)}>Upload Artwork</Link>
                         <Link to="/settings" onClick={() => setDropdownOpen(false)}>Settings</Link>
-                        <button onClick={() => { logout(); setDropdownOpen(false); }}>Sign Out</button>
+                        <button onClick={() => { logout(); setDropdownOpen(false); navigate('/'); }}>Sign Out</button>
                       </div>
                     )}
                   </div>
