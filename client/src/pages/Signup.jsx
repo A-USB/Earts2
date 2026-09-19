@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Grid2x2, Users, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './Auth.css';
+import { Eye, EyeOff, Grid2x2, Users, Sparkles } from 'lucide-react';
 
 const ROLES = ['Painter','Illustrator','Sculptor','Digital Artist','Photographer','Printmaker','Ceramicist','Mixed Media','Other'];
 
@@ -29,30 +29,30 @@ export default function Signup() {
 
   return (
     <div className="auth-page">
-      <div className="auth-card auth-card-wide">
-        <div className="auth-left">
-          <div className="auth-left-inner">
-            <span className="eyebrow" style={{color:'#FF6B9D'}}>Join today — it's free</span>
-            <h2>Your creative journey starts here</h2>
-            <p>Create your profile, upload your first artwork, and connect with a global community of creators.</p>
-            <div className="auth-perks">
-              {[
-                { icon: <Grid2x2 size={18}/>, title: 'Build your gallery', desc: 'Upload and organise your artwork in one place' },
-                { icon: <Users size={18}/>, title: 'Connect and collaborate', desc: 'Meet artists who share your style and vision' },
-                { icon: <Sparkles size={18}/>, title: 'Sell your creations', desc: 'Turn your art into income through our marketplace' },
-              ].map(p => (
-                <div key={p.title} className="auth-perk">
-                  <div className="perk-icon">{p.icon}</div>
-                  <div>
-                    <strong>{p.title}</strong>
-                    <span>{p.desc}</span>
-                  </div>
-                </div>
-              ))}
+  <div className="auth-card auth-card-wide">
+    <div className="auth-left">
+      <div className="auth-left-inner">
+        <span className="eyebrow" style={{color:'#FF6B9D'}}>Join today — it's free</span>
+        <h2>Your creative journey starts here</h2>
+        <p>Create your profile, upload your first artwork, and connect with a global community of creators.</p>
+        <div className="auth-perks">
+          {[
+            { icon: <Grid2x2 size={18}/>, title: 'Build your gallery', desc: 'Upload and organise your artwork in one place' },
+            { icon: <Users size={18}/>, title: 'Connect and collaborate', desc: 'Meet artists who share your style and vision' },
+            { icon: <Sparkles size={18}/>, title: 'Sell your creations', desc: 'Turn your art into income through our marketplace' },
+          ].map(p => (
+            <div key={p.title} className="auth-perk">
+              <div className="perk-icon">{p.icon}</div>
+              <div>
+                <strong>{p.title}</strong>
+                <span>{p.desc}</span>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
-        <div className="auth-right">
+      </div>
+    </div>
+    <div className="auth-right">
           <h2>Create account</h2>
           <p className="auth-subtitle">Join our art community</p>
 
