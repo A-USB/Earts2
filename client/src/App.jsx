@@ -6,7 +6,8 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
-import Dashboard from './pages/Dashboard'
+import Feed from './pages/Feed'
+import Marketplace from './pages/Marketplace'
 import Profile from './pages/Profile'
 import ArtworkDetail from './pages/ArtworkDetail'
 import UploadArtwork from './pages/UploadArtwork'
@@ -29,7 +30,8 @@ function Layout() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/feed" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
+          <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
           <Route path="/profile/:username" element={<Profile />} />
           <Route path="/artwork/:id" element={<ArtworkDetail />} />
           <Route path="/upload" element={<ProtectedRoute><UploadArtwork /></ProtectedRoute>} />
