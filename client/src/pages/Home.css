@@ -124,6 +124,7 @@
 }
 .section-header.centered { flex-direction: column; align-items: center; text-align: center; gap: 8px; }
 .section-header h2 { font-size: 32px; color: var(--navy); margin-top: 6px; }
+.section-header.centered p { font-size: 15px; color: var(--text-mid); max-width: 520px; margin-top: 4px; line-height: 1.7; }
 .view-all {
   display: flex;
   align-items: center;
@@ -244,34 +245,7 @@
   .artworks-grid, .artists-grid { grid-template-columns: 1fr; }
   .cta-banner { flex-direction: column; text-align: center; padding: 32px 24px; }
 }
-.about-hero {
-  background: var(--navy);
-  padding: 80px 0;
-}
-.about-hero-inner {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 64px;
-  align-items: start;
-}
-.about-hero-left .eyebrow { margin-bottom: 16px; display: block; }
-.about-hero-left h1 { font-size: 40px; color: white; margin-bottom: 20px; }
-.about-hero-left p { font-size: 15px; color: rgba(255,255,255,0.7); line-height: 1.8; }
-
-.about-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-.about-stat-card {
-  border-radius: var(--radius-lg);
-  padding: 24px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.about-stat-value { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: white; }
-.about-stat-label { font-size: 13px; color: rgba(255,255,255,0.8); }
+.about-hero { padding: 80px 0 8px; }
 
 .mission-section { padding: 80px 0; }
 .mission-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
@@ -354,23 +328,15 @@
 .timeline-content p { font-size: 13px; color: var(--text-mid); line-height: 1.6; }
 
 @media (max-width: 768px) {
-  .about-hero-inner { grid-template-columns: 1fr; }
   .mission-grid { grid-template-columns: 1fr; }
   .values-grid, .team-grid { grid-template-columns: repeat(2, 1fr); }
   .timeline::before { left: 60px; }
 }
 
 .team-avatar-img { margin: 0 auto 16px; box-shadow: 0 4px 16px rgba(91,75,245,0.2); }
-.products-hero {
-  background: linear-gradient(160deg, var(--primary) 0%, #8B5CF6 100%);
-  padding: 80px 0;
-  text-align: center;
-}
-.products-hero .eyebrow { margin-bottom: 12px; display: block; color: rgba(255,255,255,0.7); }
-.products-hero h1 { font-size: 44px; color: white; margin-bottom: 14px; }
-.products-hero p { font-size: 16px; color: rgba(255,255,255,0.8); max-width: 480px; margin: 0 auto; }
+.products-hero { padding: 80px 0 8px; }
 
-.products-body { padding: 80px 0; display: flex; flex-direction: column; gap: 80px; }
+.products-body { padding: 40px 0 80px; display: flex; flex-direction: column; gap: 80px; }
 
 .plans-grid {
   display: grid;
@@ -456,8 +422,8 @@ html { scroll-behavior: smooth; }
 
 .reveal {
   opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 0.6s ease, transform 0.6s ease;
+  transform: translateY(40px);
+  transition: opacity 1s ease, transform 1s ease;
 }
 .reveal.in-view {
   opacity: 1;
