@@ -58,7 +58,7 @@ export default function Navbar() {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/dashboard?search=${encodeURIComponent(searchQuery)}`);
+      navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}`);
       setSearchOpen(false);
     }
   };
@@ -66,7 +66,7 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-inner">
-        <Link to={user ? '/dashboard' : '/'} className="navbar-logo">Earts</Link>
+        <Link to={user ? '/feed' : '/'} className="navbar-logo">Earts</Link>
 
         <div className={`navbar-links ${menuOpen ? 'open' : ''}`}>
           {!user && HOME_SECTIONS.map(s => (
@@ -81,12 +81,28 @@ export default function Navbar() {
           {user && (
             <>
               <Link
-                to="/dashboard"
-                className={`nav-link ${location.pathname.startsWith('/dashboard') ? 'active' : ''}`}
+                to="/feed"
+                className={`nav-link ${location.pathname.startsWith('/feed') ? 'active' : ''}`}
                 onClick={() => setMenuOpen(false)}
               >
-                Dashboard
+                Feed
               </Link>
+              <Link
+                to="/marketplace"
+                className={`nav-link ${location.pathname.startsWith('/marketplace') ? 'active' : ''}`}
+                onClick={() => setMenuOpen(false)}
+              >
+                Marketplace
+              </Link>
+              {user.accountType !== 'collector' && (
+                <Link
+                  to="/upload"
+                  className={`nav-link ${location.pathname.startsWith('/upload') ? 'active' : ''}`}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Upload
+                </Link>
+              )}
               <Link
                 to={`/profile/${user.username}`}
                 className={`nav-link ${isProfileActive ? 'active' : ''}`}
@@ -134,7 +150,6 @@ export default function Navbar() {
                           <span>{user.email}</span>
                         </div>
                         <Link to={`/profile/${user.username}`} onClick={() => setDropdownOpen(false)}>My Profile</Link>
-                        <Link to="/upload" onClick={() => setDropdownOpen(false)}>Upload Artwork</Link>
                         <Link to="/settings" onClick={() => setDropdownOpen(false)}>Settings</Link>
                         <button onClick={() => { logout(); setDropdownOpen(false); navigate('/'); }}>Sign Out</button>
                       </div>
