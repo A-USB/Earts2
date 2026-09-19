@@ -28,13 +28,6 @@ const TEAM = [
   { name: 'John Brigg', role: 'Head of Design', bio: 'Shaping the look of everything you see on Earts.', color: '#a29bfe' },
 ];
 
-const ABOUT_STATS = [
-  { value: '12k+', label: 'Artists worldwide', color: '#5B4BF5' },
-  { value: '80+', label: 'Countries reached', color: '#FF6B9D' },
-  { value: '$200k+', label: 'Income genetated by artists', color: '#00BCD4' },
-  { value: '48k', label: 'Artworks shared', color: '#FF6B35' },
-];
-
 const TIMELINE = [
   { year: '2022', title: 'Earts founded', desc: 'Four artists with a dream built the first version of Earts in a shared studio in Madrid.' },
   { year: '2023', title: '10,000 artists joined', desc: 'The community grew to 10k artists across 40+ countries in just one year.' },
@@ -63,7 +56,7 @@ function useScrollReveal() {
           }
         });
       },
-      { threshold: 0.15 }
+      { threshold: 0.15, rootMargin: '0px 0px -18% 0px' }
     );
     els.forEach(el => obs.observe(el));
     return () => obs.disconnect();
@@ -256,22 +249,14 @@ export default function Home() {
       {/* ============ ABOUT TAB ============ */}
       <section id="about" className="home-section about-section-wrap">
         <section className="about-hero reveal">
-          <div className="container about-hero-inner">
-            <div className="about-hero-left">
+          <div className="container">
+            <div className="section-header centered">
               <span className="eyebrow">Our Story</span>
-              <h1>Born from a love of art and a need for community</h1>
+              <h2>Born from a love of art and a need for community</h2>
               <p>
                 Earts was founded in 2022 by a group of artists who felt unseen on existing platforms.
                 We built the space we always wished existed — one that truly puts creators first.
               </p>
-            </div>
-            <div className="about-stats">
-              {ABOUT_STATS.map(s => (
-                <div key={s.label} className="about-stat-card" style={{ background: s.color }}>
-                  <span className="about-stat-value">{s.value}</span>
-                  <span className="about-stat-label">{s.label}</span>
-                </div>
-              ))}
             </div>
           </div>
         </section>
@@ -352,9 +337,11 @@ export default function Home() {
       <section id="products" className="home-section products-section-wrap">
         <section className="products-hero reveal">
           <div className="container">
-            <span className="eyebrow">Our Products</span>
-            <h1>Tools that put artists first</h1>
-            <p>Everything you need to build your creative career on Earts. Start free, scale as you grow.</p>
+            <div className="section-header centered">
+              <span className="eyebrow">Our Products</span>
+              <h2>Tools that put artists first</h2>
+              <p>Everything you need to build your creative career on Earts. Start free, scale as you grow.</p>
+            </div>
           </div>
         </section>
 
