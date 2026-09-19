@@ -1,5 +1,5 @@
 .auth-page {
-  min-height: calc(100vh - 72px);
+  min-height: 100vh;
   background: var(--bg);
   display: flex;
   align-items: center;
@@ -12,8 +12,8 @@
   box-shadow: var(--shadow-lg);
   overflow: hidden;
   display: grid;
-  grid-template-columns: 320px 1fr;
-  max-width: 720px;
+  grid-template-columns: 380px 1fr;
+  max-width: 860px;
   width: 100%;
 }
 .auth-card-wide { max-width: 860px; grid-template-columns: 380px 1fr; }
