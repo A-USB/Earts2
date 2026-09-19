@@ -69,7 +69,7 @@ export default function Home() {
   const [trending, setTrending] = useState([]);
   const [products, setProducts] = useState([]);
 
-  const exploreLink = user ? '/dashboard' : '/signup';
+  const exploreLink = user ? '/marketplace' : '/signup';
 
   useEffect(() => {
     api.get('/artworks?trending=true').then(setTrending).catch(console.error);
@@ -181,7 +181,7 @@ export default function Home() {
                 <h3>Ready to share your art with the world?</h3>
                 <p>Join 12,000+ artists already building their creative career on Earts.</p>
               </div>
-              <Link to={user ? '/dashboard' : '/signup'} className="cta-btn">
+              <Link to={user ? '/marketplace' : '/signup'} className="cta-btn">
                 Start for free <ArrowRight size={16} />
               </Link>
               <div className="cta-blob" />

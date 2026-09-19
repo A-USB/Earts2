@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, ImagePlus } from 'lucide-react';
 import { api } from '../utils/api';
@@ -11,6 +11,12 @@ const COLORS = ['#F4D03F','#58D68D','#00BCD4','#9B59B6','#E74C3C','#FF6B9D','#5B
 export default function UploadArtwork() {
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Collector accounts don't sell art — send them back to the feed
+  useEffect(() => {
+    if (user && user.accountType === 'collector') navigate('/feed', { replace: true });
+  }, [user, navigate]);
+
   const [form, setForm] = useState({
     title:'', description:'', category:'Digital', price:'',
     status:'for_sale', medium:'', year: new Date().getFullYear(), color: '#5B4BF5'

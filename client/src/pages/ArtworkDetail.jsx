@@ -17,7 +17,7 @@ export default function ArtworkDetail() {
   useEffect(() => {
     api.get(`/artworks/${id}`)
       .then(setArtwork)
-      .catch(() => navigate('/dashboard'))
+      .catch(() => navigate('/marketplace'))
       .finally(() => setLoading(false));
   }, [id]);
 

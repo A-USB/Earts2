@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './Auth.css';
-import { Eye, EyeOff, CheckCircle } from 'lucide-react';
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -17,36 +17,36 @@ export default function Login() {
     setLoading(true); setError('');
     try {
       await login(form.email, form.password);
-      navigate('/dashboard');
+      navigate('/feed');
     } catch (err) { setError(err.message); }
     finally { setLoading(false); }
   };
 
   return (
-   <div className="auth-page">
-  <div className="auth-card">
-    <div className="auth-left">
-      <div className="auth-left-inner">
-        <span className="eyebrow" style={{color:'#FF6B9D'}}>Artist Community</span>
-        <h2>Where artists grow, share & thrive together</h2>
-        <p>Join thousands of artists sharing, growing, and turning their passion into livelihood.</p>
-        <ul className="auth-features">
-          {['Showcase your artwork to the world','Collaborate with fellow creators','Sell your work in our marketplace'].map(f => (
-            <li key={f}><CheckCircle size={16} /> {f}</li>
-          ))}
-        </ul>
-        <div className="auth-avatars">
-          {['AM','MC','BJ','US'].map((a,i) => (
-            <div key={i} className="mini-avatar" style={{
-              background: `hsl(${i*60+200},70%,55%)`,
-              marginLeft: i > 0 ? '-10px' : 0
-            }}>{a}</div>
-          ))}
-          <span>+12000 other artists, sculptors, illustrators joined</span>
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="auth-left">
+          <div className="auth-left-inner">
+            <span className="eyebrow" style={{color:'#FF6B9D'}}>Artist Community</span>
+            <h2>Where artists grow, share & thrive together</h2>
+            <p>Join thousands of artists sharing, growing, and turning their passion into livelihood.</p>
+            <ul className="auth-features">
+              {['Showcase your artwork to the world','Collaborate with fellow creators','Sell your work in our marketplace'].map(f => (
+                <li key={f}><CheckCircle size={16} /> {f}</li>
+              ))}
+            </ul>
+            <div className="auth-avatars">
+              {['AM','MC','BJ','US'].map((a,i) => (
+                <div key={i} className="mini-avatar" style={{
+                  background: `hsl(${i*60+200},70%,55%)`,
+                  marginLeft: i > 0 ? '-10px' : 0
+                }}>{a}</div>
+              ))}
+              <span>+12000 other artists, sculptors, illustrators joined</span>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-    <div className="auth-right">
+        <div className="auth-right">
           <h2>Welcome Back</h2>
           <p className="auth-subtitle">Sign in to your Earts account</p>
 

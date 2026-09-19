@@ -11,7 +11,7 @@ export default function NotFound() {
         <p>The page you're looking for doesn't exist — maybe the artist moved it somewhere else.</p>
         <div className="notfound-actions">
           <Link to="/" className="btn-primary">Go back home</Link>
-          <Link to="/dashboard" className="btn-outline">Explore your feed</Link>
+          <Link to="/feed" className="btn-outline">Explore your feed</Link>
         </div>
       </div>
     </div>
