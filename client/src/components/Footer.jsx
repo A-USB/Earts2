@@ -48,11 +48,11 @@ export default function Footer() {
           <div className="footer-cols">
             <div className="footer-col">
               <h4>EXPLORE</h4>
-              <Link to="/dashboard">Discover art</Link>
-              <Link to="/dashboard?category=Collections">Collections</Link>
-              <Link to="/dashboard?category=Artists">Artists</Link>
-              <Link to="/dashboard">Exhibitions</Link>
-              <Link to="/dashboard?trending=true">Trending</Link>
+              <Link to="/marketplace">Discover art</Link>
+              <Link to="/marketplace?category=Collections">Collections</Link>
+              <Link to="/marketplace?category=Artists">Artists</Link>
+              <Link to="/marketplace">Exhibitions</Link>
+              <Link to="/marketplace?trending=true">Trending</Link>
             </div>
             <div className="footer-col">
               <h4>FOR ARTISTS</h4>
@@ -60,7 +60,7 @@ export default function Footer() {
               <Link to="/#products">Creator tools</Link>
               <Link to="/#products">Pricing</Link>
               <Link to="/#products">Payouts</Link>
-              <Link to="/dashboard">Community</Link>
+              <Link to="/feed">Community</Link>
             </div>
             <div className="footer-col">
               <h4>COMPANY</h4>
