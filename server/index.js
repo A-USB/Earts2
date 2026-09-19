@@ -12,7 +12,7 @@ app.use(express.json());
 let users = [
   {
     id: '1', username: 'jane_murungi', firstName: 'Jane', lastName: 'Murungi',
-    email: 'jane@earts.com', password: 'hashed', role: 'Sculptor',
+    email: 'jane@earts.com', password: 'hashed', role: 'Sculptor', accountType: 'artist',
     bio: 'Illustrator and visual storyteller based in Nairobi. I create vibrant, culture-inspired art that bridges tradition and the digital world.',
     location: 'Kigali, Rwanda', avatar: null,
     tags: ['Illustration', 'Digital art', 'Watercolour', 'Sculpture'],
@@ -23,7 +23,7 @@ let users = [
   },
   {
     id: '2', username: 'nadia_reyes', firstName: 'Nadia', lastName: 'Reyes',
-    email: 'nadia@earts.com', password: 'hashed', role: 'Painter',
+    email: 'nadia@earts.com', password: 'hashed', role: 'Painter', accountType: 'artist',
     bio: 'Artist and entrepreneur passionate about creative economies.',
     location: 'Madrid, Spain', avatar: null,
     tags: ['Painting', 'Oil', 'Abstract'],
@@ -34,7 +34,7 @@ let users = [
   },
   {
     id: '3', username: 'arahibris2011', firstName: 'Ara', lastName: 'Hibris',
-    email: 'ara@earts.com', password: 'hashed', role: 'Illustrator',
+    email: 'ara@earts.com', password: 'hashed', role: 'Illustrator', accountType: 'artist',
     bio: 'Engineer & Illustrator building tools artists actually need.',
     location: 'Tokyo, Japan', avatar: null,
     tags: ['Digital', 'Illustration', 'Character design'],
@@ -45,7 +45,7 @@ let users = [
   },
   {
     id: '4', username: 'hussina_patel', firstName: 'Hussina', lastName: 'Patel',
-    email: 'hussina@earts.com', password: 'hashed', role: 'Mixed Media',
+    email: 'hussina@earts.com', password: 'hashed', role: 'Mixed Media', accountType: 'artist',
     bio: 'Bringing artists together across borders and disciplines.',
     location: 'Mumbai, India', avatar: null,
     tags: ['Mixed Media', 'Sculpture', 'Installation'],
@@ -87,7 +87,7 @@ const bcrypt = require('bcryptjs');
 const SECRET = 'earts_secret_2024';
 
 app.post('/api/auth/register', async (req, res) => {
-  const { firstName, lastName, email, password, role } = req.body;
+  const { firstName, lastName, email, password, role, accountType } = req.body;
   if (users.find(u => u.email === email)) {
     return res.status(400).json({ error: 'Email already in use' });
   }
@@ -95,7 +95,8 @@ app.post('/api/auth/register', async (req, res) => {
   const username = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now().toString().slice(-4)}`;
   const user = {
     id: String(users.length + 1), username, firstName, lastName, email,
-    password: hashed, role: role || 'Artist', bio: '', location: '',
+    password: hashed, role: role || 'Artist', accountType: accountType === 'collector' ? 'collector' : 'artist',
+    bio: '', location: '',
     avatar: null, tags: [], tools: [], availableFor: [],
     followers: 0, following: 0, artworksSold: 0,
     coverColor: 'linear-gradient(135deg, #5B4BF5 0%, #FF6B9D 100%)'
