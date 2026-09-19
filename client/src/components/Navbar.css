@@ -1,5 +1,5 @@
 .navbar {
-  background: rgba(255,255,255,0.95);
+  background: rgba(255,255,255,0.6);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
   position: sticky;
@@ -28,6 +28,7 @@
 .navbar-links {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   flex: 1;
 }
