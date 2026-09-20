@@ -1,0 +1,74 @@
+.post-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 26, 62, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: overlayFadeIn 0.2s ease;
+}
+
+.post-card {
+  background: white;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 460px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 28px 26px;
+  position: relative;
+  animation: cardPopIn 0.25s ease;
+}
+
+.post-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  color: var(--navy);
+  margin-bottom: 20px;
+}
+
+.post-form { display: flex; flex-direction: column; gap: 16px; }
+.post-form textarea {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  resize: vertical;
+}
+.post-form textarea:focus { outline: none; border-color: var(--primary); }
+
+.color-picker-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.color-swatch {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+.color-swatch.active { border-color: var(--navy); transform: scale(1.1); }
+
+.for-sale-row {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.for-sale-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--navy);
+  cursor: pointer;
+}
+.for-sale-toggle input { width: 16px; height: 16px; accent-color: var(--primary); }
+
+.post-submit { justify-content: center; width: 100%; }
