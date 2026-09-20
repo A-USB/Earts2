@@ -56,22 +56,30 @@ let users = [
   }
 ];
 
+const DAY = 86400000;
+const seedNow = Date.now();
 let artworks = [
-  { id: '1', title: 'A Calm Day In Rome', artistId: '2', artistName: 'Nadia Reyes', price: 120, likes: 23700, category: 'Painting', status: 'for_sale', color: '#F4D03F', trending: true, featured: true, description: 'A peaceful afternoon captured in warm Mediterranean tones.', medium: 'Oil on Canvas', year: 2024 },
-  { id: '2', title: 'The Starry Night', artistId: '3', artistName: 'arahibris2011', price: 85, likes: 490, category: 'Digital', status: 'for_sale', color: '#00BCD4', trending: true, featured: false, description: 'A digital reimagining of the night sky.', medium: 'Digital', year: 2023 },
-  { id: '3', title: 'Guernica', artistId: '4', artistName: 'Hussina Patel', price: 230, likes: 11600, category: 'Mixed Media', status: 'for_sale', color: '#9B59B6', trending: true, featured: true, description: 'An homage to the iconic anti-war statement.', medium: 'Mixed Media', year: 2024 },
-  { id: '4', title: 'Creation of Adam', artistId: '3', artistName: 'John Brigg', price: 44.99, likes: 6774, category: 'Digital', status: 'for_sale', color: '#A9D18E', trending: true, featured: false, description: 'A modern digital take on the Sistine Chapel masterpiece.', medium: 'Digital', year: 2023 },
-  { id: '5', title: 'Roots and Rythm III', artistId: '1', artistName: 'Jane Murungi', price: 60, likes: 1200, category: 'Illustration', status: 'for_sale', color: '#F5CBA7', trending: false, featured: true, description: 'Exploring African rhythms through visual storytelling.', medium: 'Procreate', year: 2024 },
-  { id: '6', title: 'Bloom Series III', artistId: '1', artistName: 'Jane Murungi', price: 45.99, likes: 890, category: 'Illustration', status: 'for_sale', color: '#58D68D', trending: false, featured: false, description: 'Third piece in the Bloom series — nature in full expression.', medium: 'Watercolour', year: 2024 },
-  { id: '7', title: 'Still Water', artistId: '1', artistName: 'Jane Murungi', price: 89.99, likes: 2100, category: 'Watercolour', status: 'for_sale', color: '#C0A882', trending: false, featured: true, description: 'Calm and contemplative — a meditation on stillness.', medium: 'Watercolour', year: 2023 },
-  { id: '8', title: 'Mona Lisa', artistId: '1', artistName: 'Jane Murungi', price: 74.89, likes: 3400, category: 'Digital', status: 'for_sale', color: '#5B8CDB', trending: false, featured: false, description: 'A fresh digital take on the world\'s most famous portrait.', medium: 'Digital', year: 2022 },
-  { id: '9', title: 'Golden Hour', artistId: '1', artistName: 'Jane Murungi', price: 56.79, likes: 780, category: 'Illustration', status: 'for_sale', color: '#7D7D7D', trending: false, featured: false, description: 'Capturing the magic of dusk in vibrant color.', medium: 'Procreate', year: 2024 },
-  { id: '10', title: 'Dream State', artistId: '1', artistName: 'Jane Murungi', price: null, likes: 560, category: 'Illustration', status: 'not_for_sale', color: '#D4A574', trending: false, featured: false, description: 'A surreal journey through the subconscious.', medium: 'Mixed Media', year: 2024 },
-  { id: '11', title: 'Music Lesson', artistId: '1', artistName: 'Jane Murungi', price: 35.49, likes: 1100, category: 'Illustration', status: 'for_sale', color: '#E8734A', trending: false, featured: false, description: 'Celebrating music education in African communities.', medium: 'Illustration', year: 2023 },
-  { id: '12', title: 'Salvator Mundi', artistId: '1', artistName: 'Jane Murungi', price: null, likes: 4200, category: 'Digital', status: 'not_for_sale', color: '#D4AF37', trending: false, featured: true, description: 'A spiritual exploration through digital art.', medium: 'Digital', year: 2022 },
-  { id: '13', title: 'Abstract Flow', artistId: '2', artistName: 'Nadia Reyes', price: 95, likes: 5600, category: 'Abstract', status: 'for_sale', color: '#FF6B9D', trending: false, featured: true, description: 'Fluid shapes dancing in harmony.', medium: 'Acrylic', year: 2024 },
-  { id: '14', title: 'City Lights', artistId: '3', artistName: 'arahibris2011', price: 150, likes: 8900, category: 'Digital', status: 'for_sale', color: '#1A1A3E', trending: false, featured: true, description: 'Urban energy distilled into pixels.', medium: 'Digital', year: 2023 },
+  { id: '1', title: 'A Calm Day In Rome', artistId: '2', artistName: 'Nadia Reyes', price: 120, likes: 23700, category: 'Painting', status: 'for_sale', color: '#F4D03F', trending: true, featured: true, description: 'A peaceful afternoon captured in warm Mediterranean tones.', medium: 'Oil on Canvas', year: 2024, createdAt: seedNow - 14 * DAY },
+  { id: '2', title: 'The Starry Night', artistId: '3', artistName: 'arahibris2011', price: 85, likes: 490, category: 'Digital', status: 'for_sale', color: '#00BCD4', trending: true, featured: false, description: 'A digital reimagining of the night sky.', medium: 'Digital', year: 2023, createdAt: seedNow - 13 * DAY },
+  { id: '3', title: 'Guernica', artistId: '4', artistName: 'Hussina Patel', price: 230, likes: 11600, category: 'Mixed Media', status: 'for_sale', color: '#9B59B6', trending: true, featured: true, description: 'An homage to the iconic anti-war statement.', medium: 'Mixed Media', year: 2024, createdAt: seedNow - 12 * DAY },
+  { id: '4', title: 'Creation of Adam', artistId: '3', artistName: 'John Brigg', price: 44.99, likes: 6774, category: 'Digital', status: 'for_sale', color: '#A9D18E', trending: true, featured: false, description: 'A modern digital take on the Sistine Chapel masterpiece.', medium: 'Digital', year: 2023, createdAt: seedNow - 11 * DAY },
+  { id: '5', title: 'Roots and Rythm III', artistId: '1', artistName: 'Jane Murungi', price: 60, likes: 1200, category: 'Illustration', status: 'for_sale', color: '#F5CBA7', trending: false, featured: true, description: 'Exploring African rhythms through visual storytelling.', medium: 'Procreate', year: 2024, createdAt: seedNow - 10 * DAY },
+  { id: '6', title: 'Bloom Series III', artistId: '1', artistName: 'Jane Murungi', price: 45.99, likes: 890, category: 'Illustration', status: 'for_sale', color: '#58D68D', trending: false, featured: false, description: 'Third piece in the Bloom series — nature in full expression.', medium: 'Watercolour', year: 2024, createdAt: seedNow - 9 * DAY },
+  { id: '7', title: 'Still Water', artistId: '1', artistName: 'Jane Murungi', price: 89.99, likes: 2100, category: 'Watercolour', status: 'for_sale', color: '#C0A882', trending: false, featured: true, description: 'Calm and contemplative — a meditation on stillness.', medium: 'Watercolour', year: 2023, createdAt: seedNow - 8 * DAY },
+  { id: '8', title: 'Mona Lisa', artistId: '1', artistName: 'Jane Murungi', price: 74.89, likes: 3400, category: 'Digital', status: 'for_sale', color: '#5B8CDB', trending: false, featured: false, description: 'A fresh digital take on the world\'s most famous portrait.', medium: 'Digital', year: 2022, createdAt: seedNow - 7 * DAY },
+  { id: '9', title: 'Golden Hour', artistId: '1', artistName: 'Jane Murungi', price: 56.79, likes: 780, category: 'Illustration', status: 'for_sale', color: '#7D7D7D', trending: false, featured: false, description: 'Capturing the magic of dusk in vibrant color.', medium: 'Procreate', year: 2024, createdAt: seedNow - 6 * DAY },
+  { id: '10', title: 'Dream State', artistId: '1', artistName: 'Jane Murungi', price: null, likes: 560, category: 'Illustration', status: 'not_for_sale', color: '#D4A574', trending: false, featured: false, description: 'A surreal journey through the subconscious.', medium: 'Mixed Media', year: 2024, createdAt: seedNow - 5 * DAY },
+  { id: '11', title: 'Music Lesson', artistId: '1', artistName: 'Jane Murungi', price: 35.49, likes: 1100, category: 'Illustration', status: 'for_sale', color: '#E8734A', trending: false, featured: false, description: 'Celebrating music education in African communities.', medium: 'Illustration', year: 2023, createdAt: seedNow - 4 * DAY },
+  { id: '12', title: 'Salvator Mundi', artistId: '1', artistName: 'Jane Murungi', price: null, likes: 4200, category: 'Digital', status: 'not_for_sale', color: '#D4AF37', trending: false, featured: true, description: 'A spiritual exploration through digital art.', medium: 'Digital', year: 2022, createdAt: seedNow - 3 * DAY },
+  { id: '13', title: 'Abstract Flow', artistId: '2', artistName: 'Nadia Reyes', price: 95, likes: 5600, category: 'Abstract', status: 'for_sale', color: '#FF6B9D', trending: false, featured: true, description: 'Fluid shapes dancing in harmony.', medium: 'Acrylic', year: 2024, createdAt: seedNow - 2 * DAY },
+  { id: '14', title: 'City Lights', artistId: '3', artistName: 'arahibris2011', price: 150, likes: 8900, category: 'Digital', status: 'for_sale', color: '#1A1A3E', trending: false, featured: true, description: 'Urban energy distilled into pixels.', medium: 'Digital', year: 2023, createdAt: seedNow - 1 * DAY },
 ];
+
+// Social/marketplace relationship stores
+let follows = [];        // { followerId, followingId }
+let artworkLikes = [];   // { userId, artworkId }
+let comments = [];       // { id, artworkId, userId, userName, text, createdAt }
+let orders = [];         // { id, buyerId, artworkId, price, createdAt }
 
 let products = [
   { id: '1', name: 'Artist Starter Kit', description: 'Everything you need to begin your digital art journey on Earts.', price: 29, type: 'subscription', features: ['10 artwork uploads/month', 'Basic analytics', 'Community access', 'Standard storefront'], popular: false, color: '#5B4BF5' },
@@ -159,7 +167,45 @@ app.patch('/api/users/me', auth, (req, res) => {
   res.json(safeUser);
 });
 
+// Follow / unfollow
+app.get('/api/users/me/following', auth, (req, res) => {
+  const ids = follows.filter(f => f.followerId === req.userId).map(f => f.followingId);
+  res.json(ids);
+});
+
+app.post('/api/users/:username/follow', auth, (req, res) => {
+  const target = users.find(u => u.username === req.params.username);
+  if (!target) return res.status(404).json({ error: 'Not found' });
+  if (target.id === req.userId) return res.status(400).json({ error: "Can't follow yourself" });
+  const already = follows.find(f => f.followerId === req.userId && f.followingId === target.id);
+  if (already) return res.json({ following: true, followers: target.followers });
+  follows.push({ followerId: req.userId, followingId: target.id });
+  target.followers += 1;
+  const me = users.find(u => u.id === req.userId);
+  if (me) me.following += 1;
+  res.json({ following: true, followers: target.followers });
+});
+
+app.post('/api/users/:username/unfollow', auth, (req, res) => {
+  const target = users.find(u => u.username === req.params.username);
+  if (!target) return res.status(404).json({ error: 'Not found' });
+  const idx = follows.findIndex(f => f.followerId === req.userId && f.followingId === target.id);
+  if (idx !== -1) {
+    follows.splice(idx, 1);
+    target.followers = Math.max(0, target.followers - 1);
+    const me = users.find(u => u.id === req.userId);
+    if (me) me.following = Math.max(0, me.following - 1);
+  }
+  res.json({ following: false, followers: target.followers });
+});
+
 // Artworks routes
+// Attach the owning artist's username to an artwork (needed for profile links/follow actions)
+const withArtistUsername = (artwork) => {
+  const artist = users.find(u => u.id === artwork.artistId);
+  return { ...artwork, artistUsername: artist ? artist.username : null };
+};
+
 app.get('/api/artworks', (req, res) => {
   const { category, trending, featured, artistId, search } = req.query;
   let result = [...artworks];
@@ -168,7 +214,7 @@ app.get('/api/artworks', (req, res) => {
   if (featured === 'true') result = result.filter(a => a.featured);
   if (artistId) result = result.filter(a => a.artistId === artistId);
   if (search) result = result.filter(a => a.title.toLowerCase().includes(search.toLowerCase()) || a.artistName.toLowerCase().includes(search.toLowerCase()));
-  res.json(result);
+  res.json(result.map(withArtistUsername));
 });
 
 app.get('/api/artworks/:id', (req, res) => {
@@ -185,7 +231,7 @@ app.post('/api/artworks', auth, (req, res) => {
     id: String(artworks.length + 1),
     artistId: req.userId,
     artistName: `${user.firstName} ${user.lastName}`,
-    likes: 0, trending: false, featured: false,
+    likes: 0, trending: false, featured: false, createdAt: Date.now(),
     ...req.body
   };
   artworks.push(artwork);
@@ -206,11 +252,79 @@ app.delete('/api/artworks/:id', auth, (req, res) => {
   res.json({ success: true });
 });
 
+app.get('/api/users/me/likes', auth, (req, res) => {
+  const ids = artworkLikes.filter(l => l.userId === req.userId).map(l => l.artworkId);
+  res.json(ids);
+});
+
 app.post('/api/artworks/:id/like', auth, (req, res) => {
   const artwork = artworks.find(a => a.id === req.params.id);
   if (!artwork) return res.status(404).json({ error: 'Not found' });
+  const idx = artworkLikes.findIndex(l => l.userId === req.userId && l.artworkId === artwork.id);
+  if (idx !== -1) {
+    artworkLikes.splice(idx, 1);
+    artwork.likes = Math.max(0, artwork.likes - 1);
+    return res.json({ liked: false, likes: artwork.likes });
+  }
+  artworkLikes.push({ userId: req.userId, artworkId: artwork.id });
   artwork.likes += 1;
-  res.json({ likes: artwork.likes });
+  res.json({ liked: true, likes: artwork.likes });
+});
+
+// Comments
+app.get('/api/artworks/:id/comments', (req, res) => {
+  const list = comments.filter(c => c.artworkId === req.params.id).sort((a, b) => a.createdAt - b.createdAt);
+  res.json(list);
+});
+
+app.post('/api/artworks/:id/comments', auth, (req, res) => {
+  const artwork = artworks.find(a => a.id === req.params.id);
+  if (!artwork) return res.status(404).json({ error: 'Not found' });
+  const user = users.find(u => u.id === req.userId);
+  const text = (req.body.text || '').trim();
+  if (!text) return res.status(400).json({ error: 'Comment cannot be empty' });
+  const comment = {
+    id: String(comments.length + 1), artworkId: artwork.id, userId: req.userId,
+    userName: `${user.firstName} ${user.lastName}`, username: user.username,
+    text, createdAt: Date.now()
+  };
+  comments.push(comment);
+  res.status(201).json(comment);
+});
+
+// Feed: posts from people you follow, padded with discovery content if you follow few people
+app.get('/api/feed', auth, (req, res) => {
+  const followingIds = follows.filter(f => f.followerId === req.userId).map(f => f.followingId);
+  const following = artworks.filter(a => followingIds.includes(a.artistId));
+  const rest = artworks
+    .filter(a => !followingIds.includes(a.artistId) && a.artistId !== req.userId)
+    .sort(() => Math.random() - 0.5);
+  const combined = [...following, ...rest].slice(0, 20);
+  combined.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  res.json(combined.map(withArtistUsername));
+});
+
+// Purchase (mock checkout — no real payment processing)
+app.post('/api/artworks/:id/purchase', auth, (req, res) => {
+  const artwork = artworks.find(a => a.id === req.params.id);
+  if (!artwork) return res.status(404).json({ error: 'Not found' });
+  if (artwork.status !== 'for_sale') return res.status(400).json({ error: 'This piece is not for sale' });
+  const { cardName, cardNumber, expiry, cvv } = req.body;
+  if (!cardName || !cardNumber || !expiry || !cvv) {
+    return res.status(400).json({ error: 'All payment fields are required' });
+  }
+  if (cardNumber.replace(/\s/g, '').length < 12) {
+    return res.status(400).json({ error: 'Enter a valid card number' });
+  }
+  const order = {
+    id: String(orders.length + 1), buyerId: req.userId, artworkId: artwork.id,
+    price: artwork.price, createdAt: Date.now()
+  };
+  orders.push(order);
+  artwork.status = 'sold';
+  const artist = users.find(u => u.id === artwork.artistId);
+  if (artist) artist.artworksSold = (artist.artworksSold || 0) + 1;
+  res.json({ success: true, order });
 });
 
 // Products routes
