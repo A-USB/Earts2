@@ -1,8 +1,8 @@
-import { Heart, Tag } from 'lucide-react';
+import { Heart, Tag, ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import './ArtworkCard.css';
 
-export default function ArtworkCard({ artwork, onClick }) {
+export default function ArtworkCard({ artwork, onClick, onBuyClick }) {
   const formatLikes = (n) => n >= 1000 ? `${(n/1000).toFixed(1)}k` : n;
 
   return (
@@ -11,15 +11,23 @@ export default function ArtworkCard({ artwork, onClick }) {
         <div className="artwork-overlay">
           <span className="artwork-category badge">{artwork.category}</span>
         </div>
+        {onBuyClick && artwork.status === 'for_sale' && (
+          <button
+            className="quick-buy-btn"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onBuyClick(artwork); }}
+          >
+            <ShoppingCart size={14} /> Buy
+          </button>
+        )}
       </div>
       <div className="artwork-info">
         <h3 className="artwork-title">{artwork.title}</h3>
         <span className="artwork-artist">by {artwork.artistName}</span>
         <div className="artwork-meta">
           <div className="artwork-price">
-            {artwork.status === 'not_for_sale'
-              ? <span className="not-for-sale">Not for sale</span>
-              : <><Tag size={13} /> <strong>${artwork.price}</strong></>
+            {artwork.status === 'for_sale'
+              ? <><Tag size={13} /> <strong>${artwork.price}</strong></>
+              : <span className="not-for-sale">{artwork.status === 'sold' ? 'Sold' : 'Not for sale'}</span>
             }
           </div>
           <div className="artwork-likes">
