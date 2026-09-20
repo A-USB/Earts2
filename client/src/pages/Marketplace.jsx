@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { api } from '../utils/api';
 import ArtworkCard from '../components/ArtworkCard';
+import PurchaseModal from '../components/PurchaseModal';
 import './Marketplace.css';
 
 const CATEGORIES = ['All', 'Painting', 'Digital', 'Illustration', 'Watercolour', 'Abstract', 'Sculpture', 'Mixed Media', 'Photography'];
@@ -17,13 +18,15 @@ export default function Marketplace() {
   const [sort, setSort] = useState('Latest');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [priceRange, setPriceRange] = useState([0, 1000]);
+  const [buyTarget, setBuyTarget] = useState(null);
 
   useEffect(() => {
     setLoading(true);
     const q = category !== 'All' ? `?category=${category}` : '';
     api.get(`/artworks${q}`)
       .then(data => {
-        let filtered = data;
+        // Marketplace only shows pieces that are actually purchasable
+        let filtered = data.filter(a => a.status === 'for_sale');
         if (search) filtered = filtered.filter(a =>
           a.title.toLowerCase().includes(search.toLowerCase()) ||
           a.artistName.toLowerCase().includes(search.toLowerCase())
@@ -111,7 +114,7 @@ export default function Marketplace() {
           </div>
         ) : artworks.length > 0 ? (
           <div className="marketplace-grid">
-            {artworks.map(a => <ArtworkCard key={a.id} artwork={a} />)}
+            {artworks.map(a => <ArtworkCard key={a.id} artwork={a} onBuyClick={setBuyTarget} />)}
           </div>
         ) : (
           <div className="empty-state">
@@ -124,6 +127,14 @@ export default function Marketplace() {
           </div>
         )}
       </div>
+
+      {buyTarget && (
+        <PurchaseModal
+          artwork={buyTarget}
+          onClose={() => setBuyTarget(null)}
+          onSuccess={() => setArtworks(prev => prev.filter(a => a.id !== buyTarget.id))}
+        />
+      )}
     </div>
   );
 }
