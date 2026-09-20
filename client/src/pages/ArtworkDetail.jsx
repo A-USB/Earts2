@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Heart, Share2, ShoppingCart, ArrowLeft, Tag } from 'lucide-react';
+import { Heart, Share2, ShoppingCart, ArrowLeft, Tag, MessageCircle, Send } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
+import PurchaseModal from '../components/PurchaseModal';
 import './ArtworkDetail.css';
+
+const STATUS_LABEL = { for_sale: 'Available', not_for_sale: 'Not for sale', sold: 'Sold' };
 
 export default function ArtworkDetail() {
   const { id } = useParams();
@@ -13,10 +16,23 @@ export default function ArtworkDetail() {
   const [artwork, setArtwork] = useState(null);
   const [liked, setLiked] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showPurchase, setShowPurchase] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState('');
+  const [postingComment, setPostingComment] = useState(false);
 
   useEffect(() => {
-    api.get(`/artworks/${id}`)
-      .then(setArtwork)
+    setLoading(true);
+    Promise.all([
+      api.get(`/artworks/${id}`),
+      api.get(`/artworks/${id}/comments`).catch(() => []),
+      user ? api.get('/users/me/likes').catch(() => []) : Promise.resolve([]),
+    ])
+      .then(([art, cmts, myLikes]) => {
+        setArtwork(art);
+        setComments(cmts);
+        setLiked(myLikes.includes(art.id));
+      })
       .catch(() => navigate('/marketplace'))
       .finally(() => setLoading(false));
   }, [id]);
@@ -26,8 +42,21 @@ export default function ArtworkDetail() {
     try {
       const data = await api.post(`/artworks/${id}/like`);
       setArtwork(prev => ({ ...prev, likes: data.likes }));
-      setLiked(true);
+      setLiked(data.liked);
     } catch {}
+  };
+
+  const handleComment = async (e) => {
+    e.preventDefault();
+    if (!user) { navigate('/login'); return; }
+    if (!commentText.trim()) return;
+    setPostingComment(true);
+    try {
+      const c = await api.post(`/artworks/${id}/comments`, { text: commentText.trim() });
+      setComments(prev => [...prev, c]);
+      setCommentText('');
+    } catch {}
+    finally { setPostingComment(false); }
   };
 
   if (loading) return (
@@ -38,6 +67,7 @@ export default function ArtworkDetail() {
   if (!artwork) return null;
 
   const formatLikes = n => n >= 1000 ? `${(n/1000).toFixed(1)}k` : n;
+  const isOwnArtwork = user && artwork.artistId === user.id;
 
   return (
     <div className="artwork-detail-page page-wrapper">
@@ -61,6 +91,33 @@ export default function ArtworkDetail() {
               <button className="share-btn btn-ghost">
                 <Share2 size={16} /> Share
               </button>
+            </div>
+
+            <div className="comments-section card">
+              <h4><MessageCircle size={16} /> Comments ({comments.length})</h4>
+              <div className="comments-list">
+                {comments.length === 0 && <p className="no-comments">No comments yet — be the first to say something.</p>}
+                {comments.map(c => (
+                  <div key={c.id} className="comment-item">
+                    <Avatar seed={c.userName} size={32} />
+                    <div>
+                      <strong>{c.userName}</strong>
+                      <p>{c.text}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <form className="comment-form" onSubmit={handleComment}>
+                <input
+                  placeholder={user ? 'Add a comment...' : 'Sign in to comment'}
+                  value={commentText}
+                  onChange={e => setCommentText(e.target.value)}
+                  disabled={!user}
+                />
+                <button type="submit" className="icon-btn" disabled={postingComment || !user}>
+                  <Send size={16} />
+                </button>
+              </form>
             </div>
           </div>
 
@@ -92,16 +149,16 @@ export default function ArtworkDetail() {
               {artwork.medium && <div className="meta-item"><span>Medium</span><strong>{artwork.medium}</strong></div>}
               {artwork.year && <div className="meta-item"><span>Year</span><strong>{artwork.year}</strong></div>}
               <div className="meta-item"><span>Category</span><strong>{artwork.category}</strong></div>
-              <div className="meta-item"><span>Status</span><strong>{artwork.status === 'for_sale' ? 'Available' : 'Not for sale'}</strong></div>
+              <div className="meta-item"><span>Status</span><strong>{STATUS_LABEL[artwork.status] || 'Not for sale'}</strong></div>
             </div>
 
-            {artwork.status === 'for_sale' && artwork.price && (
+            {artwork.status === 'for_sale' && artwork.price && !isOwnArtwork && (
               <div className="purchase-section">
                 <div className="price-display">
                   <Tag size={20} />
                   <span className="big-price">${artwork.price}</span>
                 </div>
-                <button className="btn-primary buy-btn">
+                <button className="btn-primary buy-btn" onClick={() => user ? setShowPurchase(true) : navigate('/login')}>
                   <ShoppingCart size={18} /> Purchase artwork
                 </button>
                 <p className="purchase-note">
@@ -109,9 +166,29 @@ export default function ArtworkDetail() {
                 </p>
               </div>
             )}
+
+            {artwork.status === 'sold' && (
+              <div className="purchase-section">
+                <p className="purchase-note" style={{textAlign:'center'}}>This piece has already been sold.</p>
+              </div>
+            )}
+
+            {isOwnArtwork && artwork.status === 'for_sale' && (
+              <div className="purchase-section">
+                <p className="purchase-note" style={{textAlign:'center'}}>This is your own artwork — listed for ${artwork.price}.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {showPurchase && (
+        <PurchaseModal
+          artwork={artwork}
+          onClose={() => setShowPurchase(false)}
+          onSuccess={() => setArtwork(prev => ({ ...prev, status: 'sold' }))}
+        />
+      )}
     </div>
   );
 }
