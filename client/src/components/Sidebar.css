@@ -8,7 +8,7 @@
   height: 100vh;
   background: rgba(255,255,255,0.9);
   backdrop-filter: blur(12px);
-  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   padding: 20px 14px;
@@ -27,6 +27,7 @@
 }
 @media (min-width: 900px) {
   .sidebar.expanded .sidebar-label { display: inline; }
+  .sidebar.expanded .sidebar-user-info { display: flex; }
 }
 
 .sidebar-top {
@@ -147,7 +148,7 @@
   transition: background 0.15s;
 }
 .sidebar-user:hover { background: var(--primary-light); }
-.sidebar-user-info { display: flex; flex-direction: column; overflow: hidden; }
+.sidebar-user-info { flex-direction: column; overflow: hidden; }
 .sidebar-user-info strong { font-size: 13px; color: var(--text-dark); overflow: hidden; text-overflow: ellipsis; }
 .sidebar-user-info span { font-size: 11px; color: var(--text-light); }
 

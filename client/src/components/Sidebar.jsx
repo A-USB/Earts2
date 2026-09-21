@@ -43,7 +43,7 @@ export default function Sidebar() {
           <span className="sidebar-label sidebar-logo-text">Earts</span>
         </Link>
         <button className="sidebar-toggle" onClick={() => setExpanded(!expanded)} title={expanded ? 'Collapse' : 'Expand'}>
-          {expanded ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          {expanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
         </button>
       </div>
 
