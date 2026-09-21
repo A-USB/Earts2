@@ -257,6 +257,23 @@ app.get('/api/users/me/likes', auth, (req, res) => {
   res.json(ids);
 });
 
+// Full artwork objects the current user has liked/saved
+app.get('/api/users/me/saved', auth, (req, res) => {
+  const ids = artworkLikes.filter(l => l.userId === req.userId).map(l => l.artworkId);
+  const saved = artworks.filter(a => ids.includes(a.id)).map(withArtistUsername);
+  res.json(saved);
+});
+
+// Purchase history for the current user, each order paired with the artwork it was for
+app.get('/api/users/me/orders', auth, (req, res) => {
+  const myOrders = orders.filter(o => o.buyerId === req.userId).sort((a, b) => b.createdAt - a.createdAt);
+  const enriched = myOrders.map(o => ({
+    ...o,
+    artwork: artworks.find(a => a.id === o.artworkId) || null
+  }));
+  res.json(enriched);
+});
+
 app.post('/api/artworks/:id/like', auth, (req, res) => {
   const artwork = artworks.find(a => a.id === req.params.id);
   if (!artwork) return res.status(404).json({ error: 'Not found' });
