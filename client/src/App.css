@@ -6,3 +6,17 @@
 .app-shell main {
   flex: 1;
 }
+
+.app-shell-sidebar {
+  flex-direction: row;
+  align-items: stretch;
+}
+.app-main-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.app-main-col main {
+  flex: 1;
+}
