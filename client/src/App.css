@@ -19,4 +19,8 @@
 }
 .app-main-col main {
   flex: 1;
+  padding: 24px 28px 0;
+}
+@media (max-width: 640px) {
+  .app-main-col main { padding: 16px 16px 0; }
 }

@@ -45,11 +45,11 @@ function Layout() {
   if (useSidebar) {
     return (
       <div className="app-shell app-shell-sidebar">
+        <Sidebar />
         <div className="app-main-col">
           <main>{routes}</main>
           <Footer />
         </div>
-        <Sidebar />
       </div>
     );
   }
