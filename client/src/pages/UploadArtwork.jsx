@@ -19,7 +19,7 @@ export default function UploadArtwork() {
 
   const [form, setForm] = useState({
     title:'', description:'', category:'Digital', price:'',
-    status:'for_sale', medium:'', year: new Date().getFullYear(), color: '#5B4BF5'
+    forSale: true, medium:'', year: new Date().getFullYear(), color: '#5B4BF5'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -29,11 +29,14 @@ export default function UploadArtwork() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.title) { setError('Title is required'); return; }
+    if (form.forSale && (!form.price || Number(form.price) <= 0)) { setError('Enter a price to list it for sale'); return; }
     setLoading(true); setError('');
     try {
       const payload = {
-        ...form,
-        price: form.status === 'for_sale' ? parseFloat(form.price) || null : null,
+        title: form.title, description: form.description, category: form.category,
+        medium: form.medium, year: form.year, color: form.color,
+        status: form.forSale ? 'for_sale' : 'not_for_sale',
+        price: form.forSale ? parseFloat(form.price) || null : null,
       };
       const artwork = await api.post('/artworks', payload);
       navigate(`/artwork/${artwork.id}`);
@@ -48,7 +51,7 @@ export default function UploadArtwork() {
       <div className="container">
         <div className="upload-header">
           <h1>Upload artwork</h1>
-          <p>Share your work with the global Earts community</p>
+          <p>This always posts to your Feed. Optionally list it for sale in the Marketplace too.</p>
         </div>
 
         <div className="upload-grid">
@@ -102,26 +105,27 @@ export default function UploadArtwork() {
               </div>
             </div>
 
-            <div className="form-row2">
-              <div className="form-group">
-                <label>Year</label>
-                <input type="number" min="1900" max="2030" value={form.year} onChange={set('year')} />
-              </div>
-              <div className="form-group">
-                <label>Status</label>
-                <select value={form.status} onChange={set('status')}>
-                  <option value="for_sale">For Sale</option>
-                  <option value="not_for_sale">Not for Sale</option>
-                </select>
-              </div>
+            <div className="form-group">
+              <label>Year</label>
+              <input type="number" min="1900" max="2030" value={form.year} onChange={set('year')} />
             </div>
 
-            {form.status === 'for_sale' && (
-              <div className="form-group">
-                <label>Price (USD)</label>
-                <input type="number" min="0" step="0.01" placeholder="e.g. 49.99" value={form.price} onChange={set('price')} />
-              </div>
-            )}
+            <div className="for-sale-row">
+              <label className="for-sale-toggle">
+                <input
+                  type="checkbox"
+                  checked={form.forSale}
+                  onChange={e => setForm(p => ({ ...p, forSale: e.target.checked }))}
+                />
+                List this for sale in the Marketplace
+              </label>
+              {form.forSale && (
+                <div className="form-group">
+                  <label>Price (USD)</label>
+                  <input type="number" min="0" step="0.01" placeholder="e.g. 49.99" value={form.price} onChange={set('price')} />
+                </div>
+              )}
+            </div>
 
             <div className="upload-actions">
               <button type="button" className="btn-ghost" onClick={() => navigate(-1)}>Cancel</button>
