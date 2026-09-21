@@ -1,6 +1,6 @@
 .auth-page {
   min-height: 100vh;
-  background: var(--bg);
+  background: linear-gradient(160deg, #F0EEFF 0%, #FAF0FF 40%, #FFF5F8 100%);
   display: flex;
   align-items: center;
   justify-content: center;
