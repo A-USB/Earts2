@@ -12,7 +12,9 @@ export default function Sidebar() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [expanded, setExpanded] = useState(true);
+  const [pinned, setPinned] = useState(false);
+  const [hovering, setHovering] = useState(false);
+  const expanded = pinned || hovering;
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -38,13 +40,25 @@ export default function Sidebar() {
   return (
     <aside className={`sidebar ${expanded ? 'expanded' : ''}`}>
       <div className="sidebar-top">
-        <Link to="/feed" className="sidebar-logo">
-          <span className="sidebar-logo-mark">E</span>
-          <span className="sidebar-label sidebar-logo-text">Earts</span>
-        </Link>
-        <button className="sidebar-toggle" onClick={() => setExpanded(!expanded)} title={expanded ? 'Collapse' : 'Expand'}>
+        <button
+          className="sidebar-toggle"
+          onMouseEnter={() => setHovering(true)}
+          onMouseLeave={() => setHovering(false)}
+          onClick={() => setPinned(p => !p)}
+          title={pinned ? 'Collapse' : 'Expand & pin'}
+        >
           {expanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
         </button>
+
+        <Link to="/feed" className="sidebar-logo">
+          <svg className="sidebar-logo-mark" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="64" height="64" rx="17" fill="#6D4CE0"/>
+            <rect x="18" y="16" width="25" height="11" rx="4" fill="#ffffff" fillOpacity="0.35" transform="rotate(-10 18 16)"/>
+            <rect x="18" y="26.5" width="25" height="11" rx="4" fill="#ffffff" fillOpacity="0.65" transform="rotate(-5 18 26.5)"/>
+            <rect x="18" y="37" width="25" height="11" rx="4" fill="#ffffff"/>
+          </svg>
+          <span className="sidebar-label sidebar-logo-text">Earts</span>
+        </Link>
       </div>
 
       <nav className="sidebar-nav">
@@ -75,7 +89,7 @@ export default function Sidebar() {
             />
           </form>
         ) : (
-          <button className="sidebar-link" onClick={() => { setExpanded(true); setSearchOpen(true); }} title="Search">
+          <button className="sidebar-link" onClick={() => { setPinned(true); setSearchOpen(true); }} title="Search">
             <Search size={20} />
             <span className="sidebar-label">Search</span>
           </button>
