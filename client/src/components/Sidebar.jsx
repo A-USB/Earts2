@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   Rss, ShoppingBag, ImagePlus, User, Search, Bell,
-  ChevronLeft, ChevronRight, Settings as SettingsIcon, LogOut
+  PanelLeftClose, PanelLeftOpen, Settings as SettingsIcon, LogOut
 } from 'lucide-react';
 import Avatar from './Avatar';
 import './Sidebar.css';
@@ -41,13 +41,13 @@ export default function Sidebar() {
     <aside className={`sidebar ${expanded ? 'expanded' : ''}`}>
       <div className="sidebar-top">
         <button
-          className="sidebar-toggle"
+          className="sidebar-link sidebar-toggle"
           onMouseEnter={() => setHovering(true)}
           onMouseLeave={() => setHovering(false)}
           onClick={() => setPinned(p => !p)}
           title={pinned ? 'Collapse' : 'Expand & pin'}
         >
-          {expanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+          {expanded ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
         </button>
 
         <Link to="/feed" className="sidebar-logo">
