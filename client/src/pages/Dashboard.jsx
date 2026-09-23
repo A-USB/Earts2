@@ -46,7 +46,7 @@ export default function Dashboard() {
         <div className="container">
           <span className="eyebrow">Your Feed</span>
           <h1>Welcome back{user?.firstName ? `, ${user.firstName}` : ''}</h1>
-          <p>Discover new artworks from artists across the Earts community</p>
+          <p>Discover new artworks from artists across the Earts community.</p>
           <div className="dashboard-search">
             <Search size={18} />
             <input
