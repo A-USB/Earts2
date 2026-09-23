@@ -105,7 +105,7 @@ export default function About() {
         <div className="container">
           <div className="section-center">
             <span className="eyebrow">Our journey</span>
-            <h2>How we got here</h2>
+            <h2>How we made it</h2>
           </div>
           <div className="timeline">
             {[
@@ -113,7 +113,7 @@ export default function About() {
               { year: '2023', title: '10,000 artists joined', desc: 'The community grew to 10k artists across 40+ countries in just one year.' },
               { year: '2024', title: '$100k earned by artists', desc: 'Our marketplace hit $100,000 in artist earnings — proof the model works.' },
               { year: '2025', title: 'Global expansion', desc: 'We opened regional hubs in Nairobi, Tokyo, and São Paulo.' },
-              { year: '2026', title: 'Today', desc: '12k+ artists, 80 countries, and a community that keeps growing every day.' },
+              { year: '2026', title: 'Today', desc: '12k+ artists, 80 countries, and a community that keeps growing day by day.' },
             ].map((item, i) => (
               <div key={i} className="timeline-item">
                 <div className="timeline-year">{item.year}</div>
