@@ -64,7 +64,7 @@ export default function Footer() {
             </div>
             <div className="footer-col">
               <h4>COMPANY</h4>
-              <Link to="/#about">Our Story</Link>
+              <Link to="/#about">Our Story & Journey</Link>
               <Link to="/#about">Blog</Link>
               <Link to="/#about">Careers</Link>
               <Link to="/#about">Press kit</Link>
