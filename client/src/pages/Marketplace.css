@@ -2,7 +2,10 @@
   background: linear-gradient(160deg, var(--navy) 0%, #2D1B69 100%);
   padding: 60px 0 48px;
   text-align: center;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  margin: -24px -28px 0;
+}
+@media (max-width: 640px) {
+  .marketplace-hero { margin: -16px -16px 0; }
 }
 .marketplace-hero .eyebrow { margin-bottom: 12px; display: block; }
 .marketplace-hero h1 { font-size: 42px; color: white; margin-bottom: 12px; }
