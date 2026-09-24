@@ -21,7 +21,20 @@ function hashStr(str) {
 
 function pick(arr, seed) { return arr[seed % arr.length]; }
 
-export default function Avatar({ seed = 'default', size = 72, className = '' }) {
+export default function Avatar({ seed = 'default', size = 72, className = '', src = null }) {
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={seed}
+        width={size}
+        height={size}
+        className={className}
+        style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', display: 'block' }}
+        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+      />
+    );
+  }
   const h = hashStr(seed);
   const skin = pick(SKIN_TONES, h);
   const hair = pick(HAIR_COLORS, h >> 3);
