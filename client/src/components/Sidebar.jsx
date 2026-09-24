@@ -19,7 +19,7 @@ export default function Sidebar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const isProfileActive = location.pathname.startsWith(`/profile/${user.username}`);
+  const isProfileActive = user?.username ? location.pathname.startsWith(`/profile/${user.username}`) : false;
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -33,8 +33,8 @@ export default function Sidebar() {
   const navItems = [
     { to: '/feed', label: 'Feed', icon: Rss, show: true },
     { to: '/marketplace', label: 'Marketplace', icon: ShoppingBag, show: true },
-    { to: '/upload', label: 'Upload', icon: ImagePlus, show: user.accountType !== 'collector' },
-    { to: `/profile/${user.username}`, label: 'My Profile', icon: User, show: true, active: isProfileActive },
+    { to: '/upload', label: 'Upload', icon: ImagePlus, show: user?.accountType !== 'collector' },
+    { to: user?.username ? `/profile/${user.username}` : '/login', label: 'My Profile', icon: User, show: true, active: isProfileActive },
   ];
 
   return (
