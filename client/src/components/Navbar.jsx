@@ -136,10 +136,10 @@ export default function Navbar() {
               )}
               {user ? (
                 <>
-                  <button className="icon-btn notif-btn">
+                  <Link to="/notifications" className="icon-btn notif-btn" title="Notifications">
                     <Bell size={18} />
                     <span className="notif-dot" />
-                  </button>
+                  </Link>
                   <div className="avatar-menu" onClick={() => setDropdownOpen(!dropdownOpen)}>
                     <Avatar seed={(user.firstName||'') + (user.lastName||'')} size={34} />
                     <ChevronDown size={14} />
