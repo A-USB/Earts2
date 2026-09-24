@@ -53,7 +53,7 @@ export default function Navbar() {
     }
   };
 
-  const isProfileActive = user && location.pathname.startsWith(`/profile/${user.username}`);
+  const isProfileActive = user?.username ? location.pathname.startsWith(`/profile/${user.username}`) : false;
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -104,7 +104,7 @@ export default function Navbar() {
                 </Link>
               )}
               <Link
-                to={`/profile/${user.username}`}
+                to={user?.username ? `/profile/${user.username}` : '/login'}
                 className={`nav-link ${isProfileActive ? 'active' : ''}`}
                 onClick={() => setMenuOpen(false)}
               >
