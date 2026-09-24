@@ -53,6 +53,17 @@ let users = [
     availableFor: ['Commissions', 'Collaborations', 'Workshop'],
     followers: 11600, following: 200, artworksSold: 19,
     coverColor: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)'
+  },
+  {
+    id: '5', username: 'arahirwa_bright', firstName: 'Arahirwa', lastName: 'Bright',
+    email: 'bright@earts.com', password: 'hashed', role: 'Sculptor', accountType: 'artist',
+    bio: 'Sculptor and mixed media creator crafting tactile visual experiences.',
+    location: 'Kigali, Rwanda', avatar: null,
+    tags: ['Sculpture', 'Mixed Media', 'Installation'],
+    tools: ['Clay', 'Metal', 'Wood', 'Procreate'],
+    availableFor: ['Commissions', 'Collaborations', 'Exhibitions'],
+    followers: 1240, following: 85, artworksSold: 12,
+    coverColor: 'linear-gradient(135deg, #5B4BF5 0%, #FF6B9D 100%)'
   }
 ];
 
@@ -63,6 +74,9 @@ let artworks = [
   { id: '2', title: 'The Starry Night', artistId: '3', artistName: 'arahibris2011', price: 85, likes: 490, category: 'Digital', status: 'for_sale', color: '#00BCD4', trending: true, featured: false, description: 'A digital reimagining of the night sky.', medium: 'Digital', year: 2023, createdAt: seedNow - 13 * DAY },
   { id: '3', title: 'Guernica', artistId: '4', artistName: 'Hussina Patel', price: 230, likes: 11600, category: 'Mixed Media', status: 'for_sale', color: '#9B59B6', trending: true, featured: true, description: 'An homage to the iconic anti-war statement.', medium: 'Mixed Media', year: 2024, createdAt: seedNow - 12 * DAY },
   { id: '4', title: 'Creation of Adam', artistId: '3', artistName: 'John Brigg', price: 44.99, likes: 6774, category: 'Digital', status: 'for_sale', color: '#A9D18E', trending: true, featured: false, description: 'A modern digital take on the Sistine Chapel masterpiece.', medium: 'Digital', year: 2023, createdAt: seedNow - 11 * DAY },
+  { id: '15', title: 'Sun 2', artistId: '5', artistName: 'Arahirwa Bright', price: 79.99, likes: 340, category: 'Sculpture', status: 'for_sale', color: '#FF6B9D', trending: true, featured: true, pinned: true, description: 'Sculptural study of radiant heat and organic geometry.', medium: 'Clay & Metal', year: 2024, createdAt: seedNow - 2 * DAY },
+  { id: '16', title: 'Form & Shadow', artistId: '5', artistName: 'Arahirwa Bright', price: 110, likes: 580, category: 'Sculpture', status: 'for_sale', color: '#5B4BF5', trending: false, featured: false, description: 'Minimalist curved sculpture exploring spatial balance.', medium: 'Wood', year: 2024, createdAt: seedNow - 5 * DAY },
+  { id: '17', title: 'Golden Ochre', artistId: '5', artistName: 'Arahirwa Bright', price: 65, likes: 210, category: 'Mixed Media', status: 'for_sale', color: '#E59866', trending: false, featured: false, description: 'Textured mixed media panel with earthy ochre pigments.', medium: 'Mixed Media', year: 2023, createdAt: seedNow - 8 * DAY },
   { id: '5', title: 'Roots and Rythm III', artistId: '1', artistName: 'Jane Murungi', price: 60, likes: 1200, category: 'Illustration', status: 'for_sale', color: '#F5CBA7', trending: false, featured: true, description: 'Exploring African rhythms through visual storytelling.', medium: 'Procreate', year: 2024, createdAt: seedNow - 10 * DAY },
   { id: '6', title: 'Bloom Series III', artistId: '1', artistName: 'Jane Murungi', price: 45.99, likes: 890, category: 'Illustration', status: 'for_sale', color: '#58D68D', trending: false, featured: false, description: 'Third piece in the Bloom series — nature in full expression.', medium: 'Watercolour', year: 2024, createdAt: seedNow - 9 * DAY },
   { id: '7', title: 'Still Water', artistId: '1', artistName: 'Jane Murungi', price: 89.99, likes: 2100, category: 'Watercolour', status: 'for_sale', color: '#C0A882', trending: false, featured: true, description: 'Calm and contemplative — a meditation on stillness.', medium: 'Watercolour', year: 2023, createdAt: seedNow - 8 * DAY },
@@ -80,6 +94,7 @@ let follows = [];        // { followerId, followingId }
 let artworkLikes = [];   // { userId, artworkId }
 let comments = [];       // { id, artworkId, userId, userName, text, createdAt }
 let orders = [];         // { id, buyerId, artworkId, price, createdAt }
+let collections = [];    // { id, artistId, name, artworkIds: [], createdAt }
 
 let products = [
   { id: '1', name: 'Artist Starter Kit', description: 'Everything you need to begin your digital art journey on Earts.', price: 29, type: 'subscription', features: ['10 artwork uploads/month', 'Basic analytics', 'Community access', 'Standard storefront'], popular: false, color: '#5B4BF5' },
@@ -231,7 +246,7 @@ app.post('/api/artworks', auth, (req, res) => {
     id: String(artworks.length + 1),
     artistId: req.userId,
     artistName: `${user.firstName} ${user.lastName}`,
-    likes: 0, trending: false, featured: false, createdAt: Date.now(),
+    likes: 0, trending: false, featured: false, pinned: false, createdAt: Date.now(),
     ...req.body
   };
   artworks.push(artwork);
@@ -249,6 +264,58 @@ app.delete('/api/artworks/:id', auth, (req, res) => {
   const idx = artworks.findIndex(a => a.id === req.params.id && a.artistId === req.userId);
   if (idx === -1) return res.status(404).json({ error: 'Not found or unauthorized' });
   artworks.splice(idx, 1);
+  res.json({ success: true });
+});
+
+// Pin an artwork to the top of your profile — only one pinned piece per artist
+app.post('/api/artworks/:id/pin', auth, (req, res) => {
+  const artwork = artworks.find(a => a.id === req.params.id && a.artistId === req.userId);
+  if (!artwork) return res.status(404).json({ error: 'Not found or unauthorized' });
+  if (artwork.pinned) {
+    artwork.pinned = false;
+    return res.json({ pinned: false });
+  }
+  artworks.forEach(a => { if (a.artistId === req.userId) a.pinned = false; });
+  artwork.pinned = true;
+  res.json({ pinned: true });
+});
+
+// Collections: named groups of artworks, like a Pinterest board / Behance project
+app.get('/api/users/:username/collections', (req, res) => {
+  const artist = users.find(u => u.username === req.params.username);
+  if (!artist) return res.status(404).json({ error: 'Not found' });
+  const list = collections
+    .filter(c => c.artistId === artist.id)
+    .map(c => ({
+      ...c,
+      artworks: c.artworkIds.map(id => artworks.find(a => a.id === id)).filter(Boolean)
+    }));
+  res.json(list);
+});
+
+app.post('/api/collections', auth, (req, res) => {
+  const name = (req.body.name || '').trim();
+  if (!name) return res.status(400).json({ error: 'Collection needs a name' });
+  const collection = {
+    id: String(collections.length + 1), artistId: req.userId, name,
+    artworkIds: Array.isArray(req.body.artworkIds) ? req.body.artworkIds : [],
+    createdAt: Date.now()
+  };
+  collections.push(collection);
+  res.status(201).json(collection);
+});
+
+app.patch('/api/collections/:id', auth, (req, res) => {
+  const idx = collections.findIndex(c => c.id === req.params.id && c.artistId === req.userId);
+  if (idx === -1) return res.status(404).json({ error: 'Not found or unauthorized' });
+  collections[idx] = { ...collections[idx], ...req.body, id: collections[idx].id, artistId: collections[idx].artistId };
+  res.json(collections[idx]);
+});
+
+app.delete('/api/collections/:id', auth, (req, res) => {
+  const idx = collections.findIndex(c => c.id === req.params.id && c.artistId === req.userId);
+  if (idx === -1) return res.status(404).json({ error: 'Not found or unauthorized' });
+  collections.splice(idx, 1);
   res.json({ success: true });
 });
 
