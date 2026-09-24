@@ -123,7 +123,7 @@ export default function Profile() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followBusy, setFollowBusy] = useState(false);
 
-  const isOwn = me?.username === username;
+  const isOwn = Boolean(me && (me.username === username || (profile && me.id === profile.id)));
   const isCollector = profile?.accountType === 'collector';
 
   useEffect(() => {
