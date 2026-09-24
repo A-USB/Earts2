@@ -13,6 +13,7 @@ import Profile from './pages/Profile'
 import ArtworkDetail from './pages/ArtworkDetail'
 import UploadArtwork from './pages/UploadArtwork'
 import Settings from './pages/Settings'
+import Notifications from './pages/Notifications'
 import NotFound from './pages/NotFound'
 import './App.css'
 
@@ -37,6 +38,7 @@ function Layout() {
       <Route path="/profile/:username" element={<Profile />} />
       <Route path="/artwork/:id" element={<ArtworkDetail />} />
       <Route path="/upload" element={<ProtectedRoute><UploadArtwork /></ProtectedRoute>} />
+      <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
