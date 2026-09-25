@@ -13,21 +13,46 @@
   position: relative;
   overflow: hidden;
 }
+.artwork-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .artwork-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.3) 0%, transparent 60%);
+  background: linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 60%);
   opacity: 0;
   transition: opacity 0.2s;
   display: flex;
   align-items: flex-end;
+  justify-content: space-between;
   padding: 12px;
 }
 .artwork-card:hover .artwork-overlay { opacity: 1; }
 .artwork-category {
   font-size: 11px;
-  background: rgba(255,255,255,0.9);
+  background: rgba(255,255,255,0.95);
   color: var(--primary);
+  font-weight: 600;
+}
+.artwork-collab-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(96, 37, 234, 0.9);
+  color: #ffffff;
+  padding: 3px 8px;
+  border-radius: 12px;
+  backdrop-filter: blur(4px);
+}
+.collab-coauthors {
+  color: var(--primary);
+  font-weight: 600;
 }
 
 .quick-buy-btn {
