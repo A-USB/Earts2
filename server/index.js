@@ -6,7 +6,8 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // In-memory data store (replace with DB in production)
 let users = [
@@ -241,16 +242,27 @@ app.get('/api/artworks/:id', (req, res) => {
 });
 
 app.post('/api/artworks', auth, (req, res) => {
-  const user = users.find(u => u.id === req.userId);
-  const artwork = {
-    id: String(artworks.length + 1),
-    artistId: req.userId,
-    artistName: `${user.firstName} ${user.lastName}`,
-    likes: 0, trending: false, featured: false, pinned: false, createdAt: Date.now(),
-    ...req.body
-  };
-  artworks.push(artwork);
-  res.status(201).json(artwork);
+  try {
+    const user = users.find(u => u.id === req.userId);
+    const artistName = user ? `${user.firstName} ${user.lastName}` : (req.body.artistName || 'Artist');
+    const artistUsername = user ? user.username : null;
+    const artwork = {
+      id: String(Date.now()),
+      artistId: req.userId,
+      artistName,
+      artistUsername,
+      likes: 0,
+      trending: false,
+      featured: false,
+      pinned: false,
+      createdAt: Date.now(),
+      ...req.body
+    };
+    artworks.unshift(artwork);
+    res.status(201).json(artwork);
+  } catch (err) {
+    res.status(500).json({ error: err.message || 'Failed to create artwork' });
+  }
 });
 
 app.patch('/api/artworks/:id', auth, (req, res) => {

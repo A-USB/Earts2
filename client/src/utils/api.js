@@ -6,8 +6,21 @@ const headers = () => {
 };
 
 const req = async (method, path, body) => {
-  const res = await fetch(`${BASE}${path}`, { method, headers: headers(), body: body ? JSON.stringify(body) : undefined });
-  const data = await res.json();
+  const res = await fetch(`${BASE}${path}`, {
+    method,
+    headers: headers(),
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const text = await res.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    if (!res.ok) {
+      throw new Error(`Server returned ${res.status}: ${res.statusText}`);
+    }
+    return text;
+  }
   if (!res.ok) throw new Error(data.error || 'Request failed');
   return data;
 };
