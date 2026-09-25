@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
-  Rss, ShoppingBag, ImagePlus, User, Search, Bell,
+  Rss, ShoppingBag, ImagePlus, User, Search, Bell, Compass,
   PanelLeftClose, PanelLeftOpen, Settings as SettingsIcon, LogOut
 } from 'lucide-react';
 import Avatar from './Avatar';
+import { EartsIcon } from './EartsLogo';
 import './Sidebar.css';
 
 export default function Sidebar() {
@@ -54,14 +55,8 @@ export default function Sidebar() {
 
         <Link to="/feed" className="sidebar-logo-wrap" title="Earts">
           <div className="sidebar-logo-icon">
-            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="64" height="64" rx="18" fill="#6D4CE0"/>
-              <rect x="18" y="16" width="26" height="11" rx="4" fill="#ffffff" fillOpacity="0.35" transform="rotate(-10 18 16)"/>
-              <rect x="18" y="26.5" width="26" height="11" rx="4" fill="#ffffff" fillOpacity="0.65" transform="rotate(-5 18 26.5)"/>
-              <rect x="18" y="37" width="26" height="11" rx="4" fill="#ffffff"/>
-            </svg>
+            <EartsIcon size={34} />
           </div>
-          <span className="sidebar-label sidebar-logo-text">Earts</span>
         </Link>
       </div>
 
