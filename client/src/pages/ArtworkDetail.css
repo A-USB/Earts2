@@ -34,9 +34,75 @@
   align-items: center;
   justify-content: center;
 }
+.detail-canvas-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
 .canvas-overlay {
   font-size: 80px;
   opacity: 0.4;
+}
+
+.artists-involved-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.artist-role-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-light);
+}
+
+.collaborators-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.collaborators-detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.collab-detail-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.collab-detail-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+}
+
+.collab-detail-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.collab-detail-text strong {
+  font-size: 14px;
+  color: var(--text-dark);
+}
+
+.collab-role-tag {
+  font-size: 11px;
+  color: var(--primary);
+  font-weight: 600;
 }
 .artwork-actions-bar { display: flex; justify-content: space-between; align-items: center; }
 .like-btn {
