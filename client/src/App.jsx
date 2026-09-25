@@ -11,6 +11,7 @@ import Feed from './pages/Feed'
 import Marketplace from './pages/Marketplace'
 import Profile from './pages/Profile'
 import ArtworkDetail from './pages/ArtworkDetail'
+import Gallery from './pages/Gallery'
 import UploadArtwork from './pages/UploadArtwork'
 import Settings from './pages/Settings'
 import Notifications from './pages/Notifications'
@@ -33,8 +34,10 @@ function Layout() {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/explore" element={<Marketplace />} />
+      <Route path="/gallery" element={<Marketplace />} />
       <Route path="/feed" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
-      <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
+      <Route path="/marketplace" element={<Marketplace />} />
       <Route path="/profile/:username" element={<Profile />} />
       <Route path="/artwork/:id" element={<ArtworkDetail />} />
       <Route path="/upload" element={<ProtectedRoute><UploadArtwork /></ProtectedRoute>} />
