@@ -1,6 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" rx="17" fill="#6D4CE0"/>
-  <rect x="18" y="16" width="25" height="11" rx="4" fill="#ffffff" fill-opacity="0.35" transform="rotate(-10 18 16)"/>
-  <rect x="18" y="26.5" width="25" height="11" rx="4" fill="#ffffff" fill-opacity="0.65" transform="rotate(-5 18 26.5)"/>
-  <rect x="18" y="37" width="25" height="11" rx="4" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="100%" height="100%" fill="none">
+  <defs>
+    <linearGradient id="eartsFaviconBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#672CF6"/>
+      <stop offset="100%" stop-color="#4F46E5"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Squircle Base for Favicon -->
+  <rect width="1000" height="1000" rx="260" fill="url(#eartsFaviconBg)"/>
+
+  <!-- High-Contrast Crisp White Brushstroke "E" -->
+  <g transform="translate(15, 5)">
+    <!-- 1. TOP STROKE -->
+    <path
+      d="M 284 472 C 275 450 290 410 332 370 C 390 315 482 268 596 252 C 648 245 680 250 684 251 C 674 268 656 281 678 285 C 696 288 710 286 714 286 C 700 300 682 316 722 316 C 690 338 650 354 624 354 C 520 355 422 400 348 450 C 314 472 292 485 284 472 Z"
+      fill="#FFFFFF"
+    />
+
+    <!-- 2. MIDDLE STROKE & SPINE -->
+    <path
+      d="M 266 714 C 262 650 286 575 330 514 C 382 444 476 430 592 432 C 632 433 646 436 646 436 C 632 452 604 466 636 476 C 622 490 600 500 574 502 C 484 510 398 572 322 666 C 298 696 280 718 266 714 Z"
+      fill="#FFFFFF"
+    />
+
+    <!-- 3. BOTTOM STROKE -->
+    <path
+      d="M 312 734 C 310 716 332 688 382 648 C 452 594 546 592 638 594 C 662 595 670 596 668 596 C 654 608 638 616 672 622 C 702 627 686 648 658 668 C 586 720 488 764 402 764 C 342 764 314 752 312 734 Z"
+      fill="#FFFFFF"
+    />
+  </g>
 </svg>
