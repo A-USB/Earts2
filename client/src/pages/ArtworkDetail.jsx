@@ -79,9 +79,13 @@ export default function ArtworkDetail() {
         <div className="artwork-detail-grid">
           <div className="artwork-display">
             <div className="artwork-canvas" style={{background: artwork.color || '#EEE'}}>
-              <div className="canvas-overlay">
-                <span>🖼️</span>
-              </div>
+              {artwork.imageUrl ? (
+                <img src={artwork.imageUrl} alt={artwork.title} className="detail-canvas-img" />
+              ) : (
+                <div className="canvas-overlay">
+                  <span>🖼️</span>
+                </div>
+              )}
             </div>
             <div className="artwork-actions-bar">
               <button className={`like-btn ${liked ? 'liked' : ''}`} onClick={handleLike}>
@@ -129,13 +133,37 @@ export default function ArtworkDetail() {
             </div>
 
             {artwork.artist && (
-              <Link to={`/profile/${artwork.artist.username}`} className="artist-link card">
-                <Avatar seed={(artwork.artist.firstName||'')+(artwork.artist.lastName||'')} size={46} />
-                <div>
-                  <strong>{artwork.artist.firstName} {artwork.artist.lastName}</strong>
-                  <span>{artwork.artist.role}</span>
-                </div>
-              </Link>
+              <div className="artists-involved-block">
+                <span className="artist-role-label">Lead Artist</span>
+                <Link to={`/profile/${artwork.artist.username}`} className="artist-link card">
+                  <Avatar seed={(artwork.artist.firstName||'')+(artwork.artist.lastName||'')} size={46} />
+                  <div>
+                    <strong>{artwork.artist.firstName} {artwork.artist.lastName}</strong>
+                    <span>{artwork.artist.role}</span>
+                  </div>
+                </Link>
+
+                {artwork.collaborators && artwork.collaborators.length > 0 && (
+                  <div className="collaborators-detail-section">
+                    <span className="artist-role-label">Co-Creators & Collaborators</span>
+                    <div className="collaborators-detail-list">
+                      {artwork.collaborators.map((c) => (
+                        <Link
+                          key={c.id}
+                          to={`/profile/${c.username}`}
+                          className="collab-detail-card card"
+                        >
+                          <Avatar name={c.name} size={36} />
+                          <div className="collab-detail-text">
+                            <strong>{c.name}</strong>
+                            <span className="collab-role-tag">{c.role}</span>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
             {artwork.description && (
