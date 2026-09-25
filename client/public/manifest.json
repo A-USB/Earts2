@@ -1,0 +1,16 @@
+{
+  "short_name": "Earts",
+  "name": "Earts — Creative Community & Marketplace",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#6025EA",
+  "display": "standalone"
+}
