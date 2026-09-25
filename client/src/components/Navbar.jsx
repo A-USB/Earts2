@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Search, Bell, Menu, X, ChevronDown } from 'lucide-react';
 import Avatar from './Avatar';
+import { EartsLogo } from './EartsLogo';
 import './Navbar.css';
 
 const HOME_SECTIONS = [
@@ -66,18 +67,31 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-inner">
-        <Link to={user ? '/feed' : '/'} className="navbar-logo">Earts</Link>
+        <Link to={user ? '/feed' : '/'} className="navbar-logo-wrap" title="Earts">
+          <EartsLogo size={32} />
+        </Link>
 
         <div className={`navbar-links ${menuOpen ? 'open' : ''}`}>
-          {!user && HOME_SECTIONS.map(s => (
-            <button
-              key={s.id}
-              className={`nav-link nav-link-tab ${onHome && activeSection === s.id ? 'active' : ''}`}
-              onClick={() => goToSection(s.id)}
-            >
-              {s.label}
-            </button>
-          ))}
+          {!user && (
+            <>
+              {HOME_SECTIONS.map(s => (
+                <button
+                  key={s.id}
+                  className={`nav-link nav-link-tab ${onHome && activeSection === s.id ? 'active' : ''}`}
+                  onClick={() => goToSection(s.id)}
+                >
+                  {s.label}
+                </button>
+              ))}
+              <Link
+                to="/marketplace"
+                className={`nav-link ${location.pathname.startsWith('/marketplace') || location.pathname.startsWith('/explore') ? 'active' : ''}`}
+                onClick={() => setMenuOpen(false)}
+              >
+                Marketplace & Gallery
+              </Link>
+            </>
+          )}
           {user && (
             <>
               <Link

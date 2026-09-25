@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { EartsLogo } from './EartsLogo';
 import './Footer.css';
 
 const SocialIcons = {
@@ -35,7 +36,9 @@ export default function Footer() {
       <div className="container">
         <div className="footer-top">
           <div className="footer-brand">
-            <span className="footer-logo">Earts</span>
+            <Link to="/" style={{ textDecoration: 'none' }}>
+              <EartsLogo size={32} />
+            </Link>
             <p>A platform built by artists, for artists. Putting creators first since 2022.</p>
             <div className="footer-social">
               {Object.entries(SocialIcons).map(([name, icon]) => (
