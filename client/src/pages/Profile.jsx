@@ -25,7 +25,11 @@ function ArtCard({ artwork, isOwn, onTogglePin }) {
         <div
           className="profile-art-thumb"
           style={{ background: artwork.color || '#DDD', aspectRatio: `1 / ${heightRatio(artwork.id)}` }}
-        />
+        >
+          {artwork.imageUrl && (
+            <img src={artwork.imageUrl} alt={artwork.title} className="profile-thumb-img" loading="lazy" />
+          )}
+        </div>
         <div className="profile-art-info">
           <span>{artwork.title}</span>
           {artwork.status === 'for_sale' ? <strong>${artwork.price}</strong> : <em>{artwork.status === 'sold' ? 'Sold' : 'Not for sale'}</em>}
@@ -495,7 +499,11 @@ export default function Profile() {
                   <div className="pinned-showcase card">
                     <span className="pinned-badge"><Pin size={12} /> Featured Showcase</span>
                     <Link to={`/artwork/${pinnedArtwork.id}`} className="pinned-card">
-                      <div className="pinned-thumb" style={{ background: pinnedArtwork.color }} />
+                      <div className="pinned-thumb" style={{ background: pinnedArtwork.color }}>
+                        {pinnedArtwork.imageUrl && (
+                          <img src={pinnedArtwork.imageUrl} alt={pinnedArtwork.title} className="profile-thumb-img" />
+                        )}
+                      </div>
                       <div className="pinned-info">
                         <div>
                           <h4>{pinnedArtwork.title}</h4>
