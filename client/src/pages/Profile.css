@@ -135,10 +135,10 @@
   width: 128px !important;
   height: 128px !important;
   border-radius: 50%;
-  border: 4.5px solid white;
+  border: 4.5px solid var(--bg-card);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   display: block;
-  background: white;
+  background: var(--bg-card);
 }
 
 @media (max-width: 640px) {
@@ -161,7 +161,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2.5px solid white;
+  border: 2.5px solid var(--bg-card);
   box-shadow: var(--shadow-sm);
   transition: transform 0.2s, background 0.2s;
 }
@@ -200,7 +200,7 @@
   align-items: center;
   justify-content: center;
   color: var(--text-mid);
-  background: white;
+  background: var(--bg-card);
   transition: all 0.2s;
 }
 
@@ -558,7 +558,7 @@
   border-radius: 50px;
   font-size: 13px;
   font-weight: 600;
-  background: white;
+  background: var(--bg-card);
   border: 1.5px solid var(--border);
   color: var(--text-mid);
   cursor: pointer;
@@ -602,7 +602,7 @@
   overflow: hidden;
   border: 1px solid var(--border);
   transition: transform 0.2s, box-shadow 0.2s;
-  background: white;
+  background: var(--bg-card);
 }
 
 .profile-art-card:hover {
