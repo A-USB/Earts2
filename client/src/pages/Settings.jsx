@@ -89,7 +89,7 @@ export default function Settings() {
                 {t.icon} {t.label}
               </button>
             ))}
-            <button className="settings-tab danger" onClick={() => { logout(); navigate('/'); }}>
+            <button className="settings-tab danger" onClick={() => { logout(); navigate('/login'); }}>
               <LogOut size={16}/> Sign Out
             </button>
           </aside>
