@@ -62,7 +62,7 @@
   border-radius: 50px;
   font-size: 13.5px;
   font-weight: 600;
-  background: white;
+  background: var(--bg-card);
   border: 1.5px solid var(--border);
   color: var(--text-mid);
   cursor: pointer;
@@ -83,11 +83,11 @@
 
 /* List */
 .notifications-list {
-  background: white;
+  background: var(--bg-card);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(91, 75, 245, 0.05);
+  box-shadow: var(--shadow-sm);
 }
 
 .notif-item {
@@ -106,11 +106,15 @@
 }
 
 .notif-item:hover {
-  background: #FBFBFF;
+  background: var(--primary-light);
 }
 
 .notif-item.unread {
-  background: #F6F4FE;
+  background: rgba(91, 75, 245, 0.06);
+}
+
+[data-theme="dark"] .notif-item.unread {
+  background: rgba(124, 110, 250, 0.12);
 }
 
 .notif-item.unread::before {
@@ -155,6 +159,12 @@
 .notif-type-feature {
   background: #FEF3C7;
 }
+
+[data-theme="dark"] .notif-type-like { background: rgba(255, 107, 157, 0.25); }
+[data-theme="dark"] .notif-type-comment { background: rgba(124, 110, 250, 0.25); }
+[data-theme="dark"] .notif-type-sale { background: rgba(16, 185, 129, 0.25); }
+[data-theme="dark"] .notif-type-follow { background: rgba(168, 85, 247, 0.25); }
+[data-theme="dark"] .notif-type-feature { background: rgba(245, 158, 11, 0.25); }
 
 .notif-avatar-wrap {
   flex-shrink: 0;
