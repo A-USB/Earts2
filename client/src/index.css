@@ -15,6 +15,7 @@
   --bg: #F8F7FF;
   --bg-card: #FFFFFF;
   --border: #E8E6F8;
+  --border-subtle: #E8E6F8;
   --gradient-hero: linear-gradient(135deg, #5B4BF5 0%, #8B5CF6 50%, #FF6B9D 100%);
   --gradient-card: linear-gradient(135deg, #5B4BF5 0%, #3B82F6 100%);
   --shadow-sm: 0 1px 3px rgba(91,75,245,0.08), 0 1px 2px rgba(0,0,0,0.04);
@@ -26,6 +27,28 @@
   --radius-xl: 24px;
 }
 
+/* Deep Cosmic Midnight Dark Mode Tokens */
+[data-theme="dark"] {
+  --primary: #7C6EFA;
+  --primary-dark: #6352E8;
+  --primary-light: rgba(124, 110, 250, 0.2);
+  --secondary: #FF7FA9;
+  --accent-orange: #FF8554;
+  --accent-cyan: #26D6EC;
+  --navy: #FFFFFF;
+  --navy-light: #DDD9FC;
+  --text-dark: #F4F3FF;
+  --text-mid: #A5A3C7;
+  --text-light: #737199;
+  --bg: #0B0B16;
+  --bg-card: #16162C;
+  --border: rgba(255, 255, 255, 0.09);
+  --border-subtle: #232345;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.65), 0 4px 12px rgba(0, 0, 0, 0.45);
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
@@ -35,6 +58,15 @@ body {
   color: var(--text-dark);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+[data-theme="dark"] body {
+  background: radial-gradient(circle at 15% 15%, rgba(91, 75, 245, 0.12) 0%, transparent 45%),
+              radial-gradient(circle at 85% 85%, rgba(255, 107, 157, 0.08) 0%, transparent 45%),
+              #0B0B16;
+  background-attachment: fixed;
+  color: var(--text-dark);
 }
 
 h1, h2, h3, h4 { font-family: 'Syne', sans-serif; line-height: 1.2; }
@@ -50,15 +82,30 @@ input, select, textarea {
   border-radius: var(--radius-sm);
   padding: 12px 16px;
   font-size: 14px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s, color 0.2s;
   width: 100%;
   background: white;
   color: var(--text-dark);
 }
 
+[data-theme="dark"] input, 
+[data-theme="dark"] select, 
+[data-theme="dark"] textarea {
+  background: #121224;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #F4F3FF;
+}
+
 input:focus, select:focus, textarea:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(91,75,245,0.1);
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(124, 110, 250, 0.2);
 }
 
 .btn-primary {
