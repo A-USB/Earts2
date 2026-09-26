@@ -181,3 +181,23 @@
   .navbar-links.open { display: flex; }
   .navbar-inner { gap: 16px; }
 }
+
+/* Dark Mode Styles for Navbar */
+[data-theme="dark"] .navbar {
+  background: rgba(11, 11, 22, 0.85);
+  border-bottom-color: var(--border);
+}
+
+[data-theme="dark"] .avatar-dropdown {
+  background: #16162C;
+  border-color: var(--border);
+  box-shadow: var(--shadow-lg);
+}
+
+[data-theme="dark"] .notif-dot {
+  border-color: #16162C;
+}
+
+[data-theme="dark"] .navbar-links {
+  background: #16162C;
+}

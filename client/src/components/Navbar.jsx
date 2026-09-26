@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Search, Bell, Menu, X, ChevronDown } from 'lucide-react';
 import Avatar from './Avatar';
 import { EartsLogo } from './EartsLogo';
+import ThemeToggle from './ThemeToggle';
 import './Navbar.css';
 
 const HOME_SECTIONS = [
@@ -148,6 +149,7 @@ export default function Navbar() {
                   <Search size={18} />
                 </button>
               )}
+              <ThemeToggle />
               {user ? (
                 <>
                   <Link to="/notifications" className="icon-btn notif-btn" title="Notifications">
@@ -165,7 +167,7 @@ export default function Navbar() {
                         </div>
                         <Link to={`/profile/${user.username}`} onClick={() => setDropdownOpen(false)}>My Profile</Link>
                         <Link to="/settings" onClick={() => setDropdownOpen(false)}>Settings</Link>
-                        <button onClick={() => { logout(); setDropdownOpen(false); navigate('/'); }}>Sign Out</button>
+                        <button onClick={() => { logout(); setDropdownOpen(false); navigate('/login'); }}>Sign Out</button>
                       </div>
                     )}
                   </div>
