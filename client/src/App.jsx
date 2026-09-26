@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { ThemeProvider } from './context/ThemeContext'
 import Navbar from './components/Navbar'
 import Sidebar from './components/Sidebar'
 import Footer from './components/Footer'
@@ -15,13 +16,14 @@ import Gallery from './pages/Gallery'
 import UploadArtwork from './pages/UploadArtwork'
 import Settings from './pages/Settings'
 import Notifications from './pages/Notifications'
+import Logout from './pages/Logout'
 import NotFound from './pages/NotFound'
 import './App.css'
 
 // These routes always keep the classic top navbar, logged in or not
-const TOP_NAV_ROUTES = ['/', '/login', '/signup'];
+const TOP_NAV_ROUTES = ['/', '/login', '/signup', '/logout'];
 // Auth screens render with no navbar/footer at all (standalone focused screen)
-const CHROMELESS_ROUTES = ['/login', '/signup'];
+const CHROMELESS_ROUTES = ['/login', '/signup', '/logout'];
 
 function Layout() {
   const location = useLocation();
@@ -34,6 +36,7 @@ function Layout() {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/logout" element={<Logout />} />
       <Route path="/explore" element={<Marketplace />} />
       <Route path="/gallery" element={<Marketplace />} />
       <Route path="/feed" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
@@ -70,10 +73,12 @@ function Layout() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Layout />
-      </BrowserRouter>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Layout />
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }
