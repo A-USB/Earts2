@@ -83,3 +83,9 @@
   .footer-cols { grid-template-columns: repeat(2, 1fr); }
   .footer-bottom { flex-direction: column; gap: 16px; text-align: center; }
 }
+
+/* Dark Mode Styles for Footer */
+[data-theme="dark"] .footer {
+  background: #080812;
+  border-top: 1px solid var(--border);
+}
