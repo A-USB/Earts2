@@ -117,3 +117,8 @@
   font-size: 12px;
   color: var(--text-light);
 }
+
+[data-theme="dark"] .artwork-category {
+  background: rgba(22, 22, 44, 0.9);
+  color: #7C6EFA;
+}
