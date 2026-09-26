@@ -172,3 +172,38 @@
   .auth-right { padding: 32px 24px; }
   .form-row { grid-template-columns: 1fr; }
 }
+
+/* Dark Mode Styles for Auth */
+[data-theme="dark"] .auth-page {
+  background: radial-gradient(circle at 20% 20%, rgba(91, 75, 245, 0.15) 0%, transparent 45%),
+              radial-gradient(circle at 80% 80%, rgba(255, 107, 157, 0.1) 0%, transparent 45%),
+              #0B0B16;
+}
+
+[data-theme="dark"] .auth-card {
+  background: #16162C;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+}
+
+[data-theme="dark"] .google-btn {
+  background: #121224;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #F4F3FF;
+}
+
+[data-theme="dark"] .account-type-toggle {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: #121224;
+}
+
+[data-theme="dark"] .account-type-toggle button.active {
+  background: var(--primary);
+  color: white;
+}
+
+[data-theme="dark"] .auth-error {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #F87171;
+}
