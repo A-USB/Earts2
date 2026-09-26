@@ -433,3 +433,26 @@ html { scroll-behavior: smooth; }
 .about-section-wrap, .products-section-wrap {
   border-top: 1px solid var(--border);
 }
+
+/* Dark Mode Overrides for Home Page */
+[data-theme="dark"] .hero {
+  background: radial-gradient(circle at 10% 20%, rgba(91, 75, 245, 0.18) 0%, transparent 45%),
+              radial-gradient(circle at 90% 80%, rgba(255, 107, 157, 0.15) 0%, transparent 45%),
+              #0B0B16;
+}
+
+[data-theme="dark"] .hero-main-img,
+[data-theme="dark"] .hero-img-placeholder {
+  background: linear-gradient(135deg, #1C1938, #281A32);
+}
+
+[data-theme="dark"] .stats-bar {
+  background: #111124;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+[data-theme="dark"] .hero-accent-card {
+  border-color: #16162C;
+}
+
