@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import Avatar from './Avatar';
 import { EartsIcon } from './EartsLogo';
+import ThemeToggle from './ThemeToggle';
 import './Sidebar.css';
 
 export default function Sidebar() {
@@ -55,8 +56,9 @@ export default function Sidebar() {
 
         <Link to="/feed" className="sidebar-logo-wrap" title="Earts">
           <div className="sidebar-logo-icon">
-            <EartsIcon size={34} />
+            <EartsIcon size={28} />
           </div>
+          <span className="sidebar-label sidebar-logo-text">Earts</span>
         </Link>
       </div>
 
@@ -107,6 +109,19 @@ export default function Sidebar() {
             <span className="sidebar-label">Search</span>
           </button>
         )}
+
+        <ThemeToggle variant="sidebar" />
+
+        <button
+          className="sidebar-link sidebar-logout-btn"
+          onClick={() => { logout(); navigate('/login'); }}
+          title="Sign Out"
+        >
+          <span className="sidebar-icon-box">
+            <LogOut size={20} />
+          </span>
+          <span className="sidebar-label">Sign Out</span>
+        </button>
       </div>
 
       <div className="sidebar-bottom">
@@ -136,7 +151,7 @@ export default function Sidebar() {
             <Link to="/settings" onClick={() => setDropdownOpen(false)}>
               <SettingsIcon size={15} /> Settings
             </Link>
-            <button onClick={() => { logout(); setDropdownOpen(false); navigate('/'); }}>
+            <button onClick={() => { logout(); setDropdownOpen(false); navigate('/login'); }}>
               <LogOut size={15} /> Sign Out
             </button>
           </div>
