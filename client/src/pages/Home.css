@@ -1,6 +1,6 @@
 /* Hero */
 .hero {
-  background: linear-gradient(160deg, #F0EEFF 0%, #FAF0FF 40%, #FFF5F8 100%);
+  background: var(--bg);
   padding: 80px 0 60px;
   overflow: hidden;
 }
@@ -12,7 +12,7 @@
 }
 .hero-left { max-width: 520px; }
 .hero-left .eyebrow { margin-bottom: 16px; display: block; }
-.hero-left h1 { font-size: clamp(36px, 4vw, 52px); color: var(--navy); margin-bottom: 20px; }
+.hero-left h1 { font-size: clamp(36px, 4vw, 52px); color: var(--text-dark); margin-bottom: 20px; }
 .hero-gradient {
   background: var(--gradient-hero);
   -webkit-background-clip: text;
@@ -123,7 +123,7 @@
   margin-bottom: 32px;
 }
 .section-header.centered { flex-direction: column; align-items: center; text-align: center; gap: 8px; }
-.section-header h2 { font-size: 32px; color: var(--navy); margin-top: 6px; }
+.section-header h2 { font-size: 32px; color: var(--text-dark); margin-top: 6px; }
 .section-header.centered p { font-size: 15px; color: var(--text-mid); max-width: 520px; margin-top: 4px; line-height: 1.7; }
 .view-all {
   display: flex;
@@ -147,37 +147,41 @@
 .cta-banner {
   background: var(--gradient-hero);
   border-radius: var(--radius-xl);
-  padding: 40px 48px;
+  padding: 44px 48px;
   display: flex;
   align-items: center;
   gap: 24px;
   position: relative;
   overflow: hidden;
+  box-shadow: var(--shadow-md);
 }
-.cta-content { flex: 1; }
-.cta-content h3 { font-size: 24px; color: white; margin-bottom: 6px; }
-.cta-content p { font-size: 14px; color: rgba(255,255,255,0.8); }
+.cta-content { flex: 1; position: relative; z-index: 2; }
+.cta-content h3 { font-size: 26px; color: white; margin-bottom: 8px; font-weight: 800; }
+.cta-content p { font-size: 14.5px; color: rgba(255,255,255,0.85); }
 .cta-btn {
   flex-shrink: 0;
   background: white;
-  color: var(--primary);
+  color: var(--primary-dark);
   padding: 14px 28px;
   border-radius: 50px;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 14.5px;
   display: flex;
   align-items: center;
   gap: 8px;
   transition: transform 0.2s, box-shadow 0.2s;
   white-space: nowrap;
+  position: relative;
+  z-index: 2;
 }
 .cta-btn:hover { transform: scale(1.03); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
 .cta-blob {
   position: absolute;
   right: 180px; top: -60px;
-  width: 200px; height: 200px;
-  background: rgba(255,255,255,0.07);
+  width: 240px; height: 240px;
+  background: rgba(255,255,255,0.1);
   border-radius: 50%;
+  pointer-events: none;
 }
 
 /* Artists */
@@ -193,18 +197,6 @@
   padding: 28px 20px;
   text-align: center;
   gap: 4px;
-}
-.artist-avatar {
-  width: 72px; height: 72px;
-  border-radius: 50%;
-  color: white;
-  font-family: 'Syne', sans-serif;
-  font-size: 28px;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 12px;
 }
 .artist-card h4 { font-size: 16px; color: var(--text-dark); font-family: 'Inter', sans-serif; font-weight: 700; }
 .artist-role { font-size: 13px; color: var(--primary); font-weight: 500; }
@@ -245,6 +237,8 @@
   .artworks-grid, .artists-grid { grid-template-columns: 1fr; }
   .cta-banner { flex-direction: column; text-align: center; padding: 32px 24px; }
 }
+
+/* ================= About Section on Home ================= */
 .about-hero { padding: 80px 0 8px; }
 
 .mission-section { padding: 80px 0; }
@@ -252,17 +246,19 @@
 .mission-card, .vision-card {
   padding: 36px;
   border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 .mission-card { background: var(--primary-light); }
 .vision-card { background: #FFF0F8; }
 .mission-card .eyebrow { color: var(--primary); margin-bottom: 14px; display: block; }
 .vision-card .eyebrow { color: var(--secondary); margin-bottom: 14px; display: block; }
-.mission-card p, .vision-card p { font-size: 14px; color: var(--text-mid); line-height: 1.8; }
+.mission-card p, .vision-card p { font-size: 14.5px; color: var(--text-dark); line-height: 1.8; }
 
-.values-section { padding: 80px 0; background: #FAFAFA; }
+.values-section { padding: 80px 0; background: transparent; }
 .section-center { text-align: center; margin-bottom: 48px; }
 .section-center .eyebrow { margin-bottom: 10px; display: block; }
-.section-center h2 { font-size: 32px; color: var(--navy); }
+.section-center h2 { font-size: 32px; color: var(--text-dark); }
 
 .values-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
 .value-card { padding: 28px 24px; text-align: center; }
@@ -273,23 +269,11 @@
 .team-section { padding: 80px 0; }
 .team-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
 .team-card { padding: 28px 20px; text-align: center; }
-.team-avatar {
-  width: 72px; height: 72px;
-  border-radius: 50%;
-  margin: 0 auto 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Syne', sans-serif;
-  font-size: 28px;
-  font-weight: 800;
-  color: white;
-}
 .team-card h4 { font-size: 16px; font-family: 'Inter', sans-serif; font-weight: 700; color: var(--text-dark); margin-bottom: 4px; }
 .team-role { font-size: 13px; color: var(--primary); font-weight: 500; display: block; margin-bottom: 10px; }
 .team-card p { font-size: 13px; color: var(--text-mid); line-height: 1.6; }
 
-.timeline-section { padding: 80px 0; background: #FAFAFA; }
+.timeline-section { padding: 80px 0; background: transparent; }
 .timeline {
   position: relative;
   max-width: 600px;
@@ -318,8 +302,8 @@
   width: 14px; height: 14px;
   border-radius: 50%;
   background: var(--primary);
-  border: 2px solid white;
-  box-shadow: 0 0 0 3px rgba(91,75,245,0.2);
+  border: 2px solid var(--bg-card);
+  box-shadow: 0 0 0 3px rgba(91,75,245,0.25);
   flex-shrink: 0;
   z-index: 1;
 }
@@ -386,7 +370,7 @@
 .plan-features li { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-mid); }
 .plan-features li svg { color: var(--primary); flex-shrink: 0; }
 
-.addons-section h2 { font-size: 32px; color: var(--navy); margin-bottom: 8px; }
+.addons-section h2 { font-size: 32px; color: var(--text-dark); margin-bottom: 8px; }
 .addons-section > p { font-size: 14px; color: var(--text-mid); margin-bottom: 28px; }
 .addons-grid { display: flex; flex-direction: column; gap: 16px; }
 .addon-card { display: flex; align-items: center; gap: 20px; padding: 20px 24px; }
@@ -400,7 +384,7 @@
 .addon-price span { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--text-dark); }
 .free-tag { color: #27AE60; font-size: 16px !important; }
 
-.faq-section h2 { font-size: 32px; color: var(--navy); margin-bottom: 28px; }
+.faq-section h2 { font-size: 32px; color: var(--text-dark); margin-bottom: 28px; }
 .faq-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
 .faq-item { padding: 24px 28px; }
 .faq-item h4 { font-size: 16px; font-family: 'Inter', sans-serif; font-weight: 700; color: var(--text-dark); margin-bottom: 8px; }
@@ -454,5 +438,63 @@ html { scroll-behavior: smooth; }
 
 [data-theme="dark"] .hero-accent-card {
   border-color: #16162C;
+}
+
+/* Deep Cosmic Dark Mode CTA Banner */
+[data-theme="dark"] .cta-banner {
+  background: linear-gradient(135deg, rgba(91, 75, 245, 0.28) 0%, rgba(255, 107, 157, 0.22) 100%), #131326;
+  border: 1px solid rgba(124, 110, 250, 0.35);
+  box-shadow: 0 16px 48px -12px rgba(0, 0, 0, 0.6), 0 0 32px rgba(91, 75, 245, 0.15);
+}
+
+[data-theme="dark"] .cta-content h3 {
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .cta-content p {
+  color: #DDD9FC;
+}
+
+[data-theme="dark"] .cta-btn {
+  background: var(--gradient-hero);
+  color: #FFFFFF;
+  box-shadow: 0 4px 20px rgba(91, 75, 245, 0.4);
+}
+
+[data-theme="dark"] .cta-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(91, 75, 245, 0.5);
+}
+
+[data-theme="dark"] .cta-blob {
+  background: radial-gradient(circle, rgba(255, 107, 157, 0.25) 0%, transparent 70%);
+}
+
+/* Dark Mode Mission & Vision Cards */
+[data-theme="dark"] .mission-card {
+  background: rgba(124, 110, 250, 0.12);
+  border-color: rgba(124, 110, 250, 0.25);
+}
+
+[data-theme="dark"] .vision-card {
+  background: rgba(255, 107, 157, 0.12);
+  border-color: rgba(255, 107, 157, 0.25);
+}
+
+[data-theme="dark"] .values-section {
+  background: rgba(255, 255, 255, 0.015);
+}
+
+[data-theme="dark"] .timeline-section {
+  background: rgba(255, 255, 255, 0.015);
+}
+
+[data-theme="dark"] .timeline-dot {
+  border-color: #16162C;
+  box-shadow: 0 0 0 3px rgba(124, 110, 250, 0.35);
+}
+
+[data-theme="dark"] .step-num {
+  color: rgba(124, 110, 250, 0.2);
 }
 

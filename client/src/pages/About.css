@@ -32,17 +32,18 @@
 .mission-card, .vision-card {
   padding: 36px;
   border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
 }
 .mission-card { background: var(--primary-light); }
 .vision-card { background: #FFF0F8; }
 .mission-card .eyebrow { color: var(--primary); margin-bottom: 14px; display: block; }
 .vision-card .eyebrow { color: var(--secondary); margin-bottom: 14px; display: block; }
-.mission-card p, .vision-card p { font-size: 14px; color: var(--text-mid); line-height: 1.8; }
+.mission-card p, .vision-card p { font-size: 14.5px; color: var(--text-dark); line-height: 1.8; }
 
-.values-section { padding: 80px 0; background: #FAFAFA; }
+.values-section { padding: 80px 0; background: transparent; }
 .section-center { text-align: center; margin-bottom: 48px; }
 .section-center .eyebrow { margin-bottom: 10px; display: block; }
-.section-center h2 { font-size: 32px; color: var(--navy); }
+.section-center h2 { font-size: 32px; color: var(--text-dark); }
 
 .values-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
 .value-card { padding: 28px 24px; text-align: center; }
@@ -53,23 +54,11 @@
 .team-section { padding: 80px 0; }
 .team-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
 .team-card { padding: 28px 20px; text-align: center; }
-.team-avatar {
-  width: 72px; height: 72px;
-  border-radius: 50%;
-  margin: 0 auto 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Syne', sans-serif;
-  font-size: 28px;
-  font-weight: 800;
-  color: white;
-}
 .team-card h4 { font-size: 16px; font-family: 'Inter', sans-serif; font-weight: 700; color: var(--text-dark); margin-bottom: 4px; }
 .team-role { font-size: 13px; color: var(--primary); font-weight: 500; display: block; margin-bottom: 10px; }
 .team-card p { font-size: 13px; color: var(--text-mid); line-height: 1.6; }
 
-.timeline-section { padding: 80px 0; background: #FAFAFA; }
+.timeline-section { padding: 80px 0; background: transparent; }
 .timeline {
   position: relative;
   max-width: 600px;
@@ -98,8 +87,8 @@
   width: 14px; height: 14px;
   border-radius: 50%;
   background: var(--primary);
-  border: 2px solid white;
-  box-shadow: 0 0 0 3px rgba(91,75,245,0.2);
+  border: 2px solid var(--bg-card);
+  box-shadow: 0 0 0 3px rgba(91,75,245,0.25);
   flex-shrink: 0;
   z-index: 1;
 }
@@ -115,3 +104,33 @@
 }
 
 .team-avatar-img { margin: 0 auto 16px; box-shadow: 0 4px 16px rgba(91,75,245,0.2); }
+
+/* Dark mode overrides for About */
+[data-theme="dark"] .about-hero {
+  background: #0F0F20;
+  border-bottom: 1px solid var(--border);
+}
+
+[data-theme="dark"] .mission-card {
+  background: rgba(124, 110, 250, 0.12);
+  border-color: rgba(124, 110, 250, 0.25);
+}
+
+[data-theme="dark"] .vision-card {
+  background: rgba(255, 107, 157, 0.12);
+  border-color: rgba(255, 107, 157, 0.25);
+}
+
+[data-theme="dark"] .values-section {
+  background: rgba(255, 255, 255, 0.015);
+}
+
+[data-theme="dark"] .timeline-section {
+  background: rgba(255, 255, 255, 0.015);
+}
+
+[data-theme="dark"] .timeline-dot {
+  border-color: #16162C;
+  box-shadow: 0 0 0 3px rgba(124, 110, 250, 0.35);
+}
+
