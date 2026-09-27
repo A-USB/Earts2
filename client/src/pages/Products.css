@@ -57,7 +57,7 @@
 .plan-features li { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-mid); }
 .plan-features li svg { color: var(--primary); flex-shrink: 0; }
 
-.addons-section h2 { font-size: 32px; color: var(--navy); margin-bottom: 8px; }
+.addons-section h2 { font-size: 32px; color: var(--text-dark); margin-bottom: 8px; }
 .addons-section > p { font-size: 14px; color: var(--text-mid); margin-bottom: 28px; }
 .addons-grid { display: flex; flex-direction: column; gap: 16px; }
 .addon-card { display: flex; align-items: center; gap: 20px; padding: 20px 24px; }
@@ -71,7 +71,7 @@
 .addon-price span { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--text-dark); }
 .free-tag { color: #27AE60; font-size: 16px !important; }
 
-.faq-section h2 { font-size: 32px; color: var(--navy); margin-bottom: 28px; }
+.faq-section h2 { font-size: 32px; color: var(--text-dark); margin-bottom: 28px; }
 .faq-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
 .faq-item { padding: 24px 28px; }
 .faq-item h4 { font-size: 16px; font-family: 'Inter', sans-serif; font-weight: 700; color: var(--text-dark); margin-bottom: 8px; }
@@ -83,3 +83,10 @@
   .faq-grid { grid-template-columns: 1fr; }
   .addon-card { flex-wrap: wrap; }
 }
+
+/* Dark mode overrides for Products */
+[data-theme="dark"] .products-hero {
+  background: linear-gradient(160deg, #181534 0%, #201438 100%);
+  border-bottom: 1px solid var(--border);
+}
+
