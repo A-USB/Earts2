@@ -2,13 +2,15 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Grid2x2, Users, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { EartsLogo } from '../components/EartsLogo';
+import ThemeToggle from '../components/ThemeToggle';
 import './Auth.css';
 
-const ROLES = ['Painter','Illustrator','Sculptor','Digital Artist','Photographer','Printmaker','Ceramicist','Mixed Media','Other'];
+const ROLES = ['Painter', 'Illustrator', 'Sculptor', 'Digital Artist', 'Photographer', 'Printmaker', 'Ceramicist', 'Mixed Media', 'Other'];
 
 export default function Signup() {
   const [accountType, setAccountType] = useState('artist'); // 'artist' | 'collector'
-  const [form, setForm] = useState({ firstName:'', lastName:'', email:'', password:'', role:'Sculptor' });
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', role: 'Sculptor' });
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,10 +32,17 @@ export default function Signup() {
 
   return (
     <div className="auth-page">
-      <div className="auth-card auth-card-wide">
+      <div className="auth-topbar">
+        <Link to="/" className="auth-logo-link" title="Earts Home">
+          <EartsLogo size={32} />
+        </Link>
+        <ThemeToggle />
+      </div>
+
+      <div className="auth-card">
         <div className="auth-left">
           <div className="auth-left-inner">
-            <span className="eyebrow" style={{color:'#FF6B9D'}}>Join today — it's free</span>
+            <span className="eyebrow">Join today — it's free</span>
             <h2>Your creative journey starts here</h2>
             <p>Create your profile, upload your first artwork, and connect with a global community of creators.</p>
             <div className="auth-perks">
@@ -110,7 +119,6 @@ export default function Signup() {
                 </select>
               </div>
             )}
-            <Link to="/login" className="forgot-link">Already have an account? Sign in</Link>
             <button type="submit" className="btn-primary auth-submit" disabled={loading}>
               {loading ? 'Creating account...' : 'Create your account'}
             </button>
@@ -123,3 +131,4 @@ export default function Signup() {
     </div>
   );
 }
+
