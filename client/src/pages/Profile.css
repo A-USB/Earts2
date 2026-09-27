@@ -812,3 +812,59 @@
   padding: 40px 16px;
 }
 
+/* Dark Mode Overrides for Profile */
+[data-theme="dark"] .profile-hero-card {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="dark"] .profile-fullname {
+  color: #F4F3FF;
+}
+
+[data-theme="dark"] .stat-strip-val {
+  color: #F4F3FF;
+}
+
+[data-theme="dark"] .profile-tag-pill {
+  background: rgba(124, 110, 250, 0.15);
+  border-color: rgba(124, 110, 250, 0.3);
+  color: #A5A3C7;
+}
+
+[data-theme="dark"] .collector-pill {
+  background: rgba(217, 119, 6, 0.2);
+  color: #FBBF24;
+}
+
+[data-theme="dark"] .unpin-btn {
+  background: rgba(22, 22, 44, 0.9);
+  color: #F4F3FF;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .unpin-btn:hover {
+  background: #1C1938;
+}
+
+[data-theme="dark"] .add-artwork-card {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .add-artwork-card:hover {
+  background: rgba(124, 110, 250, 0.08);
+  border-color: var(--primary);
+}
+
+[data-theme="dark"] .empty-collection {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .artwork-section-header h3,
+[data-theme="dark"] .collection-header h4,
+[data-theme="dark"] .empty-collection h4 {
+  color: #F4F3FF;
+}
+
+
