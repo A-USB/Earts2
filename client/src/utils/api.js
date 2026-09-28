@@ -1,4 +1,4 @@
-const BASE = 'http://localhost:5000/api';
+const BASE = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : '/api');
 
 const headers = () => {
   const token = localStorage.getItem('earts_token');
