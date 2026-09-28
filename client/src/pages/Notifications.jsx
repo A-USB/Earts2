@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Heart, MessageCircle, ShoppingBag, UserPlus, Sparkles,
   CheckCheck, Trash2, Tag, ArrowRight, Bell
 } from 'lucide-react';
+import { api } from '../utils/api';
 import Avatar from '../components/Avatar';
 import './Notifications.css';
 
@@ -90,20 +91,33 @@ export default function Notifications() {
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
   const [activeTab, setActiveTab] = useState('all');
 
+  useEffect(() => {
+    api.get('/notifications')
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setNotifications(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const markAllAsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    api.patch('/notifications/read-all').catch(() => {});
   };
 
   const markAsRead = (id) => {
     setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
+    api.patch(`/notifications/${id}/read`).catch(() => {});
   };
 
   const deleteNotification = (e, id) => {
     e.stopPropagation();
     e.preventDefault();
     setNotifications(prev => prev.filter(n => n.id !== id));
+    api.delete(`/notifications/${id}`).catch(() => {});
   };
 
   const filtered = notifications.filter(n => {
