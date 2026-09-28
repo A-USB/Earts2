@@ -84,13 +84,6 @@ export default function Navbar() {
                   {s.label}
                 </button>
               ))}
-              <Link
-                to="/marketplace"
-                className={`nav-link ${location.pathname.startsWith('/marketplace') || location.pathname.startsWith('/explore') ? 'active' : ''}`}
-                onClick={() => setMenuOpen(false)}
-              >
-                Marketplace & Gallery
-              </Link>
             </>
           )}
           {user && (
