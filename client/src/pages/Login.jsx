@@ -35,7 +35,7 @@ export default function Login() {
 
       <div className="auth-card">
         <div className="auth-left">
-          <div className="auth-left-inner">
+          <div className="auth-left-content">
             <span className="eyebrow">Artist Community</span>
             <h2>Where artists grow, share & thrive together</h2>
             <p>Join thousands of artists sharing, growing, and turning their passion into livelihood.</p>
@@ -44,6 +44,8 @@ export default function Login() {
                 <li key={f}><CheckCircle size={16} /> {f}</li>
               ))}
             </ul>
+          </div>
+          <div className="auth-left-footer">
             <div className="auth-avatars">
               {['AM', 'MC', 'BJ', 'US'].map((a, i) => (
                 <div key={i} className="mini-avatar" style={{

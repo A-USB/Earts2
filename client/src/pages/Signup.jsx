@@ -41,7 +41,7 @@ export default function Signup() {
 
       <div className="auth-card">
         <div className="auth-left">
-          <div className="auth-left-inner">
+          <div className="auth-left-content">
             <span className="eyebrow">Join today — it's free</span>
             <h2>Your creative journey starts here</h2>
             <p>Create your profile, upload your first artwork, and connect with a global community of creators.</p>
@@ -59,6 +59,17 @@ export default function Signup() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+          <div className="auth-left-footer">
+            <div className="auth-avatars">
+              {['AM', 'MC', 'BJ', 'US'].map((a, i) => (
+                <div key={i} className="mini-avatar" style={{
+                  background: `hsl(${i * 60 + 200}, 70%, 55%)`,
+                  marginLeft: i > 0 ? '-10px' : 0
+                }}>{a}</div>
+              ))}
+              <span>+12,000 creators joined</span>
             </div>
           </div>
         </div>
@@ -91,11 +102,11 @@ export default function Signup() {
             <div className="form-row">
               <div className="form-group">
                 <label>First Name</label>
-                <input placeholder="eg: John" value={form.firstName} onChange={set('firstName')} required />
+                <input placeholder="John" value={form.firstName} onChange={set('firstName')} required />
               </div>
               <div className="form-group">
                 <label>Last Name</label>
-                <input placeholder="eg: Doe" value={form.lastName} onChange={set('lastName')} required />
+                <input placeholder="Doe" value={form.lastName} onChange={set('lastName')} required />
               </div>
             </div>
             <div className="form-group">
@@ -113,7 +124,7 @@ export default function Signup() {
             </div>
             {accountType === 'artist' && (
               <div className="form-group">
-                <label>I am a ......</label>
+                <label>Creative Specialty</label>
                 <select value={form.role} onChange={set('role')}>
                   {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
