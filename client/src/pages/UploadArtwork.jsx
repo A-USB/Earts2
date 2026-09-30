@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Upload, ImagePlus, X, Users, Sparkles, Check,
-  AlertCircle, FileImage, ShieldCheck, Eye
+  AlertCircle, FileImage, ShieldCheck, Eye, Palette, Pipette
 } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
@@ -19,10 +19,44 @@ const COLLAB_ROLES = [
   '3D Sculptor', 'Art Director', 'Concept Artist', 'Visual Designer'
 ];
 
-const COLORS = [
-  '#6025EA', '#FF6B9D', '#58D68D', '#00BCD4', '#9B59B6',
-  '#E74C3C', '#F39C12', '#1ABC9C', '#C0A882', '#2D3436', '#4F46E5', '#7D7D7D'
-];
+const COLOR_CATEGORIES = {
+  vibrant: {
+    label: 'Vibrant & Spectrum',
+    colors: [
+      '#6025EA', '#7C3AED', '#8B5CF6', '#A855F7', '#C026D3',
+      '#EC4899', '#FF6B9D', '#F43F5E', '#EF4444', '#FF6B35',
+      '#F97316', '#F59E0B', '#F1C40F', '#84CC16', '#10B981',
+      '#1ABC9C', '#00BCD4', '#0EA5E9', '#3B82F6', '#4F46E5',
+      '#6366F1', '#D946EF', '#FB7185', '#E11D48'
+    ]
+  },
+  pastels: {
+    label: 'Pastels & Neutrals',
+    colors: [
+      '#FEE2E2', '#FFEDD5', '#FEF08A', '#ECFCCB', '#D1FAE5',
+      '#CFFAFE', '#E0E7FF', '#EDE9FE', '#FAE8FF', '#FFE4E6',
+      '#C0A882', '#A39171', '#94A3B8', '#64748B', '#475569',
+      '#334155', '#1E293B', '#0F172A'
+    ]
+  },
+  gradients: {
+    label: 'Gradients',
+    colors: [
+      'linear-gradient(135deg, #6025EA 0%, #FF6B9D 100%)',
+      'linear-gradient(135deg, #FF6B35 0%, #F59E0B 100%)',
+      'linear-gradient(135deg, #00BCD4 0%, #3B82F6 100%)',
+      'linear-gradient(135deg, #10B981 0%, #06B6D4 100%)',
+      'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
+      'linear-gradient(135deg, #F43F5E 0%, #F97316 100%)',
+      'linear-gradient(135deg, #5B4BF5 0%, #00BCD4 100%)',
+      'linear-gradient(135deg, #111827 0%, #374151 100%)',
+      'linear-gradient(135deg, #F59E0B 0%, #EF4444 100%)',
+      'linear-gradient(135deg, #06B6D4 0%, #10B981 100%)',
+      'linear-gradient(135deg, #6366F1 0%, #A855F7 100%)',
+      'linear-gradient(135deg, #FB7185 0%, #818CF8 100%)'
+    ]
+  }
+};
 
 export default function UploadArtwork() {
   const { user } = useAuth();
@@ -60,6 +94,9 @@ export default function UploadArtwork() {
   const [collaborators, setCollaborators] = useState([]);
   const [selectedRole, setSelectedRole] = useState('Co-Creator');
   const [showCollabDropdown, setShowCollabDropdown] = useState(false);
+
+  const [colorTab, setColorTab] = useState('vibrant');
+  const customColorRef = useRef(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -302,24 +339,80 @@ export default function UploadArtwork() {
                 </div>
               )}
 
-              {/* Accent Color Picker for Card Background */}
+              {/* Multi-Category Accent Color Palette & Custom Picker */}
               <div className="color-picker-section">
                 <div className="color-picker-header">
-                  <label>Background Accent</label>
-                  <span className="color-hex">{form.color}</span>
+                  <div className="color-picker-title-wrap">
+                    <label>Background Accent</label>
+                    <span className="color-preview-badge" style={{ background: form.color }}></span>
+                  </div>
+                  <span className="color-hex">{form.color.startsWith('linear') ? 'Gradient' : form.color}</span>
                 </div>
+
+                {/* Palette Category Switcher Tabs */}
+                <div className="color-tabs">
+                  {Object.entries(COLOR_CATEGORIES).map(([key, cat]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      className={`color-tab-btn ${colorTab === key ? 'active' : ''}`}
+                      onClick={() => setColorTab(key)}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Active Category Swatches */}
                 <div className="color-swatches-grid">
-                  {COLORS.map((c) => (
+                  {COLOR_CATEGORIES[colorTab].colors.map((c) => (
                     <button
                       key={c}
                       type="button"
                       className={`swatch-btn ${form.color === c ? 'active' : ''}`}
                       style={{ background: c }}
+                      title={c}
                       onClick={() => setForm((p) => ({ ...p, color: c }))}
                     >
                       {form.color === c && <Check size={13} color="#fff" />}
                     </button>
                   ))}
+                </div>
+
+                {/* Custom Spectrum Picker Bar */}
+                <div className="custom-color-row">
+                  <div className="custom-color-input-wrap">
+                    <button
+                      type="button"
+                      className="spectrum-picker-btn"
+                      onClick={() => customColorRef.current?.click()}
+                      title="Open full spectrum color picker"
+                    >
+                      <Palette size={15} />
+                      <span>Custom Color Wheel</span>
+                      <input
+                        ref={customColorRef}
+                        type="color"
+                        value={form.color.startsWith('#') ? form.color : '#6025EA'}
+                        onChange={(e) => setForm((p) => ({ ...p, color: e.target.value }))}
+                        className="hidden-color-native-input"
+                      />
+                    </button>
+                  </div>
+                  <div className="hex-input-wrap">
+                    <span className="hex-prefix">#</span>
+                    <input
+                      type="text"
+                      maxLength={7}
+                      placeholder="HEX Code"
+                      value={form.color.startsWith('#') ? form.color.replace('#', '') : ''}
+                      onChange={(e) => {
+                        const val = e.target.value.replace('#', '');
+                        setForm((p) => ({ ...p, color: `#${val}` }));
+                      }}
+                      className="hex-text-input"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
