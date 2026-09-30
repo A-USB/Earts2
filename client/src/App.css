@@ -19,8 +19,11 @@
 }
 .app-main-col main {
   flex: 1;
-  padding: 24px 28px 0;
+  padding: 48px 40px 48px;
+}
+@media (max-width: 900px) {
+  .app-main-col main { padding: 36px 24px 36px; }
 }
 @media (max-width: 640px) {
-  .app-main-col main { padding: 16px 16px 0; }
+  .app-main-col main { padding: 24px 16px 24px; }
 }
