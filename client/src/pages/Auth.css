@@ -546,3 +546,189 @@
   border-color: rgba(239, 68, 68, 0.3);
   color: #F87171;
 }
+
+/* Google Auth Modal Styles */
+.google-demo-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.google-demo-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  max-width: 440px;
+  width: 100%;
+  overflow: hidden;
+  animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.google-demo-header {
+  padding: 24px 24px 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.google-demo-header h4 {
+  font-size: 17px;
+  color: var(--text-dark);
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.google-demo-header p {
+  font-size: 13px;
+  color: var(--text-mid);
+}
+
+.google-demo-list {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.google-account-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: all 0.18s ease;
+}
+
+.google-account-item:hover {
+  background: var(--border-subtle);
+  border-color: var(--border);
+  transform: translateX(2px);
+}
+
+.google-acc-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.google-acc-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.google-acc-info strong {
+  font-size: 13.5px;
+  color: var(--text-dark);
+}
+
+.google-acc-info span {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.google-demo-footer {
+  padding: 14px 20px;
+  background: var(--border-subtle);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.google-demo-footer span {
+  font-size: 11.5px;
+  color: var(--text-mid);
+  line-height: 1.4;
+}
+
+.google-demo-footer code {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.google-cancel-btn {
+  background: none;
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-mid);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.google-cancel-btn:hover {
+  background: var(--bg-card);
+  color: var(--text-dark);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+[data-theme="dark"] .google-demo-modal {
+  background: #141427;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="dark"] .google-demo-header {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .google-account-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .google-demo-footer {
+  background: #101022;
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .google-demo-footer code {
+  background: rgba(255, 255, 255, 0.08);
+  color: #DDD9FC;
+}
+
+[data-theme="dark"] .google-cancel-btn {
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #A5A3C7;
+}
+
+[data-theme="dark"] .google-cancel-btn:hover {
+  background: #1C1C35;
+  color: #FFFFFF;
+}
