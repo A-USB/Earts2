@@ -108,6 +108,96 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// Helper function to decode base64url Google JWT payload
+function decodeGoogleToken(credential) {
+  try {
+    const base64Url = credential.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+}
+
+app.post('/api/auth/google', async (req, res) => {
+  try {
+    const { credential, email: bodyEmail, firstName: bodyFirst, lastName: bodyLast, avatar: bodyAvatar, googleId: bodyGoogleId, accountType, role } = req.body;
+
+    let email = bodyEmail;
+    let firstName = bodyFirst;
+    let lastName = bodyLast;
+    let avatar = bodyAvatar;
+    let googleId = bodyGoogleId;
+
+    if (credential) {
+      const payload = decodeGoogleToken(credential);
+      if (payload && payload.email) {
+        email = payload.email;
+        firstName = payload.given_name || payload.name?.split(' ')[0] || 'Artist';
+        lastName = payload.family_name || payload.name?.split(' ').slice(1).join(' ') || '';
+        avatar = payload.picture || null;
+        googleId = payload.sub || null;
+      }
+    }
+
+    if (!email) {
+      return res.status(400).json({ error: 'Valid Google account info is required' });
+    }
+
+    // Check if user already exists
+    let user = await User.findOne({ email: email.toLowerCase() });
+
+    if (user) {
+      // If user exists, link Google ID and update avatar if empty
+      let updated = false;
+      if (!user.googleId && googleId) {
+        user.googleId = googleId;
+        updated = true;
+      }
+      if (!user.avatar && avatar) {
+        user.avatar = avatar;
+        updated = true;
+      }
+      if (updated) await user.save();
+    } else {
+      // Create new user via Google
+      const cleanFirst = (firstName || 'creator').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const cleanLast = (lastName || 'artist').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const baseUser = `${cleanFirst}_${cleanLast}` || 'creator';
+      let username = `${baseUser}_${Date.now().toString().slice(-4)}`;
+
+      // Ensure username uniqueness
+      const existingUser = await User.findOne({ username });
+      if (existingUser) {
+        username = `${baseUser}_${Math.floor(1000 + Math.random() * 9000)}`;
+      }
+
+      user = await User.create({
+        username,
+        firstName: firstName || 'Creator',
+        lastName: lastName || '',
+        email: email.toLowerCase(),
+        avatar: avatar || null,
+        googleId: googleId || null,
+        role: role || 'Artist',
+        accountType: accountType === 'collector' ? 'collector' : 'artist'
+      });
+    }
+
+    const token = jwt.sign({ id: user.id }, SECRET, { expiresIn: '7d' });
+    res.json({ token, user: user.toJSON() });
+  } catch (err) {
+    console.error('Google Auth Error:', err);
+    res.status(500).json({ error: err.message || 'Google authentication failed' });
+  }
+});
+
 app.get('/api/auth/me', auth, async (req, res) => {
   try {
     const user = await User.findById(req.userId);
