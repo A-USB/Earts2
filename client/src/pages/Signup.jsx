@@ -4,6 +4,7 @@ import { Eye, EyeOff, Grid2x2, Users, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { EartsLogo } from '../components/EartsLogo';
 import ThemeToggle from '../components/ThemeToggle';
+import GoogleAuthButton from '../components/GoogleAuthButton';
 import './Auth.css';
 
 const ROLES = ['Painter', 'Illustrator', 'Sculptor', 'Digital Artist', 'Photographer', 'Printmaker', 'Ceramicist', 'Mixed Media', 'Other'];
@@ -76,6 +77,10 @@ export default function Signup() {
         <div className="auth-right">
           <h2>Create account</h2>
           <p className="auth-subtitle">Join our art community</p>
+
+          <GoogleAuthButton accountType={accountType} role={form.role} onError={setError} />
+
+          <div className="auth-divider"><span>or register with email</span></div>
 
           {error && <div className="auth-error">{error}</div>}
 
