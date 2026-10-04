@@ -5,16 +5,18 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
-const { connectDB } = require('./db');
-const User = require('./models/User');
-const Artwork = require('./models/Artwork');
-const Comment = require('./models/Comment');
-const Order = require('./models/Order');
-const Follow = require('./models/Follow');
-const Like = require('./models/Like');
-const Collection = require('./models/Collection');
-const Notification = require('./models/Notification');
-const Product = require('./models/Product');
+const {
+  connectDB,
+  User,
+  Artwork,
+  Comment,
+  Order,
+  Follow,
+  Like,
+  Collection,
+  Notification,
+  Product
+} = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
