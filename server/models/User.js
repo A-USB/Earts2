@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema({
   accountType: { type: String, enum: ['artist', 'collector'], default: 'artist' },
   bio: { type: String, default: '' },
   location: { type: String, default: '' },
+  workplace: { type: String, default: '' },
   avatar: { type: String, default: null },
   tags: [{ type: String }],
   tools: [{ type: String }],
