@@ -57,7 +57,7 @@ const auth = (req, res, next) => {
 // ================= AUTH ROUTES =================
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { firstName, lastName, email, password, role, accountType } = req.body;
+    const { firstName, lastName, email, password, role, accountType, workplace, location, tools, bio } = req.body;
     if (!email || !password || !firstName || !lastName) {
       return res.status(400).json({ error: 'All fields are required' });
     }
@@ -71,14 +71,22 @@ app.post('/api/auth/register', async (req, res) => {
     const baseUser = `${firstName.toLowerCase()}_${lastName.toLowerCase()}`.replace(/[^a-z0-9_]/g, '');
     const username = `${baseUser}_${Date.now().toString().slice(-4)}`;
 
+    const parsedTools = Array.isArray(tools) 
+      ? tools 
+      : (typeof tools === 'string' && tools.trim() ? tools.split(',').map(t => t.trim()).filter(Boolean) : []);
+
     const user = await User.create({
       username,
       firstName,
       lastName,
       email: email.toLowerCase(),
       password: hashedPassword,
-      role: role || 'Artist',
-      accountType: accountType === 'collector' ? 'collector' : 'artist'
+      role: role || (accountType === 'collector' ? 'Collector' : 'Artist'),
+      accountType: accountType === 'collector' ? 'collector' : 'artist',
+      workplace: workplace || '',
+      location: location || '',
+      tools: parsedTools,
+      bio: bio || ''
     });
 
     const token = jwt.sign({ id: user.id }, SECRET, { expiresIn: '7d' });
