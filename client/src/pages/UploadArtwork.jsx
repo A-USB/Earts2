@@ -2,7 +2,8 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Upload, ImagePlus, X, Users, Sparkles, Check,
-  AlertCircle, FileImage, ShieldCheck, Eye, Palette, Pipette
+  AlertCircle, FileImage, ShieldCheck, Eye, Palette, Pipette,
+  Copy, CheckCheck, Sliders
 } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
@@ -21,7 +22,7 @@ const COLLAB_ROLES = [
 
 const COLOR_CATEGORIES = {
   vibrant: {
-    label: 'Vibrant & Spectrum',
+    label: 'Vibrant & Bold',
     colors: [
       '#6025EA', '#7C3AED', '#8B5CF6', '#A855F7', '#C026D3',
       '#EC4899', '#FF6B9D', '#F43F5E', '#EF4444', '#FF6B35',
@@ -33,14 +34,14 @@ const COLOR_CATEGORIES = {
   pastels: {
     label: 'Pastels & Neutrals',
     colors: [
-      '#FEE2E2', '#FFEDD5', '#FEF08A', '#ECFCCB', '#D1FAE5',
-      '#CFFAFE', '#E0E7FF', '#EDE9FE', '#FAE8FF', '#FFE4E6',
-      '#C0A882', '#A39171', '#94A3B8', '#64748B', '#475569',
-      '#334155', '#1E293B', '#0F172A'
+      '#FFFFFF', '#F8FAFC', '#F1F5F9', '#E2E8F0', '#94A3B8', '#64748B',
+      '#475569', '#334155', '#1E293B', '#0F172A', '#0B0B16', '#16162C',
+      '#FEE2E2', '#FFEDD5', '#FEF08A', '#ECFCCB', '#D1FAE5', '#CFFAFE',
+      '#E0E7FF', '#EDE9FE', '#FAE8FF', '#FFE4E6', '#C0A882', '#A39171'
     ]
   },
   gradients: {
-    label: 'Gradients',
+    label: 'Gradients & Glow',
     colors: [
       'linear-gradient(135deg, #6025EA 0%, #FF6B9D 100%)',
       'linear-gradient(135deg, #FF6B35 0%, #F59E0B 100%)',
@@ -57,6 +58,28 @@ const COLOR_CATEGORIES = {
     ]
   }
 };
+
+const QUICK_ACCENTS = [
+  { name: 'Cosmic Violet', value: '#6025EA' },
+  { name: 'Electric Pink', value: '#FF6B9D' },
+  { name: 'Neon Flame', value: '#FF6B35' },
+  { name: 'Cyber Cyan', value: '#00BCD4' },
+  { name: 'Emerald', value: '#10B981' },
+  { name: 'Deep Onyx', value: '#0B0B16' },
+  { name: 'Studio Slate', value: '#1E293B' },
+  { name: 'Pure White', value: '#FFFFFF' },
+];
+
+function hslToHex(h, s, l) {
+  l /= 100;
+  const a = (s * Math.min(l, 1 - l)) / 100;
+  const f = (n) => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`.toUpperCase();
+}
 
 export default function UploadArtwork() {
   const { user } = useAuth();
@@ -96,7 +119,40 @@ export default function UploadArtwork() {
   const [showCollabDropdown, setShowCollabDropdown] = useState(false);
 
   const [colorTab, setColorTab] = useState('vibrant');
+  const [spectrumHue, setSpectrumHue] = useState(260);
+  const [copiedHex, setCopiedHex] = useState(false);
   const customColorRef = useRef(null);
+
+  const hasEyeDropper = typeof window !== 'undefined' && 'EyeDropper' in window;
+
+  const handleEyeDropper = async () => {
+    if (hasEyeDropper) {
+      try {
+        const eyeDropper = new window.EyeDropper();
+        const result = await eyeDropper.open();
+        if (result?.sRGBHex) {
+          setForm((p) => ({ ...p, color: result.sRGBHex.toUpperCase() }));
+        }
+      } catch {
+        // User cancelled picker
+      }
+    }
+  };
+
+  const handleCopyHex = () => {
+    if (form.color) {
+      navigator.clipboard.writeText(form.color);
+      setCopiedHex(true);
+      setTimeout(() => setCopiedHex(false), 1600);
+    }
+  };
+
+  const handleHueSliderChange = (e) => {
+    const val = Number(e.target.value);
+    setSpectrumHue(val);
+    const newHex = hslToHex(val, 85, 55);
+    setForm((p) => ({ ...p, color: newHex }));
+  };
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -297,7 +353,7 @@ export default function UploadArtwork() {
                 <div className="preview-container">
                   <div
                     className="preview-viewport"
-                    style={{ backgroundColor: form.color }}
+                    style={{ background: form.color }}
                   >
                     <img
                       src={imageData}
@@ -339,14 +395,63 @@ export default function UploadArtwork() {
                 </div>
               )}
 
-              {/* Multi-Category Accent Color Palette & Custom Picker */}
+              {/* Multi-Category Accent Color Palette & Interactive Spectrum Studio */}
               <div className="color-picker-section">
                 <div className="color-picker-header">
                   <div className="color-picker-title-wrap">
-                    <label>Background Accent</label>
-                    <span className="color-preview-badge" style={{ background: form.color }}></span>
+                    <div className="color-picker-icon-badge">
+                      <Palette size={16} />
+                    </div>
+                    <div>
+                      <label className="color-section-label">Backdrop Accent & Spectrum</label>
+                      <span className="color-section-desc">Frames your art with ambient backlighting</span>
+                    </div>
                   </div>
-                  <span className="color-hex">{form.color.startsWith('linear') ? 'Gradient' : form.color}</span>
+
+                  {/* Active Color Pill Badge with 1-click copy */}
+                  <button
+                    type="button"
+                    className="color-status-pill"
+                    title="Click to copy color code"
+                    onClick={handleCopyHex}
+                  >
+                    <span className="color-status-preview" style={{ background: form.color }} />
+                    <span className="color-status-text">
+                      {form.color.startsWith('linear') ? 'Gradient Aura' : form.color.toUpperCase()}
+                    </span>
+                    <span className="color-copy-btn">
+                      {copiedHex ? <CheckCheck size={12} className="copy-success-icon" /> : <Copy size={12} />}
+                    </span>
+                  </button>
+                </div>
+
+                {/* Interactive Continuous Rainbow Hue Spectrum Slider */}
+                <div className="spectrum-slider-card">
+                  <div className="spectrum-slider-header">
+                    <span className="spectrum-slider-title">
+                      <Sliders size={13} /> Continuous Hue Spectrum
+                    </span>
+                    <span className="spectrum-slider-degree">{spectrumHue}° Hue</span>
+                  </div>
+                  <div className="spectrum-track-wrap">
+                    <input
+                      type="range"
+                      min="0"
+                      max="360"
+                      value={spectrumHue}
+                      onChange={handleHueSliderChange}
+                      className="spectrum-range-slider"
+                      aria-label="Spectrum Hue Slider"
+                    />
+                    <div
+                      className="spectrum-active-glow"
+                      style={{
+                        background: form.color.startsWith('linear')
+                          ? 'var(--primary)'
+                          : form.color
+                      }}
+                    />
+                  </div>
                 </div>
 
                 {/* Palette Category Switcher Tabs */}
@@ -358,7 +463,8 @@ export default function UploadArtwork() {
                       className={`color-tab-btn ${colorTab === key ? 'active' : ''}`}
                       onClick={() => setColorTab(key)}
                     >
-                      {cat.label}
+                      <span>{cat.label}</span>
+                      <span className="color-tab-count">{cat.colors.length}</span>
                     </button>
                   ))}
                 </div>
@@ -369,49 +475,86 @@ export default function UploadArtwork() {
                     <button
                       key={c}
                       type="button"
-                      className={`swatch-btn ${form.color === c ? 'active' : ''}`}
+                      className={`swatch-btn ${form.color === c ? 'active' : ''} ${c.startsWith('linear') ? 'is-gradient' : ''}`}
                       style={{ background: c }}
                       title={c}
                       onClick={() => setForm((p) => ({ ...p, color: c }))}
                     >
-                      {form.color === c && <Check size={13} color="#fff" />}
+                      {form.color === c && <Check size={13} className="swatch-check-icon" />}
                     </button>
                   ))}
                 </div>
 
-                {/* Custom Spectrum Picker Bar */}
-                <div className="custom-color-row">
-                  <div className="custom-color-input-wrap">
+                {/* Quick Theme Accents Strip */}
+                <div className="quick-accents-strip">
+                  <span className="quick-accents-label">Quick Presets:</span>
+                  <div className="quick-accents-list">
+                    {QUICK_ACCENTS.map((item) => (
+                      <button
+                        key={item.value}
+                        type="button"
+                        className={`quick-accent-chip ${form.color.toLowerCase() === item.value.toLowerCase() ? 'active' : ''}`}
+                        onClick={() => setForm((p) => ({ ...p, color: item.value }))}
+                        title={item.name}
+                      >
+                        <span className="quick-accent-dot" style={{ background: item.value }} />
+                        <span>{item.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Custom Color Wheel, Eyedropper & Hex Studio */}
+                <div className="custom-color-studio">
+                  <div className="custom-actions-left">
+                    {hasEyeDropper && (
+                      <button
+                        type="button"
+                        className="eyedropper-tool-btn"
+                        onClick={handleEyeDropper}
+                        title="Sample color directly from uploaded image or screen"
+                      >
+                        <Pipette size={14} />
+                        <span>Eyedropper</span>
+                      </button>
+                    )}
+
                     <button
                       type="button"
                       className="spectrum-picker-btn"
                       onClick={() => customColorRef.current?.click()}
-                      title="Open full spectrum color picker"
+                      title="Open full spectrum color wheel"
                     >
-                      <Palette size={15} />
-                      <span>Custom Color Wheel</span>
+                      <Palette size={14} />
+                      <span>Color Wheel</span>
                       <input
                         ref={customColorRef}
                         type="color"
-                        value={form.color.startsWith('#') ? form.color : '#6025EA'}
-                        onChange={(e) => setForm((p) => ({ ...p, color: e.target.value }))}
+                        value={form.color.startsWith('#') && form.color.length === 7 ? form.color : '#6025EA'}
+                        onChange={(e) => setForm((p) => ({ ...p, color: e.target.value.toUpperCase() }))}
                         className="hidden-color-native-input"
                       />
                     </button>
                   </div>
-                  <div className="hex-input-wrap">
-                    <span className="hex-prefix">#</span>
-                    <input
-                      type="text"
-                      maxLength={7}
-                      placeholder="HEX Code"
-                      value={form.color.startsWith('#') ? form.color.replace('#', '') : ''}
-                      onChange={(e) => {
-                        const val = e.target.value.replace('#', '');
-                        setForm((p) => ({ ...p, color: `#${val}` }));
-                      }}
-                      className="hex-text-input"
-                    />
+
+                  <div className="hex-input-studio">
+                    <div className="hex-input-box">
+                      <span className="hex-prefix">#</span>
+                      <input
+                        type="text"
+                        maxLength={6}
+                        placeholder="RRGGBB"
+                        value={form.color.startsWith('#') ? form.color.replace('#', '') : ''}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9a-fA-F]/g, '').slice(0, 6);
+                          setForm((p) => ({ ...p, color: `#${val}` }));
+                        }}
+                        className="hex-text-input"
+                      />
+                      {form.color.startsWith('#') && form.color.length === 7 && (
+                        <span className="hex-valid-dot" style={{ background: form.color }} />
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
