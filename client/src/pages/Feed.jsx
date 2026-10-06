@@ -5,6 +5,7 @@ import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
 import CreatePostModal from '../components/CreatePostModal';
+import PostCommentsModal from '../components/PostCommentsModal';
 import './Feed.css';
 
 function timeAgo(ts) {
@@ -18,7 +19,7 @@ function timeAgo(ts) {
   return min >= 1 ? `${min}m ago` : 'just now';
 }
 
-function Post({ post, isFollowing, onToggleFollow, liked, onToggleLike, isSelf }) {
+function Post({ post, isFollowing, onToggleFollow, liked, onToggleLike, isSelf, onOpenComments }) {
   const formatLikes = n => n >= 1000 ? `${(n/1000).toFixed(1)}k` : n;
 
   return (
@@ -51,9 +52,15 @@ function Post({ post, isFollowing, onToggleFollow, liked, onToggleLike, isSelf }
         <button className={`post-icon-btn ${liked ? 'liked' : ''}`} onClick={() => onToggleLike(post)}>
           <Heart size={22} fill={liked ? 'currentColor' : 'none'} />
         </button>
-        <Link to={`/artwork/${post.id}`} className="post-icon-btn">
+        <button
+          type="button"
+          className="post-icon-btn"
+          onClick={() => onOpenComments(post)}
+          title="View comments"
+          aria-label="View comments"
+        >
           <MessageCircle size={22} />
-        </Link>
+        </button>
         {post.status === 'for_sale' && (
           <Link to={`/artwork/${post.id}`} className="post-icon-btn post-marketplace-btn" title="View in Marketplace">
             <ShoppingBag size={22} />
@@ -65,7 +72,13 @@ function Post({ post, isFollowing, onToggleFollow, liked, onToggleLike, isSelf }
         <strong>{formatLikes(post.likes)} likes</strong>
         <p><Link to={`/profile/${post.artistUsername || ''}`} className="post-caption-author">{post.artistName}</Link> {post.title}</p>
         {post.description && <p className="post-caption">{post.description}</p>}
-        <Link to={`/artwork/${post.id}`} className="post-view-comments">View details &amp; comments</Link>
+        <button
+          type="button"
+          className="post-view-comments"
+          onClick={() => onOpenComments(post)}
+        >
+          View all comments
+        </button>
       </div>
     </article>
   );
@@ -79,6 +92,7 @@ export default function Feed() {
   const [followingIds, setFollowingIds] = useState([]);
   const [likedIds, setLikedIds] = useState([]);
   const [showComposer, setShowComposer] = useState(false);
+  const [commentsPostId, setCommentsPostId] = useState(null);
 
   const loadFeed = () => {
     setLoading(true);
@@ -114,12 +128,31 @@ export default function Feed() {
 
   const handleToggleLike = async (post) => {
     if (!user) { navigate('/login'); return; }
+
+    // Optimistic: flip like state + count instantly, reconcile with the server after
+    const wasLiked = likedIds.includes(post.id);
+    const prevLikes = posts.find(p => p.id === post.id)?.likes || post.likes || 0;
+    const nextLikes = wasLiked ? Math.max(0, prevLikes - 1) : prevLikes + 1;
+
+    setPosts(prev => prev.map(p => p.id === post.id ? { ...p, likes: nextLikes } : p));
+    setLikedIds(prev => wasLiked ? prev.filter(id => id !== post.id) : [...prev, post.id]);
+
     try {
       const data = await api.post(`/artworks/${post.id}/like`);
       setPosts(prev => prev.map(p => p.id === post.id ? { ...p, likes: data.likes } : p));
-      setLikedIds(prev => data.liked ? [...prev, post.id] : prev.filter(id => id !== post.id));
-    } catch {}
+      setLikedIds(prev => data.liked
+        ? (prev.includes(post.id) ? prev : [...prev, post.id])
+        : prev.filter(id => id !== post.id));
+    } catch {
+      // Roll back to the pre-click state if the request failed
+      setPosts(prev => prev.map(p => p.id === post.id ? { ...p, likes: prevLikes } : p));
+      setLikedIds(prev => wasLiked
+        ? (prev.includes(post.id) ? prev : [...prev, post.id])
+        : prev.filter(id => id !== post.id));
+    }
   };
+
+  const activePost = posts.find(p => p.id === commentsPostId) || null;
 
   return (
     <div className="feed-page page-wrapper">
@@ -152,6 +185,7 @@ export default function Feed() {
                 liked={likedIds.includes(post.id)}
                 onToggleLike={handleToggleLike}
                 isSelf={user && post.artistId === user.id}
+                onOpenComments={(p) => setCommentsPostId(p.id)}
               />
             ))}
           </div>
@@ -163,6 +197,15 @@ export default function Feed() {
           </div>
         )}
       </div>
+
+      {activePost && (
+        <PostCommentsModal
+          post={activePost}
+          liked={likedIds.includes(activePost.id)}
+          onToggleLike={handleToggleLike}
+          onClose={() => setCommentsPostId(null)}
+        />
+      )}
 
       {showComposer && (
         <CreatePostModal
