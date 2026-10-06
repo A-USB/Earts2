@@ -19,6 +19,12 @@
 }
 .composer-btn { padding: 8px 16px; font-size: 13px; flex-shrink: 0; }
 
+.posts-list,
+.feed-skeletons {
+  max-width: 460px;
+  margin-inline: auto;
+}
+
 .posts-list { display: flex; flex-direction: column; gap: 24px; }
 
 /* Post card */
@@ -106,6 +112,11 @@
   margin-top: 6px;
   font-size: 13px;
   color: var(--text-light);
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  cursor: pointer;
 }
 .post-view-comments:hover { color: var(--primary); }
 
