@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import Navbar from './components/Navbar'
@@ -25,6 +25,13 @@ const TOP_NAV_ROUTES = ['/', '/login', '/signup', '/logout'];
 // Auth screens render with no navbar/footer at all (standalone focused screen)
 const CHROMELESS_ROUTES = ['/login', '/signup', '/logout'];
 
+function HomeRoute() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (user) return <Navigate to="/feed" replace />;
+  return <Home />;
+}
+
 function Layout() {
   const location = useLocation();
   const { user } = useAuth();
@@ -33,7 +40,7 @@ function Layout() {
 
   const routes = (
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<HomeRoute />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/logout" element={<Logout />} />
