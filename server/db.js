@@ -1,11 +1,3 @@
-const dns = require('dns');
-// Set robust public DNS servers to resolve MongoDB Atlas SRV records properly
-try {
-  dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
-} catch {
-  // Ignore in restricted environments
-}
-
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
@@ -74,21 +66,37 @@ async function seedDatabase() {
   }
 }
 
+let reconnectTimer = null;
+let connectionAttemptInProgress = false;
+let reconnectDelayMs = 1000;
+const MAX_RECONNECT_DELAY_MS = 30000;
+
 async function connectDB() {
   // Always seed in-memory store so the app is instantly responsive
   await seedMemoryStore();
 
+  if (connectionAttemptInProgress || mongoose.connection.readyState === 1) return;
+  connectionAttemptInProgress = true;
   const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/earts';
   try {
-    console.log(`🔌 Connecting to MongoDB at: ${uri.split('@').pop() || uri}...`);
+    console.log('🔌 Connecting to MongoDB...');
     await mongoose.connect(uri, {
       serverSelectionTimeoutMS: 3000
     });
-    console.log(`🚀 Connected to MongoDB at: ${uri.split('@').pop()}`);
+    reconnectDelayMs = 1000;
+    console.log('🚀 Connected to MongoDB. Persistent database is active.');
     await seedDatabase();
   } catch (err) {
     console.warn(`⚠️ MongoDB connection note: ${err.message}`);
     console.log(`✨ Running in High-Speed Resilient Mode (Instant fallback active, demo login ready).`);
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null;
+      connectDB();
+    }, reconnectDelayMs);
+    reconnectTimer.unref?.();
+    reconnectDelayMs = Math.min(reconnectDelayMs * 2, MAX_RECONNECT_DELAY_MS);
+  } finally {
+    connectionAttemptInProgress = false;
   }
 }
 
