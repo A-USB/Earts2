@@ -42,7 +42,7 @@ export default function CreatePostModal({ onClose, onPosted }) {
 
   return (
     <div className="post-overlay" onClick={onClose}>
-      <div className="post-card" onClick={e => e.stopPropagation()}>
+      <div className="create-modal-card" onClick={e => e.stopPropagation()}>
         <button className="purchase-close" onClick={onClose}><X size={18} /></button>
         <h3><ImagePlus size={18} /> Share new artwork</h3>
 
