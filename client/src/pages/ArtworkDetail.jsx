@@ -39,24 +39,51 @@ export default function ArtworkDetail() {
 
   const handleLike = async () => {
     if (!user) { navigate('/login'); return; }
+
+    // Optimistic: update instantly, reconcile with the server after
+    const prevLikes = artwork.likes || 0;
+    const prevLiked = liked;
+    setArtwork(prev => ({ ...prev, likes: liked ? Math.max(0, prevLikes - 1) : prevLikes + 1 }));
+    setLiked(!liked);
+
     try {
       const data = await api.post(`/artworks/${id}/like`);
       setArtwork(prev => ({ ...prev, likes: data.likes }));
       setLiked(data.liked);
-    } catch {}
+    } catch {
+      // Roll back if the request failed
+      setArtwork(prev => ({ ...prev, likes: prevLikes }));
+      setLiked(prevLiked);
+    }
   };
 
   const handleComment = async (e) => {
     e.preventDefault();
     if (!user) { navigate('/login'); return; }
-    if (!commentText.trim()) return;
+    const value = commentText.trim();
+    if (!value || postingComment) return;
+
+    // Optimistic: append immediately, swap in the server copy after
+    const tempId = `temp_${Date.now()}`;
+    setComments(prev => [...prev, {
+      id: tempId,
+      userName: user.firstName ? `${user.firstName} ${user.lastName}` : (user.username || 'You'),
+      text: value,
+      createdAt: Date.now(),
+    }]);
+    setCommentText('');
     setPostingComment(true);
+
     try {
-      const c = await api.post(`/artworks/${id}/comments`, { text: commentText.trim() });
-      setComments(prev => [...prev, c]);
-      setCommentText('');
-    } catch {}
-    finally { setPostingComment(false); }
+      const c = await api.post(`/artworks/${id}/comments`, { text: value });
+      setComments(prev => prev.map(x => x.id === tempId ? c : x));
+    } catch {
+      // Roll back: remove the optimistic comment and restore the draft
+      setComments(prev => prev.filter(x => x.id !== tempId));
+      setCommentText(prev => prev || value);
+    } finally {
+      setPostingComment(false);
+    }
   };
 
   if (loading) return (
