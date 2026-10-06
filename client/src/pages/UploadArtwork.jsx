@@ -121,7 +121,6 @@ export default function UploadArtwork() {
   const [colorTab, setColorTab] = useState('vibrant');
   const [spectrumHue, setSpectrumHue] = useState(260);
   const [copiedHex, setCopiedHex] = useState(false);
-  const customColorRef = useRef(null);
 
   const hasEyeDropper = typeof window !== 'undefined' && 'EyeDropper' in window;
 
@@ -504,7 +503,7 @@ export default function UploadArtwork() {
                   </div>
                 </div>
 
-                {/* Custom Color Wheel, Eyedropper & Hex Studio */}
+                {/* Eyedropper & Hex Studio */}
                 <div className="custom-color-studio">
                   <div className="custom-actions-left">
                     {hasEyeDropper && (
@@ -518,23 +517,6 @@ export default function UploadArtwork() {
                         <span>Eyedropper</span>
                       </button>
                     )}
-
-                    <button
-                      type="button"
-                      className="spectrum-picker-btn"
-                      onClick={() => customColorRef.current?.click()}
-                      title="Open full spectrum color wheel"
-                    >
-                      <Palette size={14} />
-                      <span>Color Wheel</span>
-                      <input
-                        ref={customColorRef}
-                        type="color"
-                        value={form.color.startsWith('#') && form.color.length === 7 ? form.color : '#6025EA'}
-                        onChange={(e) => setForm((p) => ({ ...p, color: e.target.value.toUpperCase() }))}
-                        className="hidden-color-native-input"
-                      />
-                    </button>
                   </div>
 
                   <div className="hex-input-studio">
