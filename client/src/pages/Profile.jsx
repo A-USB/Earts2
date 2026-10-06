@@ -70,7 +70,7 @@ function NewCollectionModal({ artworks, onClose, onCreated }) {
 
   return (
     <div className="purchase-overlay" onClick={onClose}>
-      <div className="post-card" onClick={e => e.stopPropagation()}>
+      <div className="create-modal-card" onClick={e => e.stopPropagation()}>
         <button className="purchase-close" onClick={onClose}><X size={18} /></button>
         <h3><FolderPlus size={18} /> New collection</h3>
         <form onSubmit={submit} className="post-form">
