@@ -11,7 +11,7 @@
   animation: overlayFadeIn 0.2s ease;
 }
 
-.post-card {
+.create-modal-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
@@ -25,7 +25,7 @@
   animation: cardPopIn 0.25s ease;
 }
 
-.post-card h3 {
+.create-modal-card h3 {
   display: flex;
   align-items: center;
   gap: 8px;
