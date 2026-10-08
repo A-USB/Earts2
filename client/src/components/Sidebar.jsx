@@ -94,6 +94,7 @@ export default function Sidebar() {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search..."
+              maxLength={100}
               onBlur={() => !searchQuery && setSearchOpen(false)}
             />
           </form>
