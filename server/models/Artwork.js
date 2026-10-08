@@ -8,17 +8,17 @@ const collaboratorSchema = new mongoose.Schema({
 }, { _id: false });
 
 const artworkSchema = new mongoose.Schema({
-  title: { type: String, required: true, trim: true },
-  description: { type: String, default: '' },
+  title: { type: String, required: true, trim: true, maxlength: 120 },
+  description: { type: String, default: '', maxlength: 3000 },
   artistId: { type: String, required: true, index: true },
-  artistName: { type: String, required: true },
+  artistName: { type: String, required: true, maxlength: 161 },
   artistUsername: { type: String },
   price: { type: Number, default: null },
   category: { type: String, required: true, index: true },
   status: { type: String, enum: ['for_sale', 'not_for_sale', 'sold'], default: 'for_sale', index: true },
   color: { type: String, default: '#6025EA' },
-  imageUrl: { type: String, default: null },
-  medium: { type: String, default: '' },
+  imageUrl: { type: String, default: null, maxlength: 4300000 },
+  medium: { type: String, default: '', maxlength: 80 },
   year: { type: Number, default: () => new Date().getFullYear() },
   likes: { type: Number, default: 0 },
   trending: { type: Boolean, default: false, index: true },
