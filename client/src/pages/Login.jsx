@@ -72,13 +72,13 @@ export default function Login() {
             <div className="form-group">
               <label>Email address</label>
               <input type="email" placeholder="you@example.com" value={form.email}
-                onChange={e => setForm(p => ({ ...p, email: e.target.value }))} required />
+                onChange={e => setForm(p => ({ ...p, email: e.target.value }))} maxLength={254} autoComplete="email" required />
             </div>
             <div className="form-group">
               <label>Password</label>
               <div className="input-wrap">
                 <input type={showPass ? 'text' : 'password'} placeholder="••••••••" value={form.password}
-                  onChange={e => setForm(p => ({ ...p, password: e.target.value }))} required />
+                  onChange={e => setForm(p => ({ ...p, password: e.target.value }))} maxLength={128} autoComplete="current-password" required />
                 <button type="button" className="input-icon" onClick={() => setShowPass(!showPass)}>
                   {showPass ? <EyeOff size={16}/> : <Eye size={16}/>}
                 </button>
@@ -97,4 +97,3 @@ export default function Login() {
     </div>
   );
 }
-
