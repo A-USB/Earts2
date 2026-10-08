@@ -99,6 +99,7 @@ export default function Marketplace() {
               placeholder="Search artworks, artists, mediums..."
               value={search}
               onChange={e => setSearch(e.target.value)}
+              maxLength={100}
             />
             {search && (
               <button onClick={() => setSearch('')} className="clear-search-btn">
