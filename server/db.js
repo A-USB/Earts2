@@ -60,7 +60,7 @@ async function seedDatabase() {
     // 3. Seed Products
     await Product.insertMany(INITIAL_PRODUCTS);
 
-    console.log('✅ MongoDB database seeded successfully! Demo password: password123');
+    console.log('✅ MongoDB database seeded successfully.');
   } catch (err) {
     console.error('⚠️ Error seeding database:', err.message);
   }
