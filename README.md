@@ -27,6 +27,19 @@ npm run dev
 ```
 App runs on **http://localhost:5173**
 
+## Deploy to Vercel
+
+Create two Vercel projects from this repository:
+
+1. Set the frontend project's Root Directory to `client`. Add
+   `VITE_API_URL=https://<server-project>.vercel.app/api` and deploy it.
+2. Set the backend project's Root Directory to `server`. Add `MONGODB_URI`, a
+   long random `JWT_SECRET`, and `CLIENT_ORIGIN=https://<client-project>.vercel.app`.
+   Deploy it and allow its URL in MongoDB Atlas Network Access.
+
+Set these variables for Production and Preview as needed. If you use a custom
+frontend domain, include it in `CLIENT_ORIGIN` and redeploy the backend.
+
 ---
 
 ## Pages

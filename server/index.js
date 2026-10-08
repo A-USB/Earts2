@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
@@ -20,7 +19,8 @@ const {
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const SECRET = process.env.JWT_SECRET || 'earts_secret_2024';
+const SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? '' : 'earts_secret_2024');
+if (!SECRET) throw new Error('JWT_SECRET must be set in production');
 
 // CORS configuration (allow deployed domains or localhost during development)
 const allowedOrigins = process.env.CLIENT_ORIGIN
@@ -32,7 +32,7 @@ app.use(cors({
     if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    return callback(null, true); // Permissive for MVP deployments
+    return callback(null, false);
   },
   credentials: true
 }));
@@ -42,6 +42,20 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Connect to MongoDB
 connectDB();
+
+app.use('/api', async (req, res, next) => {
+  if (process.env.NODE_ENV !== 'production') return next();
+
+  try {
+    const connected = await connectDB();
+    if (!connected) {
+      return res.status(503).json({ error: 'Database temporarily unavailable' });
+    }
+    next();
+  } catch {
+    res.status(503).json({ error: 'Database temporarily unavailable' });
+  }
+});
 
 // Auth Middleware
 const auth = (req, res, next) => {
@@ -747,17 +761,6 @@ app.get('/api/stats', (req, res) => {
     countries: '80+',
     earned: '$200k+',
     artworks: '48k+'
-  });
-});
-
-// ================= SERVE STATIC CLIENT IN PRODUCTION =================
-const clientDistPath = path.join(__dirname, '../client/dist');
-app.use(express.static(clientDistPath));
-
-app.use((req, res, next) => {
-  if (req.path.startsWith('/api')) return next();
-  res.sendFile(path.join(clientDistPath, 'index.html'), (err) => {
-    if (err) next();
   });
 });
 
