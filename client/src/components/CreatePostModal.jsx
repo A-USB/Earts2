@@ -63,11 +63,11 @@ export default function CreatePostModal({ onClose, onPosted }) {
 
           <div className="form-group">
             <label>Title</label>
-            <input placeholder="What did you make?" value={form.title} onChange={set('title')} required />
+            <input placeholder="What did you make?" value={form.title} onChange={set('title')} maxLength={120} required />
           </div>
           <div className="form-group">
             <label>Caption</label>
-            <textarea rows={3} placeholder="Tell the story behind it..." value={form.description} onChange={set('description')} />
+            <textarea rows={3} placeholder="Tell the story behind it..." value={form.description} onChange={set('description')} maxLength={3000} />
           </div>
           <div className="form-group">
             <label>Category</label>
@@ -88,7 +88,7 @@ export default function CreatePostModal({ onClose, onPosted }) {
             {form.forSale && (
               <div className="form-group">
                 <label>Price ($)</label>
-                <input type="number" min="1" step="0.01" placeholder="e.g. 85" value={form.price} onChange={set('price')} required />
+                <input type="number" min="0.01" max="1000000000" step="0.01" placeholder="e.g. 85" value={form.price} onChange={set('price')} required />
               </div>
             )}
           </div>
