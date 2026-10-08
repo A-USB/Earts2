@@ -173,13 +173,13 @@ export default function UploadArtwork() {
   const processFile = (file) => {
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      setError('Please upload a valid image file (PNG, JPG, WEBP, GIF, SVG).');
+    if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type)) {
+      setError('Please upload a valid PNG, JPG, WEBP, or GIF image.');
       return;
     }
 
-    if (file.size > 25 * 1024 * 1024) {
-      setError('Image size exceeds 25MB limit. Please upload a smaller file.');
+    if (file.size > 3 * 1024 * 1024) {
+      setError('Image size exceeds 3MB. Please upload a smaller file.');
       return;
     }
 
@@ -324,7 +324,7 @@ export default function UploadArtwork() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/png, image/jpeg, image/webp, image/gif, image/svg+xml"
+                accept="image/png, image/jpeg, image/webp, image/gif"
                 style={{ display: 'none' }}
                 onChange={handleFileChange}
               />
@@ -564,6 +564,7 @@ export default function UploadArtwork() {
                     placeholder="e.g. Celestial Symphony No. 3"
                     value={form.title}
                     onChange={set('title')}
+                    maxLength={120}
                     required
                   />
                 </div>
@@ -575,6 +576,7 @@ export default function UploadArtwork() {
                     placeholder="Tell the story, inspiration, and techniques behind this piece..."
                     value={form.description}
                     onChange={set('description')}
+                    maxLength={3000}
                   />
                 </div>
 
@@ -597,6 +599,7 @@ export default function UploadArtwork() {
                       placeholder="e.g. Oil on Linen, Blender, Procreate"
                       value={form.medium}
                       onChange={set('medium')}
+                      maxLength={80}
                     />
                   </div>
                 </div>
@@ -731,7 +734,8 @@ export default function UploadArtwork() {
                         <span className="currency-prefix">$</span>
                         <input
                           type="number"
-                          min="1"
+                          min="0.01"
+                          max="1000000000"
                           step="0.01"
                           placeholder="e.g. 150.00"
                           value={form.price}
