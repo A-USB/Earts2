@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const { CATEGORIES, ROLES, text: validateText, email: validateEmail, enumValue, stringArray, safeImage, price: validatePrice } = require('./validation');
 
 const {
   connectDB,
@@ -37,8 +38,8 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.json({ limit: '4.5mb' }));
+app.use(express.urlencoded({ limit: '100kb', extended: true, parameterLimit: 50 }));
 
 // Connect to MongoDB
 connectDB();
@@ -57,6 +58,14 @@ app.use('/api', async (req, res, next) => {
   }
 });
 
+app.use('/api', (req, res, next) => {
+  if (req.body !== undefined && (!req.body || typeof req.body !== 'object' || Array.isArray(req.body))) {
+    return res.status(400).json({ error: 'Request body must be a JSON object' });
+  }
+  if (req.body === undefined) req.body = {};
+  next();
+});
+
 // Auth Middleware
 const auth = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
@@ -70,15 +79,82 @@ const auth = (req, res, next) => {
   }
 };
 
+function validateArtworkPayload(payload, { partial = false } = {}) {
+  const allowed = new Set(['title', 'description', 'category', 'medium', 'year', 'color', 'imageUrl', 'status', 'price', 'collaborators']);
+  const unknown = Object.keys(payload).find(key => !allowed.has(key));
+  if (unknown) return 'One or more artwork fields are not allowed';
+  const errors = [
+    payload.title !== undefined || !partial ? validateText(payload.title, 'Title', 120, { required: true }) : null,
+    payload.description !== undefined ? validateText(payload.description, 'Description', 3000, { multiline: true }) : null,
+    payload.category !== undefined || !partial ? enumValue(payload.category, CATEGORIES, 'category') : null,
+    payload.medium !== undefined ? validateText(payload.medium, 'Medium', 80) : null,
+    payload.year !== undefined && (!Number.isInteger(Number(payload.year)) || Number(payload.year) < 1000 || Number(payload.year) > new Date().getFullYear() + 1)
+      ? 'Year must be a valid year'
+      : null,
+    payload.color !== undefined && (typeof payload.color !== 'string' || !/^#[\da-f]{3,8}$/i.test(payload.color))
+      ? 'Choose a valid artwork color'
+      : null,
+    payload.imageUrl !== undefined ? safeImage(payload.imageUrl) : null,
+    payload.status !== undefined && !['for_sale', 'not_for_sale', 'sold'].includes(payload.status)
+      ? 'Choose a valid artwork status'
+      : null,
+    payload.price !== undefined ? validatePrice(payload.price, { required: payload.status === 'for_sale' }) : null,
+    payload.collaborators !== undefined && (!Array.isArray(payload.collaborators) || payload.collaborators.length > 10)
+      ? 'An artwork can have at most 10 collaborators'
+      : null
+  ].filter(Boolean);
+  if (errors.length) return errors[0];
+  if (payload.collaborators) {
+    for (const collaborator of payload.collaborators) {
+      if (!collaborator || typeof collaborator !== 'object') return 'Collaborator details are invalid';
+      const collaboratorError = [
+        validateText(collaborator.id || collaborator.userId || '', 'Collaborator ID', 100, { required: true }),
+        validateText(collaborator.username || '', 'Collaborator username', 40, { required: true }),
+        validateText(collaborator.name || '', 'Collaborator name', 100, { required: true }),
+        validateText(collaborator.role || '', 'Collaborator role', 60, { required: true })
+      ].find(Boolean);
+      if (collaboratorError) return collaboratorError;
+    }
+  }
+  return null;
+}
+
+function validateChoiceArray(values, choices, label) {
+  const arrayError = stringArray(values, label, { maxItems: choices.size, itemLength: 40 });
+  if (arrayError) return arrayError;
+  return values.every(value => choices.has(value)) ? null : `Choose valid ${label.toLowerCase()}`;
+}
+
+function validateToolString(value) {
+  const error = validateText(value, 'Tools', 300);
+  if (error) return error;
+  const tools = value.split(',').map(tool => tool.trim()).filter(Boolean);
+  if (tools.length > 10) return 'Choose at most 10 tools';
+  return tools.some(tool => tool.length > 40) ? 'Each tool must be 40 characters or fewer' : null;
+}
+
 // ================= AUTH ROUTES =================
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { firstName, lastName, email, password, role, accountType, workplace, location, tools, bio } = req.body;
-    if (!email || !password || !firstName || !lastName) {
-      return res.status(400).json({ error: 'All fields are required' });
-    }
+    const { firstName, lastName, email, password, role, accountType, workplace = '', location = '', tools = '', bio = '' } = req.body;
+    const errors = [
+      validateText(firstName, 'First name', 80, { required: true }),
+      validateText(lastName, 'Last name', 80, { required: true }),
+      validateEmail(email),
+      validateText(password, 'Password', 128, { required: true, minLength: 8 }),
+      enumValue(accountType, new Set(['artist', 'collector']), 'account type'),
+      enumValue(role, ROLES, 'role'),
+      validateText(workplace, 'Workplace', 100),
+      validateText(location, 'Location', 100),
+      validateText(bio, 'Bio', 300, { multiline: true }),
+      typeof tools === 'string'
+        ? validateToolString(tools)
+        : stringArray(tools, 'Tools', { maxItems: 10, itemLength: 40 })
+    ].filter(Boolean);
+    if (errors.length) return res.status(400).json({ error: errors[0] });
 
-    const existing = await User.findOne({ email: email.toLowerCase() });
+    const normalizedEmail = email.trim().toLowerCase();
+    const existing = await User.findOne({ email: normalizedEmail });
     if (existing) {
       return res.status(400).json({ error: 'Email already in use' });
     }
@@ -95,14 +171,14 @@ app.post('/api/auth/register', async (req, res) => {
       username,
       firstName,
       lastName,
-      email: email.toLowerCase(),
+      email: normalizedEmail,
       password: hashedPassword,
-      role: role || (accountType === 'collector' ? 'Collector' : 'Artist'),
-      accountType: accountType === 'collector' ? 'collector' : 'artist',
-      workplace: workplace || '',
-      location: location || '',
+      role: accountType === 'collector' ? 'Collector' : role,
+      accountType,
+      workplace: workplace.trim(),
+      location: location.trim(),
       tools: parsedTools,
-      bio: bio || ''
+      bio: bio.trim()
     });
 
     const token = jwt.sign({ id: user.id }, SECRET, { expiresIn: '7d' });
@@ -115,11 +191,10 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
-    }
+    const errors = [validateEmail(email), validateText(password, 'Password', 128, { required: true, minLength: 1 })].filter(Boolean);
+    if (errors.length) return res.status(400).json({ error: errors[0] });
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: email.trim().toLowerCase() });
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
     const valid = await bcrypt.compare(password, user.password);
@@ -173,9 +248,24 @@ app.post('/api/auth/google', async (req, res) => {
     if (!email) {
       return res.status(400).json({ error: 'Valid Google account info is required' });
     }
+    const googleErrors = [
+      validateEmail(email),
+      validateText(firstName || 'Creator', 'First name', 80, { required: true }),
+      validateText(lastName || '', 'Last name', 80),
+      enumValue(accountType || 'artist', new Set(['artist', 'collector']), 'account type'),
+      enumValue(role || 'Artist', ROLES, 'role'),
+      avatar != null && (typeof avatar !== 'string' || avatar.length > 2048 || !/^https:\/\//i.test(avatar))
+        ? 'Google profile image URL is invalid'
+        : null,
+      credential != null && (typeof credential !== 'string' || credential.length > 12000)
+        ? 'Google credential is too large'
+        : null
+    ].filter(Boolean);
+    if (googleErrors.length) return res.status(400).json({ error: googleErrors[0] });
 
     // Check if user already exists
-    let user = await User.findOne({ email: email.toLowerCase() });
+    const normalizedEmail = email.trim().toLowerCase();
+    let user = await User.findOne({ email: normalizedEmail });
 
     if (user) {
       // If user exists, link Google ID and update avatar if empty
@@ -206,7 +296,7 @@ app.post('/api/auth/google', async (req, res) => {
         username,
         firstName: firstName || 'Creator',
         lastName: lastName || '',
-        email: email.toLowerCase(),
+        email: normalizedEmail,
         avatar: avatar || null,
         googleId: googleId || null,
         role: role || 'Artist',
@@ -259,7 +349,27 @@ app.get('/api/users/:username', async (req, res) => {
 
 app.patch('/api/users/me', auth, async (req, res) => {
   try {
-    const { password, email, ...updates } = req.body;
+    const allowedFields = new Set(['firstName', 'lastName', 'bio', 'location', 'role', 'tags', 'tools', 'availableFor', 'coverColor']);
+    const unknownField = Object.keys(req.body).find(key => !allowedFields.has(key));
+    if (unknownField) return res.status(400).json({ error: 'One or more profile fields are not editable' });
+    const updates = { ...req.body };
+    const errors = [
+      updates.firstName !== undefined ? validateText(updates.firstName, 'First name', 80, { required: true }) : null,
+      updates.lastName !== undefined ? validateText(updates.lastName, 'Last name', 80, { required: true }) : null,
+      updates.bio !== undefined ? validateText(updates.bio, 'Bio', 500, { multiline: true }) : null,
+      updates.location !== undefined ? validateText(updates.location, 'Location', 100) : null,
+      updates.role !== undefined ? enumValue(updates.role, ROLES, 'role') : null,
+      updates.tags !== undefined ? validateChoiceArray(updates.tags, new Set(['Illustration', 'Digital art', 'Watercolour', 'Sculpture', 'Oil', 'Abstract', 'Photography', 'Printmaking']), 'Tags') : null,
+      updates.tools !== undefined ? validateChoiceArray(updates.tools, new Set(['Procreate', 'Photoshop', 'Illustrator', 'Ink', 'Watercolour', 'Oil paint', 'Canvas', 'Clay', 'Metal', 'Wood']), 'Tools') : null,
+      updates.availableFor !== undefined ? validateChoiceArray(updates.availableFor, new Set(['Commissions', 'Collaborations', 'Workshop', 'Exhibitions', 'Residencies']), 'Availability') : null,
+      updates.coverColor !== undefined && (typeof updates.coverColor !== 'string' || updates.coverColor.length > 160 || !/^(#[\da-f]{3,8}|linear-gradient\([\d\s.,%#a-f()deg-]+\))$/i.test(updates.coverColor))
+        ? 'Choose a valid profile cover color'
+        : null
+    ].filter(Boolean);
+    if (errors.length) return res.status(400).json({ error: errors[0] });
+    for (const field of ['firstName', 'lastName', 'bio', 'location']) {
+      if (typeof updates[field] === 'string') updates[field] = updates[field].trim();
+    }
     const user = await User.findByIdAndUpdate(req.userId, updates, { new: true, runValidators: true });
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json(user.toJSON());
@@ -413,6 +523,8 @@ app.get('/api/artworks/:id', async (req, res) => {
 
 app.post('/api/artworks', auth, async (req, res) => {
   try {
+    const validationError = validateArtworkPayload(req.body);
+    if (validationError) return res.status(400).json({ error: validationError });
     const user = await User.findById(req.userId);
     const artistName = user ? `${user.firstName} ${user.lastName}` : (req.body.artistName || 'Artist');
     const artistUsername = user ? user.username : null;
@@ -437,6 +549,8 @@ app.post('/api/artworks', auth, async (req, res) => {
 
 app.patch('/api/artworks/:id', auth, async (req, res) => {
   try {
+    const validationError = validateArtworkPayload(req.body, { partial: true });
+    if (validationError) return res.status(400).json({ error: validationError });
     const artwork = await Artwork.findOneAndUpdate(
       { _id: req.params.id, artistId: req.userId },
       req.body,
@@ -537,8 +651,9 @@ app.post('/api/artworks/:id/comments', auth, async (req, res) => {
     if (!artwork) return res.status(404).json({ error: 'Artwork not found' });
 
     const user = await User.findById(req.userId);
-    const text = (req.body.text || '').trim();
-    if (!text) return res.status(400).json({ error: 'Comment cannot be empty' });
+    const textError = validateText(req.body.text, 'Comment', 600, { required: true, multiline: true });
+    if (textError) return res.status(400).json({ error: textError });
+    const text = req.body.text.trim();
 
     const comment = await Comment.create({
       artworkId: artwork.id,
@@ -592,8 +707,12 @@ app.get('/api/users/:username/collections', async (req, res) => {
 
 app.post('/api/collections', auth, async (req, res) => {
   try {
-    const name = (req.body.name || '').trim();
-    if (!name) return res.status(400).json({ error: 'Collection needs a name' });
+    const nameError = validateText(req.body.name, 'Collection name', 60, { required: true });
+    if (nameError) return res.status(400).json({ error: nameError });
+    const name = req.body.name.trim();
+    if (req.body.artworkIds !== undefined && (!Array.isArray(req.body.artworkIds) || req.body.artworkIds.length > 100 || req.body.artworkIds.some(id => typeof id !== 'string' || id.length > 100))) {
+      return res.status(400).json({ error: 'A collection can contain at most 100 valid artwork IDs' });
+    }
 
     const collection = await Collection.create({
       artistId: req.userId,
@@ -610,6 +729,16 @@ app.post('/api/collections', auth, async (req, res) => {
 
 app.patch('/api/collections/:id', auth, async (req, res) => {
   try {
+    if (Object.keys(req.body).some(key => !['name', 'artworkIds'].includes(key))) {
+      return res.status(400).json({ error: 'One or more collection fields are not editable' });
+    }
+    if (req.body.name !== undefined) {
+      const nameError = validateText(req.body.name, 'Collection name', 60, { required: true });
+      if (nameError) return res.status(400).json({ error: nameError });
+    }
+    if (req.body.artworkIds !== undefined && (!Array.isArray(req.body.artworkIds) || req.body.artworkIds.length > 100 || req.body.artworkIds.some(id => typeof id !== 'string' || id.length > 100))) {
+      return res.status(400).json({ error: 'A collection can contain at most 100 valid artwork IDs' });
+    }
     const collection = await Collection.findOneAndUpdate(
       { _id: req.params.id, artistId: req.userId },
       req.body,
@@ -661,13 +790,14 @@ app.post('/api/artworks/:id/purchase', auth, async (req, res) => {
     if (artwork.status !== 'for_sale') return res.status(400).json({ error: 'This piece is not for sale' });
 
     const { cardName, cardNumber, expiry, cvv } = req.body;
-    if (!cardName || !cardNumber || !expiry || !cvv) {
-      return res.status(400).json({ error: 'All payment fields are required' });
-    }
-    const cleanNumber = cardNumber.replace(/\s/g, '');
-    if (cleanNumber.length < 12) {
-      return res.status(400).json({ error: 'Enter a valid card number' });
-    }
+    const cleanNumber = typeof cardNumber === 'string' ? cardNumber.replace(/[\s-]/g, '') : '';
+    const paymentErrors = [
+      validateText(cardName, 'Name on card', 80, { required: true }),
+      !/^\d{12,19}$/.test(cleanNumber) ? 'Enter a valid card number' : null,
+      typeof expiry !== 'string' || !/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiry) ? 'Enter a valid expiry date (MM/YY)' : null,
+      typeof cvv !== 'string' || !/^\d{3,4}$/.test(cvv) ? 'Enter a valid security code' : null
+    ].filter(Boolean);
+    if (paymentErrors.length) return res.status(400).json({ error: paymentErrors[0] });
 
     const order = await Order.create({
       buyerId: req.userId,
@@ -762,6 +892,13 @@ app.get('/api/stats', (req, res) => {
     earned: '$200k+',
     artworks: '48k+'
   });
+});
+
+app.use((err, req, res, next) => {
+  if (err?.type === 'entity.too.large') return res.status(413).json({ error: 'Request is too large. Artwork images must be 3 MB or smaller.' });
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) return res.status(400).json({ error: 'Request contains invalid JSON' });
+  console.error('Unhandled request error:', err);
+  res.status(500).json({ error: 'Unexpected server error' });
 });
 
 app.listen(PORT, () => {
