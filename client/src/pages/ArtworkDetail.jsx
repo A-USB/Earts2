@@ -144,6 +144,7 @@ export default function ArtworkDetail() {
                   value={commentText}
                   onChange={e => setCommentText(e.target.value)}
                   disabled={!user}
+                  maxLength={600}
                 />
                 <button type="submit" className="icon-btn" disabled={postingComment || !user}>
                   <Send size={16} />
