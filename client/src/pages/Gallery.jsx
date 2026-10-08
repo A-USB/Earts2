@@ -95,6 +95,7 @@ export default function Gallery() {
                 placeholder="Search by title, artist name, medium, or style..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
+                maxLength={100}
               />
               {search && (
                 <button onClick={() => setSearch('')} className="clear-search-btn">
