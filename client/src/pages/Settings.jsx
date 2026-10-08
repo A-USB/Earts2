@@ -103,11 +103,11 @@ export default function Settings() {
                 <div className="form-row-s">
                   <div className="form-group">
                     <label>First Name</label>
-                    <input value={form.firstName} onChange={set('firstName')} placeholder="First name" />
+                    <input value={form.firstName} onChange={set('firstName')} placeholder="First name" maxLength={80} />
                   </div>
                   <div className="form-group">
                     <label>Last Name</label>
-                    <input value={form.lastName} onChange={set('lastName')} placeholder="Last name" />
+                    <input value={form.lastName} onChange={set('lastName')} placeholder="Last name" maxLength={80} />
                   </div>
                 </div>
 
@@ -120,12 +120,12 @@ export default function Settings() {
 
                 <div className="form-group">
                   <label>Bio</label>
-                  <textarea rows={4} value={form.bio} onChange={set('bio')} placeholder="Tell the world about your art and practice..." />
+                  <textarea rows={4} value={form.bio} onChange={set('bio')} placeholder="Tell the world about your art and practice..." maxLength={500} />
                 </div>
 
                 <div className="form-group">
                   <label>Location</label>
-                  <input value={form.location} onChange={set('location')} placeholder="e.g. Kigali, Rwanda" />
+                  <input value={form.location} onChange={set('location')} placeholder="e.g. Kigali, Rwanda" maxLength={100} />
                 </div>
 
                 <div className="form-group">
