@@ -53,8 +53,16 @@ export default function Signup() {
       setError('Please provide a valid email address');
       return;
     }
-    if (form.password.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (form.firstName.trim().length > 80 || form.lastName.trim().length > 80) {
+      setError('Names must be 80 characters or fewer');
+      return;
+    }
+    if (form.email.trim().length > 254) {
+      setError('Email must be 254 characters or fewer');
+      return;
+    }
+    if (form.password.length < 8 || form.password.length > 128) {
+      setError('Password must be between 8 and 128 characters');
       return;
     }
     setError('');
@@ -189,17 +197,17 @@ export default function Signup() {
               <div className="form-row">
                 <div className="form-group">
                   <label>First Name</label>
-                  <input placeholder="John" value={form.firstName} onChange={set('firstName')} required />
+                  <input placeholder="John" value={form.firstName} onChange={set('firstName')} maxLength={80} autoComplete="given-name" required />
                 </div>
                 <div className="form-group">
                   <label>Last Name</label>
-                  <input placeholder="Doe" value={form.lastName} onChange={set('lastName')} required />
+                  <input placeholder="Doe" value={form.lastName} onChange={set('lastName')} maxLength={80} autoComplete="family-name" required />
                 </div>
               </div>
 
               <div className="form-group">
                 <label>Email address</label>
-                <input type="email" placeholder="you@example.com" value={form.email} onChange={set('email')} required />
+                <input type="email" placeholder="you@example.com" value={form.email} onChange={set('email')} maxLength={254} autoComplete="email" required />
               </div>
 
               <div className="form-group">
@@ -207,9 +215,12 @@ export default function Signup() {
                 <div className="input-wrap">
                   <input
                     type={showPass ? 'text' : 'password'}
-                    placeholder="•••••••• (min. 6 chars)"
+                    placeholder="•••••••• (8–128 characters)"
                     value={form.password}
                     onChange={set('password')}
+                    minLength={8}
+                    maxLength={128}
+                    autoComplete="new-password"
                     required
                   />
                   <button type="button" className="input-icon" onClick={() => setShowPass(!showPass)}>
@@ -265,6 +276,7 @@ export default function Signup() {
                         placeholder="e.g. Freelance, Studio, Agency"
                         value={form.workplace}
                         onChange={set('workplace')}
+                        maxLength={100}
                       />
                     </div>
                     <div className="form-group">
@@ -275,6 +287,7 @@ export default function Signup() {
                         placeholder="e.g. Paris, Tokyo, New York"
                         value={form.location}
                         onChange={set('location')}
+                        maxLength={100}
                       />
                     </div>
                   </div>
@@ -287,6 +300,7 @@ export default function Signup() {
                       placeholder="e.g. Procreate, Blender, Oil Paint, Clay"
                       value={form.tools}
                       onChange={set('tools')}
+                      maxLength={300}
                     />
                   </div>
 
@@ -296,6 +310,7 @@ export default function Signup() {
                       placeholder="e.g. Exploring surreal cyberpunk digital landscapes"
                       value={form.bio}
                       onChange={set('bio')}
+                      maxLength={300}
                     />
                   </div>
                 </>
@@ -322,6 +337,7 @@ export default function Signup() {
                       placeholder="e.g. London, United Kingdom"
                       value={form.location}
                       onChange={set('location')}
+                      maxLength={100}
                     />
                   </div>
 
@@ -331,6 +347,7 @@ export default function Signup() {
                       placeholder="e.g. Passionate collector of contemporary oil works and 3D art"
                       value={form.bio}
                       onChange={set('bio')}
+                      maxLength={300}
                     />
                   </div>
                 </>
@@ -356,4 +373,3 @@ export default function Signup() {
     </div>
   );
 }
-
