@@ -69,7 +69,7 @@ export default function PurchaseModal({ artwork, onClose, onSuccess }) {
               {error && <div className="auth-error">{error}</div>}
               <div className="form-group">
                 <label>Cardholder name</label>
-                <input placeholder="Name on card" value={form.cardName} onChange={set('cardName')} required />
+                <input placeholder="Name on card" value={form.cardName} onChange={set('cardName')} maxLength={80} required />
               </div>
               <div className="form-group">
                 <label>Card number</label>
@@ -78,13 +78,14 @@ export default function PurchaseModal({ artwork, onClose, onSuccess }) {
                   value={form.cardNumber}
                   onChange={set('cardNumber', formatCardNumber)}
                   inputMode="numeric"
+                  maxLength={23}
                   required
                 />
               </div>
               <div className="form-row">
                 <div className="form-group">
                   <label>Expiry</label>
-                  <input placeholder="MM/YY" value={form.expiry} onChange={set('expiry', formatExpiry)} inputMode="numeric" required />
+                  <input placeholder="MM/YY" value={form.expiry} onChange={set('expiry', formatExpiry)} inputMode="numeric" maxLength={5} required />
                 </div>
                 <div className="form-group">
                   <label>CVV</label>
