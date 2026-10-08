@@ -77,7 +77,7 @@ function NewCollectionModal({ artworks, onClose, onCreated }) {
           {error && <div className="auth-error">{error}</div>}
           <div className="form-group">
             <label>Collection name</label>
-            <input placeholder="e.g. Cityscapes, Early work..." value={name} onChange={e => setName(e.target.value)} />
+            <input placeholder="e.g. Cityscapes, Early work..." value={name} onChange={e => setName(e.target.value)} maxLength={60} />
           </div>
           <div className="form-group">
             <label>Pick artworks ({selected.length} selected)</label>
