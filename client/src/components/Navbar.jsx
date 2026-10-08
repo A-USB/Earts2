@@ -130,6 +130,7 @@ export default function Navbar() {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search artworks, artists..."
+                maxLength={100}
               />
               <button type="button" onClick={() => setSearchOpen(false)} className="icon-btn">
                 <X size={16} />
