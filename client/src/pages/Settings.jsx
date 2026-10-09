@@ -14,6 +14,7 @@ const TABS = [
 
 const ROLES = ['Painter','Illustrator','Sculptor','Digital Artist','Photographer','Printmaker','Ceramicist','Mixed Media','Other'];
 const TAGS_OPTIONS = ['Illustration','Digital art','Watercolour','Sculpture','Oil','Abstract','Photography','Printmaking'];
+const EXPLORER_INTERESTS = ['Painting', 'Digital Art', 'Illustration', 'Photography', 'Sculpture', 'Mixed Media', 'Watercolour', 'Abstract'];
 const TOOLS_OPTIONS = ['Procreate','Photoshop','Illustrator','Ink','Watercolour','Oil paint','Canvas','Clay','Metal','Wood'];
 const AVAIL_OPTIONS = ['Commissions','Collaborations','Workshop','Exhibitions','Residencies'];
 const COVER_GRADIENTS = [
@@ -48,7 +49,7 @@ export default function Settings() {
       availableFor: user.availableFor || [],
       coverColor: user.coverColor || COVER_GRADIENTS[0],
     });
-  }, [user]);
+  }, [user, navigate]);
 
   const set = k => e => setForm(p => ({ ...p, [k]: e.target.value }));
 
@@ -60,7 +61,10 @@ export default function Settings() {
   const handleSave = async () => {
     setLoading(true);
     try {
-      const updated = await api.patch('/users/me', form);
+      const updates = user.accountType === 'collector'
+        ? { firstName: form.firstName, lastName: form.lastName, bio: form.bio, location: form.location, tags: form.tags, coverColor: form.coverColor }
+        : form;
+      const updated = await api.patch('/users/me', updates);
       updateUser(updated);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
@@ -98,7 +102,7 @@ export default function Settings() {
             {tab === 'profile' && (
               <div className="settings-section">
                 <h3>Profile Information</h3>
-                <p className="section-desc">This is how other artists will see you on Earts.</p>
+                <p className="section-desc">{user.accountType === 'collector' ? 'This is how artists and other explorers see you on Earts.' : 'This is how other artists will see you on Earts.'}</p>
 
                 <div className="form-row-s">
                   <div className="form-group">
@@ -111,16 +115,16 @@ export default function Settings() {
                   </div>
                 </div>
 
-                <div className="form-group">
+                {user.accountType !== 'collector' && <div className="form-group">
                   <label>I am a...</label>
                   <select value={form.role} onChange={set('role')}>
                     {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
-                </div>
+                </div>}
 
                 <div className="form-group">
-                  <label>Bio</label>
-                  <textarea rows={4} value={form.bio} onChange={set('bio')} placeholder="Tell the world about your art and practice..." maxLength={500} />
+                  <label>{user.accountType === 'collector' ? 'Interests / Bio' : 'Bio'}</label>
+                  <textarea rows={4} value={form.bio} onChange={set('bio')} placeholder={user.accountType === 'collector' ? 'Share what kind of art you enjoy discovering...' : 'Tell the world about your art and practice...'} maxLength={500} />
                 </div>
 
                 <div className="form-group">
@@ -129,38 +133,38 @@ export default function Settings() {
                 </div>
 
                 <div className="form-group">
-                  <label>Tags (select all that apply)</label>
+                  <label>{user.accountType === 'collector' ? 'Art interests (select all that apply)' : 'Tags (select all that apply)'}</label>
                   <div className="toggle-chips">
-                    {TAGS_OPTIONS.map(t => (
+                    {(user.accountType === 'collector' ? EXPLORER_INTERESTS : TAGS_OPTIONS).map(t => (
                       <button key={t} type="button" className={`chip ${form.tags.includes(t) ? 'active' : ''}`} onClick={() => toggleArr('tags', t)}>{t}</button>
                     ))}
                   </div>
                 </div>
 
-                <div className="form-group">
+                {user.accountType !== 'collector' && <div className="form-group">
                   <label>Tools & Media</label>
                   <div className="toggle-chips">
                     {TOOLS_OPTIONS.map(t => (
                       <button key={t} type="button" className={`chip ${form.tools.includes(t) ? 'active' : ''}`} onClick={() => toggleArr('tools', t)}>{t}</button>
                     ))}
                   </div>
-                </div>
+                </div>}
 
-                <div className="form-group">
+                {user.accountType !== 'collector' && <div className="form-group">
                   <label>Available for</label>
                   <div className="toggle-chips">
                     {AVAIL_OPTIONS.map(a => (
                       <button key={a} type="button" className={`chip ${form.availableFor.includes(a) ? 'active' : ''}`} onClick={() => toggleArr('availableFor', a)}>{a}</button>
                     ))}
                   </div>
-                </div>
+                </div>}
               </div>
             )}
 
             {tab === 'appearance' && (
               <div className="settings-section">
                 <h3>Profile Appearance</h3>
-                <p className="section-desc">Customise how your profile looks to other artists.</p>
+                <p className="section-desc">{user.accountType === 'collector' ? 'Customise the appearance of your explorer profile.' : 'Customise how your profile looks to other artists.'}</p>
 
                 <div className="form-group">
                   <label>Cover Gradient</label>
@@ -187,14 +191,16 @@ export default function Settings() {
                 <h3>Notification Preferences</h3>
                 <p className="section-desc">Choose what you hear about and how.</p>
                 <div className="notif-list">
-                  {[
+                  {(user.accountType === 'collector' ? [
+                    { label: 'New artwork from followed artists', desc: 'When an artist you follow shares new work' },
+                    { label: 'Purchase updates', desc: 'Confirmations and updates about your orders' },
+                  ] : [
                     { label: 'New follower', desc: 'When someone follows your profile' },
                     { label: 'Artwork liked', desc: 'When someone likes your artwork' },
-                    { label: 'New message', desc: 'When you receive a direct message' },
+                    { label: 'Artwork comments', desc: 'When someone comments on your artwork' },
                     { label: 'Sale made', desc: 'When one of your artworks is purchased' },
-                    { label: 'Community updates', desc: 'Weekly digest of community activity' },
                     { label: 'Product announcements', desc: "New features and updates from Earts" },
-                  ].map(n => (
+                  ]).map(n => (
                     <div key={n.label} className="notif-item">
                       <div>
                         <strong>{n.label}</strong>
