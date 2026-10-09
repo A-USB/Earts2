@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Grid2x2, Users, Sparkles, ArrowRight, ArrowLeft, Palette, Briefcase, MapPin, Wrench, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, Grid2x2, Users, Sparkles, ArrowRight, ArrowLeft, Palette, Briefcase, MapPin, Wrench, CheckCircle2, Check, X, Compass } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { EartsLogo } from '../components/EartsLogo';
 import ThemeToggle from '../components/ThemeToggle';
@@ -21,6 +21,8 @@ const ROLES = [
   'Other'
 ];
 
+const EXPLORER_INTERESTS = ['Painting', 'Digital Art', 'Illustration', 'Photography', 'Sculpture', 'Mixed Media', 'Watercolour', 'Abstract'];
+
 export default function Signup() {
   const [step, setStep] = useState(1);
   const [accountType, setAccountType] = useState('artist'); // 'artist' | 'collector'
@@ -33,15 +35,38 @@ export default function Signup() {
     workplace: '',
     location: '',
     tools: '',
-    bio: ''
+    bio: '',
+    interests: []
   });
   const [showPass, setShowPass] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [passwordTouched, setPasswordTouched] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  const set = (k) => (e) => setForm((p) => ({ ...p, [k]: e.target.value }));
+  const set = (k) => (e) => {
+    setForm((p) => ({ ...p, [k]: e.target.value }));
+    setError('');
+  };
+
+  const toggleInterest = (interest) => {
+    setForm((current) => ({
+      ...current,
+      interests: current.interests.includes(interest)
+        ? current.interests.filter((item) => item !== interest)
+        : current.interests.length < 5 ? [...current.interests, interest] : current.interests
+    }));
+  };
+
+  const passwordChecks = [
+    { label: 'Between 7 and 17 characters', valid: form.password.length >= 7 && form.password.length <= 17 },
+    { label: 'At least one number', valid: /\d/.test(form.password) },
+    { label: 'At least one special character', valid: /[^A-Za-z0-9\s]/.test(form.password) }
+  ];
+  const passwordValid = passwordChecks.every((check) => check.valid);
+  const emailValid = form.email.trim().length <= 60 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim());
 
   const handleNextStep = (e) => {
     e.preventDefault();
@@ -49,20 +74,18 @@ export default function Signup() {
       setError('Please provide your first and last name');
       return;
     }
-    if (!form.email.trim()) {
-      setError('Please provide a valid email address');
+    if (form.firstName.trim().length > 30 || form.lastName.trim().length > 30) {
+      setError('First and last names must be 30 characters or fewer');
       return;
     }
-    if (form.firstName.trim().length > 80 || form.lastName.trim().length > 80) {
-      setError('Names must be 80 characters or fewer');
+    if (!emailValid) {
+      setEmailTouched(true);
+      setError('Enter a valid email address with no more than 60 characters');
       return;
     }
-    if (form.email.trim().length > 254) {
-      setError('Email must be 254 characters or fewer');
-      return;
-    }
-    if (form.password.length < 8 || form.password.length > 128) {
-      setError('Password must be between 8 and 128 characters');
+    if (!passwordValid) {
+      setPasswordTouched(true);
+      setError('Complete all password requirements before continuing');
       return;
     }
     setError('');
@@ -79,10 +102,16 @@ export default function Signup() {
     setLoading(true);
     setError('');
     try {
+      const profile = accountType === 'artist'
+        ? { role: form.role, workplace: form.workplace, location: form.location, tools: form.tools, bio: form.bio }
+        : { role: 'Collector', location: form.location, bio: form.bio, interests: form.interests };
       await register({
-        ...form,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: form.email,
+        password: form.password,
         accountType,
-        role: accountType === 'collector' ? 'Collector' : form.role
+        ...profile
       });
       navigate('/feed');
     } catch (err) {
@@ -106,14 +135,20 @@ export default function Signup() {
         <div className="auth-left">
           <div className="auth-left-content">
             <span className="eyebrow">Join today — it's free</span>
-            <h2>Your creative journey starts here</h2>
-            <p>Create your profile, upload your first artwork, and connect with a global community of creators.</p>
+            <h2>{accountType === 'artist' ? 'Your creative journey starts here' : 'Discover art on your terms'}</h2>
+            <p>{accountType === 'artist'
+              ? 'Create your profile, share your artwork, and connect with a global community of creators.'
+              : 'Explore original artwork, follow artists, and save the pieces that inspire you.'}</p>
             <div className="auth-perks">
-              {[
+              {(accountType === 'artist' ? [
                 { icon: <Grid2x2 size={18} />, title: 'Build your gallery', desc: 'Upload and organise your artwork in one place' },
                 { icon: <Users size={18} />, title: 'Connect and collaborate', desc: 'Meet artists who share your style and vision' },
                 { icon: <Sparkles size={18} />, title: 'Sell your creations', desc: 'Turn your art into income through our marketplace' }
-              ].map((p) => (
+              ] : [
+                { icon: <Grid2x2 size={18} />, title: 'Explore the marketplace', desc: 'Find original work across styles and mediums' },
+                { icon: <Users size={18} />, title: 'Follow artists', desc: 'Keep up with creators and their latest work' },
+                { icon: <Sparkles size={18} />, title: 'Save what inspires you', desc: 'Build a personal collection of favorite pieces' }
+              ]).map((p) => (
                 <div key={p.title} className="auth-perk">
                   <div className="perk-icon">{p.icon}</div>
                   <div>
@@ -154,7 +189,7 @@ export default function Signup() {
             <div className="step-divider" />
             <div className={`step-item ${step === 2 ? 'active' : ''}`}>
               <div className="step-circle">2</div>
-              <span className="step-label">Creative Profile</span>
+              <span className="step-label">{accountType === 'artist' ? 'Creative Profile' : 'Explorer Profile'}</span>
             </div>
           </div>
 
@@ -162,28 +197,34 @@ export default function Signup() {
 
           {/* PHASE 1: CREDENTIALS */}
           {step === 1 && (
-            <form onSubmit={handleNextStep} className="auth-form step-fade-in">
+            <form onSubmit={handleNextStep} className="auth-form step-fade-in" noValidate>
               <div className="auth-header-block">
                 <h2>Create account</h2>
-                <p className="auth-subtitle">Phase 1: Basic credentials & account intent</p>
+                <p className="auth-subtitle">Phase 1: Choose how you want to use Earts</p>
               </div>
 
               <div className="form-group">
                 <label>I want to...</label>
-                <div className="account-type-toggle">
+                <div className="account-type-cards">
                   <button
                     type="button"
-                    className={accountType === 'artist' ? 'active' : ''}
+                    className={`account-type-card ${accountType === 'artist' ? 'active' : ''}`}
+                    aria-pressed={accountType === 'artist'}
                     onClick={() => setAccountType('artist')}
                   >
-                    Sell my art
+                    <Palette size={21} />
+                    <strong>Artist</strong>
+                    <span>Share and sell your artwork</span>
                   </button>
                   <button
                     type="button"
-                    className={accountType === 'collector' ? 'active' : ''}
+                    className={`account-type-card ${accountType === 'collector' ? 'active' : ''}`}
+                    aria-pressed={accountType === 'collector'}
                     onClick={() => setAccountType('collector')}
                   >
-                    Just browse & collect
+                    <Compass size={21} />
+                    <strong>Explorer</strong>
+                    <span>Discover art and follow artists</span>
                   </button>
                 </div>
               </div>
@@ -197,17 +238,33 @@ export default function Signup() {
               <div className="form-row">
                 <div className="form-group">
                   <label>First Name</label>
-                  <input placeholder="John" value={form.firstName} onChange={set('firstName')} maxLength={80} autoComplete="given-name" required />
+                  <input placeholder="John" value={form.firstName} onChange={set('firstName')} maxLength={30} autoComplete="given-name" required />
                 </div>
                 <div className="form-group">
                   <label>Last Name</label>
-                  <input placeholder="Doe" value={form.lastName} onChange={set('lastName')} maxLength={80} autoComplete="family-name" required />
+                  <input placeholder="Doe" value={form.lastName} onChange={set('lastName')} maxLength={30} autoComplete="family-name" required />
                 </div>
               </div>
 
               <div className="form-group">
                 <label>Email address</label>
-                <input type="email" placeholder="you@example.com" value={form.email} onChange={set('email')} maxLength={254} autoComplete="email" required />
+                <input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={form.email}
+                  onChange={set('email')}
+                  onBlur={() => setEmailTouched(true)}
+                  maxLength={60}
+                  autoComplete="email"
+                  aria-invalid={emailTouched && !emailValid}
+                  aria-describedby={emailTouched && !emailValid ? 'signup-email-error' : undefined}
+                  required
+                />
+                {emailTouched && !emailValid && (
+                  <div className="signup-validation-card signup-validation-error" id="signup-email-error" role="alert">
+                    Enter a valid email address (maximum 60 characters).
+                  </div>
+                )}
               </div>
 
               <div className="form-group">
@@ -215,18 +272,34 @@ export default function Signup() {
                 <div className="input-wrap">
                   <input
                     type={showPass ? 'text' : 'password'}
-                    placeholder="•••••••• (8–128 characters)"
+                    placeholder="7–17 characters, number + special sign"
                     value={form.password}
                     onChange={set('password')}
-                    minLength={8}
-                    maxLength={128}
+                    onFocus={() => setPasswordTouched(true)}
+                    minLength={7}
+                    maxLength={17}
                     autoComplete="new-password"
+                    aria-invalid={passwordTouched && !passwordValid}
+                    aria-describedby={passwordTouched && !passwordValid ? 'signup-password-checklist' : undefined}
                     required
                   />
                   <button type="button" className="input-icon" onClick={() => setShowPass(!showPass)}>
                     {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
+                {passwordTouched && !passwordValid && (
+                  <div className="signup-validation-card signup-password-checklist" id="signup-password-checklist" role="status" aria-live="polite">
+                    <strong>Password requirements</strong>
+                    <ul>
+                      {passwordChecks.map((check) => (
+                        <li key={check.label} className={check.valid ? 'is-valid' : 'is-invalid'}>
+                          {check.valid ? <Check size={15} aria-hidden="true" /> : <X size={15} aria-hidden="true" />}
+                          <span>{check.label}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
 
               <button type="submit" className="btn-primary auth-submit">
@@ -244,7 +317,7 @@ export default function Signup() {
           {step === 2 && (
             <form onSubmit={handleSubmit} className="auth-form step-fade-in">
               <div className="auth-header-block">
-                <h2>{accountType === 'artist' ? 'Creative Identity' : 'Collector Profile'}</h2>
+                <h2>{accountType === 'artist' ? 'Creative Identity' : 'Explorer Profile'}</h2>
                 <p className="auth-subtitle">
                   {accountType === 'artist'
                     ? 'Phase 2: Tell the community what you craft'
@@ -317,16 +390,20 @@ export default function Signup() {
               ) : (
                 <>
                   <div className="form-group">
-                    <label className="label-with-icon">
-                      <Palette size={14} /> Favorite Art Mediums
-                    </label>
-                    <select value={form.role} onChange={set('role')}>
-                      {ROLES.map((r) => (
-                        <option key={r} value={r}>
-                          {r}
-                        </option>
+                    <label className="label-with-icon"><Palette size={14} /> What art are you interested in? <span>(Optional, choose up to 5)</span></label>
+                    <div className="signup-interest-options">
+                      {EXPLORER_INTERESTS.map((interest) => (
+                        <button
+                          key={interest}
+                          type="button"
+                          className={`signup-interest-chip ${form.interests.includes(interest) ? 'active' : ''}`}
+                          aria-pressed={form.interests.includes(interest)}
+                          onClick={() => toggleInterest(interest)}
+                        >
+                          {interest}
+                        </button>
                       ))}
-                    </select>
+                    </div>
                   </div>
 
                   <div className="form-group">
@@ -342,9 +419,9 @@ export default function Signup() {
                   </div>
 
                   <div className="form-group">
-                    <label>Collecting Bio / Interests (Optional)</label>
+                    <label>What are you hoping to discover? <span>(Optional)</span></label>
                     <input
-                      placeholder="e.g. Passionate collector of contemporary oil works and 3D art"
+                      placeholder="Tell artists what you enjoy seeing"
                       value={form.bio}
                       onChange={set('bio')}
                       maxLength={300}
