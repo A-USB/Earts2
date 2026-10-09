@@ -13,6 +13,7 @@ const Order = require('./models/Order');
 const Follow = require('./models/Follow');
 const Like = require('./models/Like');
 const Collection = require('./models/Collection');
+const SavedArtwork = require('./models/SavedArtwork');
 
 const {
   memoryStore,
@@ -118,6 +119,7 @@ const ProxiedOrder = createModelProxy('Order', Order, memoryStore.orders);
 const ProxiedFollow = createModelProxy('Follow', Follow, memoryStore.follows);
 const ProxiedLike = createModelProxy('Like', Like, memoryStore.likes);
 const ProxiedCollection = createModelProxy('Collection', Collection, memoryStore.collections);
+const ProxiedSavedArtwork = createModelProxy('SavedArtwork', SavedArtwork, memoryStore.savedArtworks);
 
 module.exports = {
   connectDB,
@@ -131,5 +133,6 @@ module.exports = {
   Follow: ProxiedFollow,
   Like: ProxiedLike,
   Collection: ProxiedCollection,
+  SavedArtwork: ProxiedSavedArtwork,
   memoryStore
 };
