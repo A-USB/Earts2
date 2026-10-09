@@ -16,6 +16,7 @@ const {
   Follow,
   Like,
   Collection,
+  SavedArtwork,
   Notification,
   Product
 } = require('./db');
@@ -356,6 +357,11 @@ app.patch('/api/users/me', auth, async (req, res) => {
     const allowedFields = new Set(['firstName', 'lastName', 'bio', 'location', 'role', 'tags', 'tools', 'availableFor', 'coverColor']);
     const unknownField = Object.keys(req.body).find(key => !allowedFields.has(key));
     if (unknownField) return res.status(400).json({ error: 'One or more profile fields are not editable' });
+    const currentUser = await User.findById(req.userId);
+    if (!currentUser) return res.status(404).json({ error: 'User not found' });
+    if (currentUser.accountType === 'collector' && ['role', 'tools', 'availableFor'].some(field => field in req.body)) {
+      return res.status(400).json({ error: 'Explorer profiles cannot edit artist-only fields' });
+    }
     const updates = { ...req.body };
     const errors = [
       updates.firstName !== undefined ? validateText(updates.firstName, 'First name', 30, { required: true }) : null,
@@ -363,7 +369,7 @@ app.patch('/api/users/me', auth, async (req, res) => {
       updates.bio !== undefined ? validateText(updates.bio, 'Bio', 500, { multiline: true }) : null,
       updates.location !== undefined ? validateText(updates.location, 'Location', 100) : null,
       updates.role !== undefined ? enumValue(updates.role, ROLES, 'role') : null,
-      updates.tags !== undefined ? validateChoiceArray(updates.tags, new Set(['Illustration', 'Digital art', 'Watercolour', 'Sculpture', 'Oil', 'Abstract', 'Photography', 'Printmaking']), 'Tags') : null,
+      updates.tags !== undefined ? validateChoiceArray(updates.tags, new Set(['Painting', 'Digital Art', 'Illustration', 'Photography', 'Sculpture', 'Mixed Media', 'Watercolour', 'Abstract', 'Digital art', 'Oil', 'Printmaking']), 'Tags') : null,
       updates.tools !== undefined ? validateChoiceArray(updates.tools, new Set(['Procreate', 'Photoshop', 'Illustrator', 'Ink', 'Watercolour', 'Oil paint', 'Canvas', 'Clay', 'Metal', 'Wood']), 'Tools') : null,
       updates.availableFor !== undefined ? validateChoiceArray(updates.availableFor, new Set(['Commissions', 'Collaborations', 'Workshop', 'Exhibitions', 'Residencies']), 'Availability') : null,
       updates.coverColor !== undefined && (typeof updates.coverColor !== 'string' || updates.coverColor.length > 160 || !/^(#[\da-f]{3,8}|linear-gradient\([\d\s.,%#a-f()deg-]+\))$/i.test(updates.coverColor))
@@ -396,6 +402,7 @@ app.post('/api/users/:username/follow', auth, async (req, res) => {
   try {
     const target = await User.findOne({ username: req.params.username });
     if (!target) return res.status(404).json({ error: 'Target user not found' });
+    if (target.accountType === 'collector') return res.status(403).json({ error: 'Explorer profiles cannot be followed' });
     if (target.id === req.userId) return res.status(400).json({ error: "Can't follow yourself" });
 
     const existing = await Follow.findOne({ followerId: req.userId, followingId: target.id });
@@ -456,10 +463,19 @@ app.get('/api/users/me/likes', auth, async (req, res) => {
 
 app.get('/api/users/me/saved', auth, async (req, res) => {
   try {
-    const likes = await Like.find({ userId: req.userId });
-    const artworkIds = likes.map(l => l.artworkId);
+    const savedRecords = await SavedArtwork.find({ userId: req.userId }).sort({ createdAt: -1 });
+    const artworkIds = savedRecords.map(record => record.artworkId);
     const saved = await Artwork.find({ _id: { $in: artworkIds } });
     res.json(saved.map(a => a.toJSON()));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/users/me/saved/ids', auth, async (req, res) => {
+  try {
+    const saved = await SavedArtwork.find({ userId: req.userId });
+    res.json(saved.map(record => record.artworkId));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -547,9 +563,39 @@ app.post('/api/artworks', auth, async (req, res) => {
       createdAt: Date.now()
     });
 
+    const followers = await Follow.find({ followingId: req.userId });
+    if (followers.length) {
+      await Notification.insertMany(followers.map(({ followerId }) => ({
+        userId: followerId,
+        type: 'new_artwork',
+        actorName: `${user.firstName} ${user.lastName}`,
+        actorUsername: user.username,
+        text: 'shared a new artwork',
+        targetTitle: artwork.title,
+        targetId: artwork.id,
+        targetColor: artwork.color
+      })));
+    }
+
     res.status(201).json(artwork.toJSON());
   } catch (err) {
     res.status(500).json({ error: err.message || 'Failed to create artwork' });
+  }
+});
+
+app.post('/api/artworks/:id/save', auth, async (req, res) => {
+  try {
+    const artwork = await Artwork.findById(req.params.id);
+    if (!artwork) return res.status(404).json({ error: 'Artwork not found' });
+    const existing = await SavedArtwork.findOne({ userId: req.userId, artworkId: artwork.id });
+    if (existing) {
+      await SavedArtwork.findOneAndDelete({ userId: req.userId, artworkId: artwork.id });
+      return res.json({ saved: false });
+    }
+    await SavedArtwork.create({ userId: req.userId, artworkId: artwork.id });
+    res.json({ saved: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message || 'Failed to save artwork' });
   }
 });
 
@@ -832,6 +878,16 @@ app.post('/api/artworks/:id/purchase', auth, async (req, res) => {
         targetPrice: artwork.price,
         targetColor: artwork.color
       });
+      await Notification.create({
+        userId: buyer.id,
+        type: 'purchase',
+        actorName: 'Earts',
+        text: 'Your purchase was confirmed for',
+        targetTitle: artwork.title,
+        targetId: artwork.id,
+        targetPrice: artwork.price,
+        targetColor: artwork.color
+      });
     }
 
     res.json({ success: true, order: order.toJSON() });
@@ -843,7 +899,12 @@ app.post('/api/artworks/:id/purchase', auth, async (req, res) => {
 // ================= NOTIFICATIONS ROUTES =================
 app.get('/api/notifications', auth, async (req, res) => {
   try {
-    const list = await Notification.find({ userId: req.userId }).sort({ createdAt: -1 }).limit(50);
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const types = user.accountType === 'collector'
+      ? ['purchase', 'new_artwork']
+      : ['like', 'comment', 'sale', 'follow', 'feature', 'new_artwork'];
+    const list = await Notification.find({ userId: req.userId, type: { $in: types } }).sort({ createdAt: -1 }).limit(50);
     res.json(list.map(n => n.toJSON()));
   } catch (err) {
     res.status(500).json({ error: err.message });
