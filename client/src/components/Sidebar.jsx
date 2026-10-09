@@ -136,7 +136,7 @@ export default function Sidebar() {
           </div>
           <div className="sidebar-label sidebar-user-info">
             <strong>{user?.firstName} {user?.lastName}</strong>
-            <span>{user?.accountType === 'collector' ? 'Collector' : 'Artist'}</span>
+            <span>{user?.accountType === 'collector' ? 'Explorer' : 'Artist'}</span>
           </div>
         </button>
 
