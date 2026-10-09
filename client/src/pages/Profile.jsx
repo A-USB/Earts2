@@ -363,7 +363,7 @@ export default function Profile() {
                 <h1 className="profile-fullname">{profile.firstName} {profile.lastName}</h1>
                 <span className={`profile-badge-pill ${isCollector ? 'collector-pill' : 'artist-pill'}`}>
                   {isCollector ? <Sparkles size={12} /> : <Palette size={12} />}
-                  {isCollector ? 'Collector' : profile.role || 'Artist'}
+                  {isCollector ? 'Explorer' : profile.role || 'Artist'}
                 </span>
               </div>
 
@@ -391,7 +391,7 @@ export default function Profile() {
               </div>
 
               {/* Tags row */}
-              {!isCollector && profile.tags?.length > 0 && (
+              {profile.tags?.length > 0 && (
                 <div className="profile-tags-row">
                   {profile.tags.map(t => (
                     <span key={t} className="profile-tag-pill">{t}</span>
