@@ -301,6 +301,25 @@ class MemoryCollection {
     this.data = this.data.filter(d => !matchQuery(d, filter));
     return { deletedCount: initialLen - this.data.length };
   }
+
+  async updateMany(filter = {}, updates = {}) {
+    let modifiedCount = 0;
+    for (const doc of this.data) {
+      if (!matchQuery(doc, filter)) continue;
+      if (updates.$inc) {
+        for (const [key, amount] of Object.entries(updates.$inc)) {
+          doc[key] = (doc[key] || 0) + amount;
+        }
+      }
+      if (updates.$set) Object.assign(doc, updates.$set);
+      for (const [key, value] of Object.entries(updates)) {
+        if (key !== '$inc' && key !== '$set') doc[key] = value;
+      }
+      await doc.save();
+      modifiedCount += 1;
+    }
+    return { acknowledged: true, matchedCount: modifiedCount, modifiedCount };
+  }
 }
 
 const memoryStore = {
@@ -312,6 +331,7 @@ const memoryStore = {
   follows: new MemoryCollection('follows'),
   likes: new MemoryCollection('likes'),
   collections: new MemoryCollection('collections'),
+  savedArtworks: new MemoryCollection('savedArtworks'),
   notifications: new MemoryCollection('notifications'),
 };
 
