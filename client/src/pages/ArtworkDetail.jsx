@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Heart, Share2, ShoppingCart, ArrowLeft, Tag, MessageCircle, Send } from 'lucide-react';
+import { Heart, Share2, ShoppingCart, ArrowLeft, Tag, MessageCircle, Send, Bookmark } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
@@ -15,6 +15,7 @@ export default function ArtworkDetail() {
   const navigate = useNavigate();
   const [artwork, setArtwork] = useState(null);
   const [liked, setLiked] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showPurchase, setShowPurchase] = useState(false);
   const [comments, setComments] = useState([]);
@@ -26,16 +27,18 @@ export default function ArtworkDetail() {
     Promise.all([
       api.get(`/artworks/${id}`),
       api.get(`/artworks/${id}/comments`).catch(() => []),
-      user ? api.get('/users/me/likes').catch(() => []) : Promise.resolve([]),
+      user?.id ? api.get('/users/me/likes').catch(() => []) : Promise.resolve([]),
+      user?.id ? api.get('/users/me/saved/ids').catch(() => []) : Promise.resolve([]),
     ])
-      .then(([art, cmts, myLikes]) => {
+      .then(([art, cmts, myLikes, mySaved]) => {
         setArtwork(art);
         setComments(cmts);
         setLiked(myLikes.includes(art.id));
+        setSaved(mySaved.includes(art.id));
       })
       .catch(() => navigate('/marketplace'))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, user?.id, navigate]);
 
   const handleLike = async () => {
     if (!user) { navigate('/login'); return; }
@@ -55,6 +58,14 @@ export default function ArtworkDetail() {
       setArtwork(prev => ({ ...prev, likes: prevLikes }));
       setLiked(prevLiked);
     }
+  };
+
+  const handleSave = async () => {
+    if (!user) { navigate('/login'); return; }
+    try {
+      const result = await api.post(`/artworks/${id}/save`);
+      setSaved(result.saved);
+    } catch {}
   };
 
   const handleComment = async (e) => {
@@ -118,6 +129,10 @@ export default function ArtworkDetail() {
               <button className={`like-btn ${liked ? 'liked' : ''}`} onClick={handleLike}>
                 <Heart size={18} fill={liked ? 'currentColor' : 'none'} />
                 {formatLikes(artwork.likes)} likes
+              </button>
+              <button className={`like-btn ${saved ? 'liked' : ''}`} onClick={handleSave} aria-pressed={saved}>
+                <Bookmark size={18} fill={saved ? 'currentColor' : 'none'} />
+                {saved ? 'Saved' : 'Save'}
               </button>
               <button className="share-btn btn-ghost">
                 <Share2 size={16} /> Share
