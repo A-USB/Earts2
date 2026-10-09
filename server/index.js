@@ -3,7 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { CATEGORIES, ROLES, text: validateText, email: validateEmail, enumValue, stringArray, safeImage, price: validatePrice } = require('./validation');
+const { CATEGORIES, ROLES, text: validateText, email: validateEmail, signupPassword, enumValue, stringArray, safeImage, price: validatePrice } = require('./validation');
+
+const EXPLORER_INTERESTS = new Set(['Painting', 'Digital Art', 'Illustration', 'Photography', 'Sculpture', 'Mixed Media', 'Watercolour', 'Abstract']);
 
 const {
   connectDB,
@@ -136,20 +138,21 @@ function validateToolString(value) {
 // ================= AUTH ROUTES =================
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { firstName, lastName, email, password, role, accountType, workplace = '', location = '', tools = '', bio = '' } = req.body;
+    const { firstName, lastName, email, password, role, accountType, workplace = '', location = '', tools = '', bio = '', interests = [] } = req.body;
     const errors = [
-      validateText(firstName, 'First name', 80, { required: true }),
-      validateText(lastName, 'Last name', 80, { required: true }),
-      validateEmail(email),
-      validateText(password, 'Password', 128, { required: true, minLength: 8 }),
+      validateText(firstName, 'First name', 30, { required: true }),
+      validateText(lastName, 'Last name', 30, { required: true }),
+      validateEmail(email, 60),
+      signupPassword(password),
       enumValue(accountType, new Set(['artist', 'collector']), 'account type'),
-      enumValue(role, ROLES, 'role'),
-      validateText(workplace, 'Workplace', 100),
+      accountType === 'artist' ? enumValue(role, ROLES, 'role') : null,
+      accountType === 'artist' ? validateText(workplace, 'Workplace', 100) : null,
       validateText(location, 'Location', 100),
       validateText(bio, 'Bio', 300, { multiline: true }),
-      typeof tools === 'string'
+      accountType === 'collector' ? validateChoiceArray(interests, EXPLORER_INTERESTS, 'Interests') : null,
+      accountType === 'artist' && typeof tools === 'string'
         ? validateToolString(tools)
-        : stringArray(tools, 'Tools', { maxItems: 10, itemLength: 40 })
+        : accountType === 'artist' ? stringArray(tools, 'Tools', { maxItems: 10, itemLength: 40 }) : null
     ].filter(Boolean);
     if (errors.length) return res.status(400).json({ error: errors[0] });
 
@@ -160,12 +163,12 @@ app.post('/api/auth/register', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const baseUser = `${firstName.toLowerCase()}_${lastName.toLowerCase()}`.replace(/[^a-z0-9_]/g, '');
+    const baseUser = `${firstName.toLowerCase()}_${lastName.toLowerCase()}`.replace(/[^a-z0-9_]/g, '').slice(0, 34);
     const username = `${baseUser}_${Date.now().toString().slice(-4)}`;
 
-    const parsedTools = Array.isArray(tools) 
+    const parsedTools = accountType === 'artist' && Array.isArray(tools)
       ? tools 
-      : (typeof tools === 'string' && tools.trim() ? tools.split(',').map(t => t.trim()).filter(Boolean) : []);
+      : (accountType === 'artist' && typeof tools === 'string' && tools.trim() ? tools.split(',').map(t => t.trim()).filter(Boolean) : []);
 
     const user = await User.create({
       username,
@@ -175,10 +178,11 @@ app.post('/api/auth/register', async (req, res) => {
       password: hashedPassword,
       role: accountType === 'collector' ? 'Collector' : role,
       accountType,
-      workplace: workplace.trim(),
+      workplace: accountType === 'artist' ? workplace.trim() : '',
       location: location.trim(),
       tools: parsedTools,
-      bio: bio.trim()
+      bio: bio.trim(),
+      tags: accountType === 'collector' ? interests : []
     });
 
     const token = jwt.sign({ id: user.id }, SECRET, { expiresIn: '7d' });
@@ -249,9 +253,9 @@ app.post('/api/auth/google', async (req, res) => {
       return res.status(400).json({ error: 'Valid Google account info is required' });
     }
     const googleErrors = [
-      validateEmail(email),
-      validateText(firstName || 'Creator', 'First name', 80, { required: true }),
-      validateText(lastName || '', 'Last name', 80),
+      validateEmail(email, 60),
+      validateText(firstName || 'Creator', 'First name', 30, { required: true }),
+      validateText(lastName || '', 'Last name', 30),
       enumValue(accountType || 'artist', new Set(['artist', 'collector']), 'account type'),
       enumValue(role || 'Artist', ROLES, 'role'),
       avatar != null && (typeof avatar !== 'string' || avatar.length > 2048 || !/^https:\/\//i.test(avatar))
@@ -283,7 +287,7 @@ app.post('/api/auth/google', async (req, res) => {
       // Create new user via Google
       const cleanFirst = (firstName || 'creator').toLowerCase().replace(/[^a-z0-9]/g, '');
       const cleanLast = (lastName || 'artist').toLowerCase().replace(/[^a-z0-9]/g, '');
-      const baseUser = `${cleanFirst}_${cleanLast}` || 'creator';
+      const baseUser = `${cleanFirst}_${cleanLast}`.slice(0, 34) || 'creator';
       let username = `${baseUser}_${Date.now().toString().slice(-4)}`;
 
       // Ensure username uniqueness
@@ -354,8 +358,8 @@ app.patch('/api/users/me', auth, async (req, res) => {
     if (unknownField) return res.status(400).json({ error: 'One or more profile fields are not editable' });
     const updates = { ...req.body };
     const errors = [
-      updates.firstName !== undefined ? validateText(updates.firstName, 'First name', 80, { required: true }) : null,
-      updates.lastName !== undefined ? validateText(updates.lastName, 'Last name', 80, { required: true }) : null,
+      updates.firstName !== undefined ? validateText(updates.firstName, 'First name', 30, { required: true }) : null,
+      updates.lastName !== undefined ? validateText(updates.lastName, 'Last name', 30, { required: true }) : null,
       updates.bio !== undefined ? validateText(updates.bio, 'Bio', 500, { multiline: true }) : null,
       updates.location !== undefined ? validateText(updates.location, 'Location', 100) : null,
       updates.role !== undefined ? enumValue(updates.role, ROLES, 'role') : null,
@@ -523,11 +527,13 @@ app.get('/api/artworks/:id', async (req, res) => {
 
 app.post('/api/artworks', auth, async (req, res) => {
   try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.accountType === 'collector') return res.status(403).json({ error: 'Explorer accounts cannot upload artwork' });
     const validationError = validateArtworkPayload(req.body);
     if (validationError) return res.status(400).json({ error: validationError });
-    const user = await User.findById(req.userId);
-    const artistName = user ? `${user.firstName} ${user.lastName}` : (req.body.artistName || 'Artist');
-    const artistUsername = user ? user.username : null;
+    const artistName = `${user.firstName} ${user.lastName}`;
+    const artistUsername = user.username;
 
     const artwork = await Artwork.create({
       ...req.body,
