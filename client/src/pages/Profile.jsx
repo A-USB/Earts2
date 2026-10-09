@@ -145,7 +145,7 @@ export default function Profile() {
         setProfile(null);
       })
       .finally(() => setLoading(false));
-  }, [username, me]);
+  }, [username, me, navigate]);
 
   useEffect(() => {
     if (isOwn && isCollector) {
@@ -246,13 +246,11 @@ export default function Profile() {
   const statItems = isCollector
     ? (isOwn
         ? [
-            { label: 'Followers', value: formatNum(profile.followers) },
             { label: 'Following', value: profile.following },
             { label: 'Saved Pieces', value: saved.length },
             { label: 'Purchases', value: orders.length },
           ]
         : [
-            { label: 'Followers', value: formatNum(profile.followers) },
             { label: 'Following', value: profile.following },
           ])
     : [
@@ -335,13 +333,13 @@ export default function Profile() {
                   </>
                 ) : (
                   <>
-                    <button
+                    {!isCollector && <button
                       className={isFollowing ? 'btn-outline profile-action-btn' : 'btn-primary profile-action-btn'}
                       onClick={handleFollowToggle}
                       disabled={followBusy}
                     >
                       {isFollowing ? 'Following' : 'Follow'}
-                    </button>
+                    </button>}
                     <button
                       className="btn-outline profile-action-btn"
                       onClick={() => alert(`Direct messaging with ${profile.firstName} is coming soon!`)}
@@ -467,7 +465,7 @@ export default function Profile() {
                       <div className="empty-collection card">
                         <Heart size={32} />
                         <h4>No saved artworks yet</h4>
-                        <p>Artworks you save or like while browsing will appear here.</p>
+                        <p>Artworks you save while browsing will appear here.</p>
                         <Link to="/marketplace" className="btn-outline">Explore Marketplace</Link>
                       </div>
                     )
