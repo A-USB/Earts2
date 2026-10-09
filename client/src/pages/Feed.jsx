@@ -157,13 +157,15 @@ export default function Feed() {
   return (
     <div className="feed-page page-wrapper">
       <div className="container feed-container">
-        <div className="composer-bar card" onClick={() => setShowComposer(true)}>
-          <Avatar seed={(user?.firstName||'')+(user?.lastName||'')} size={40} />
-          <span>Share what you're working on...</span>
-          <button className="btn-primary composer-btn" onClick={(e) => { e.stopPropagation(); setShowComposer(true); }}>
-            <ImagePlus size={16} /> Post
-          </button>
-        </div>
+        {user?.accountType !== 'collector' && (
+          <div className="composer-bar card" onClick={() => setShowComposer(true)}>
+            <Avatar seed={(user?.firstName||'')+(user?.lastName||'')} size={40} />
+            <span>Share what you're working on...</span>
+            <button className="btn-primary composer-btn" onClick={(e) => { e.stopPropagation(); setShowComposer(true); }}>
+              <ImagePlus size={16} /> Post
+            </button>
+          </div>
+        )}
 
         {loading ? (
           <div className="feed-skeletons">
@@ -207,7 +209,7 @@ export default function Feed() {
         />
       )}
 
-      {showComposer && (
+      {showComposer && user?.accountType !== 'collector' && (
         <CreatePostModal
           onClose={() => setShowComposer(false)}
           onPosted={(newPost) => {
