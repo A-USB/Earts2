@@ -103,11 +103,11 @@ export default function Settings() {
                 <div className="form-row-s">
                   <div className="form-group">
                     <label>First Name</label>
-                    <input value={form.firstName} onChange={set('firstName')} placeholder="First name" maxLength={80} />
+                    <input value={form.firstName} onChange={set('firstName')} placeholder="First name" maxLength={30} />
                   </div>
                   <div className="form-group">
                     <label>Last Name</label>
-                    <input value={form.lastName} onChange={set('lastName')} placeholder="Last name" maxLength={80} />
+                    <input value={form.lastName} onChange={set('lastName')} placeholder="Last name" maxLength={30} />
                   </div>
                 </div>
 
