@@ -283,9 +283,7 @@
 
 /* Dropdown */
 .sidebar-dropdown {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 0;
+  position: fixed;
   background: white;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);

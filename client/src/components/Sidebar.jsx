@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   Rss, ShoppingBag, ImagePlus, User, Search, Bell,
@@ -22,6 +23,8 @@ export default function Sidebar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState(null);
+  const userButtonRef = useRef(null);
 
   const isProfileActive = user?.username ? location.pathname.startsWith(`/profile/${user.username}`) : false;
 
@@ -129,8 +132,20 @@ export default function Sidebar() {
 
       <div className="sidebar-bottom">
         <button
+          ref={userButtonRef}
           className="sidebar-user"
-          onClick={() => setDropdownOpen(!dropdownOpen)}
+          onClick={() => {
+            if (dropdownOpen) {
+              setDropdownOpen(false);
+              return;
+            }
+            const bounds = userButtonRef.current.getBoundingClientRect();
+            setDropdownPosition({
+              left: bounds.left,
+              bottom: window.innerHeight - bounds.top + 8,
+            });
+            setDropdownOpen(true);
+          }}
           title={user ? `${user.firstName} ${user.lastName}` : 'Account'}
         >
           <div className="sidebar-user-avatar">
@@ -142,8 +157,8 @@ export default function Sidebar() {
           </div>
         </button>
 
-        {dropdownOpen && (
-          <div className="sidebar-dropdown">
+        {dropdownOpen && dropdownPosition && createPortal(
+          <div className="sidebar-dropdown" style={dropdownPosition}>
             <div className="dropdown-header">
               <strong>{user?.firstName} {user?.lastName}</strong>
               <span>{user?.email}</span>
@@ -157,7 +172,8 @@ export default function Sidebar() {
             <button onClick={() => { logout(); setDropdownOpen(false); navigate('/login'); }}>
               <LogOut size={15} /> Sign Out
             </button>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </aside>
