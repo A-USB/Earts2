@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import {
   Search, SlidersHorizontal, X, ShoppingBag,
-  Sparkles, Users, ArrowRight, Tag, Eye
+  Sparkles, Users, ArrowRight, Eye
 } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
@@ -22,6 +22,7 @@ const SORT_OPTIONS = [
 
 export default function Marketplace() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [artworks, setArtworks] = useState([]);
   const [featuredArtists, setFeaturedArtists] = useState([]);
@@ -35,6 +36,24 @@ export default function Marketplace() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [priceRange, setPriceRange] = useState([0, 1000]);
   const [buyTarget, setBuyTarget] = useState(null);
+  const [savedIds, setSavedIds] = useState([]);
+
+  useEffect(() => {
+    if (!user) { setSavedIds([]); return; }
+    api.get('/users/me/saved/ids').then(setSavedIds).catch(() => setSavedIds([]));
+  }, [user]);
+
+  const handleToggleSave = async (artwork) => {
+    if (!user) { navigate('/login'); return; }
+    try {
+      const result = await api.post(`/artworks/${artwork.id}/save`);
+      setSavedIds(current => result.saved
+        ? (current.includes(artwork.id) ? current : [...current, artwork.id])
+        : current.filter(id => id !== artwork.id));
+    } catch (error) {
+      console.error('Failed to save artwork:', error);
+    }
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -235,6 +254,8 @@ export default function Marketplace() {
                 key={a.id}
                 artwork={a}
                 onBuyClick={setBuyTarget}
+                saved={savedIds.includes(a.id)}
+                onToggleSave={handleToggleSave}
               />
             ))}
           </div>
