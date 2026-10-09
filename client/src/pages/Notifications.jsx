@@ -6,79 +6,9 @@ import {
 } from 'lucide-react';
 import { api } from '../utils/api';
 import Avatar from '../components/Avatar';
+import { useAuth } from '../context/AuthContext';
+import { announceNotificationsChanged } from '../hooks/useUnreadNotificationCount';
 import './Notifications.css';
-
-const INITIAL_NOTIFICATIONS = [
-  {
-    id: '1',
-    type: 'sale',
-    actorName: 'Nadia Reyes',
-    actorUsername: 'nadia_reyes',
-    text: 'purchased your artwork',
-    targetTitle: 'Sun 2',
-    targetId: '15',
-    targetPrice: 79.99,
-    targetColor: '#FF6B9D',
-    time: '5m ago',
-    read: false,
-  },
-  {
-    id: '2',
-    type: 'like',
-    actorName: 'Jane Murungi',
-    actorUsername: 'jane_murungi',
-    text: 'liked your piece',
-    targetTitle: 'Form & Shadow',
-    targetId: '16',
-    targetColor: '#5B4BF5',
-    time: '24m ago',
-    read: false,
-  },
-  {
-    id: '3',
-    type: 'comment',
-    actorName: 'Ara Hibris',
-    actorUsername: 'arahibris2011',
-    text: 'commented: "The balance and texture on this piece are extraordinary!" on',
-    targetTitle: 'Sun 2',
-    targetId: '15',
-    targetColor: '#FF6B9D',
-    time: '1h ago',
-    read: false,
-  },
-  {
-    id: '4',
-    type: 'follow',
-    actorName: 'Hussina Patel',
-    actorUsername: 'hussina_patel',
-    text: 'started following your creative portfolio',
-    time: '3h ago',
-    read: true,
-  },
-  {
-    id: '5',
-    type: 'feature',
-    actorName: 'Earts Editorial',
-    text: 'selected your piece for the Homepage Curated Showcase!',
-    targetTitle: 'Golden Ochre',
-    targetId: '17',
-    targetColor: '#E59866',
-    time: '1d ago',
-    read: true,
-  },
-  {
-    id: '6',
-    type: 'like',
-    actorName: 'Nadia Reyes',
-    actorUsername: 'nadia_reyes',
-    text: 'liked your piece',
-    targetTitle: 'Golden Ochre',
-    targetId: '17',
-    targetColor: '#E59866',
-    time: '2d ago',
-    read: true,
-  },
-];
 
 const FILTER_TABS = [
   { id: 'all', label: 'All' },
@@ -87,40 +17,64 @@ const FILTER_TABS = [
   { id: 'network', label: 'Followers' },
 ];
 
+function formatTimeAgo(timestamp) {
+  const elapsed = Date.now() - Number(timestamp || 0);
+  if (!timestamp || elapsed < 0) return '';
+  if (elapsed < 60000) return 'just now';
+  if (elapsed < 3600000) return `${Math.floor(elapsed / 60000)}m ago`;
+  if (elapsed < 86400000) return `${Math.floor(elapsed / 3600000)}h ago`;
+  return `${Math.floor(elapsed / 86400000)}d ago`;
+}
+
 export default function Notifications() {
-  const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
+  const { user } = useAuth();
+  const isExplorer = user?.accountType === 'collector';
+  const [notifications, setNotifications] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
+  const tabs = isExplorer
+    ? [{ id: 'all', label: 'All' }, { id: 'purchases', label: 'Purchases' }, { id: 'artists', label: 'Artists you follow' }]
+    : FILTER_TABS;
 
   useEffect(() => {
     api.get('/notifications')
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          setNotifications(data);
-        }
+        setNotifications(Array.isArray(data) ? data : []);
       })
       .catch(() => {});
-  }, []);
+  }, [user?.id]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    api.patch('/notifications/read-all').catch(() => {});
+  const markAllAsRead = async () => {
+    try {
+      await api.patch('/notifications/read-all');
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      announceNotificationsChanged();
+    } catch {}
   };
 
-  const markAsRead = (id) => {
-    setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
-    api.patch(`/notifications/${id}/read`).catch(() => {});
+  const markAsRead = async (id) => {
+    try {
+      await api.patch(`/notifications/${id}/read`);
+      setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
+      announceNotificationsChanged();
+    } catch {}
   };
 
   const deleteNotification = (e, id) => {
     e.stopPropagation();
     e.preventDefault();
-    setNotifications(prev => prev.filter(n => n.id !== id));
-    api.delete(`/notifications/${id}`).catch(() => {});
+    api.delete(`/notifications/${id}`)
+      .then(() => {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+        announceNotificationsChanged();
+      })
+      .catch(() => {});
   };
 
   const filtered = notifications.filter(n => {
+    if (activeTab === 'purchases') return n.type === 'purchase';
+    if (activeTab === 'artists') return n.type === 'new_artwork';
     if (activeTab === 'interactions') return n.type === 'like' || n.type === 'comment';
     if (activeTab === 'sales') return n.type === 'sale';
     if (activeTab === 'network') return n.type === 'follow';
@@ -134,7 +88,10 @@ export default function Notifications() {
       case 'comment':
         return <MessageCircle size={16} color="#5B4BF5" />;
       case 'sale':
+      case 'purchase':
         return <ShoppingBag size={16} color="#10B981" />;
+      case 'new_artwork':
+        return <Sparkles size={16} color="#5B4BF5" />;
       case 'follow':
         return <UserPlus size={16} color="#8B5CF6" />;
       case 'feature':
@@ -157,7 +114,7 @@ export default function Notifications() {
                 <span className="notif-unread-badge">{unreadCount} new</span>
               )}
             </div>
-            <p className="notif-subtitle">Activity, sales, and interactions across your art</p>
+            <p className="notif-subtitle">{isExplorer ? 'Updates from artists you follow and your purchases' : 'Activity, sales, and interactions across your art'}</p>
           </div>
 
           {unreadCount > 0 && (
@@ -169,7 +126,7 @@ export default function Notifications() {
 
         {/* Filter Tabs */}
         <div className="notifications-tabs">
-          {FILTER_TABS.map(tab => (
+          {tabs.map(tab => (
             <button
               key={tab.id}
               className={`notif-tab ${activeTab === tab.id ? 'active' : ''}`}
@@ -226,10 +183,10 @@ export default function Notifications() {
                   </p>
 
                   <div className="notif-meta-row">
-                    <span className="notif-time">{item.time}</span>
-                    {item.type === 'sale' && (
+                    <span className="notif-time">{item.time || formatTimeAgo(item.createdAt)}</span>
+                    {(item.type === 'sale' || item.type === 'purchase') && (
                       <span className="notif-sale-tag">
-                        <Tag size={12} /> +${item.targetPrice} earned
+                        <Tag size={12} /> {item.type === 'purchase' ? `Paid $${item.targetPrice}` : `+$${item.targetPrice} earned`}
                       </span>
                     )}
                   </div>
@@ -268,7 +225,7 @@ export default function Notifications() {
             <div className="notifications-empty">
               <span className="empty-bell-icon">🔔</span>
               <h3>No notifications in this filter</h3>
-              <p>When artists and collectors interact with your pieces, they'll show up here.</p>
+              <p>{isExplorer ? 'New work from followed artists and purchase confirmations will appear here.' : 'When people interact with your artwork, the updates will appear here.'}</p>
               {activeTab !== 'all' && (
                 <button className="btn-outline" onClick={() => setActiveTab('all')}>
                   Show all notifications
