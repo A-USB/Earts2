@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, MessageCircle, ShoppingBag, ImagePlus, Tag } from 'lucide-react';
+import { Heart, MessageCircle, ShoppingBag, ImagePlus, Tag, Bookmark } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
@@ -19,7 +19,7 @@ function timeAgo(ts) {
   return min >= 1 ? `${min}m ago` : 'just now';
 }
 
-function Post({ post, isFollowing, onToggleFollow, liked, onToggleLike, isSelf, onOpenComments }) {
+function Post({ post, isFollowing, onToggleFollow, liked, onToggleLike, saved, onToggleSave, isSelf, onOpenComments }) {
   const formatLikes = n => n >= 1000 ? `${(n/1000).toFixed(1)}k` : n;
 
   return (
@@ -61,6 +61,15 @@ function Post({ post, isFollowing, onToggleFollow, liked, onToggleLike, isSelf, 
         >
           <MessageCircle size={22} />
         </button>
+        <button
+          className={`post-icon-btn ${saved ? 'saved' : ''}`}
+          onClick={() => onToggleSave(post)}
+          title={saved ? 'Remove from saved artworks' : 'Save artwork'}
+          aria-label={saved ? 'Remove from saved artworks' : 'Save artwork'}
+          aria-pressed={saved}
+        >
+          <Bookmark size={21} fill={saved ? 'currentColor' : 'none'} />
+        </button>
         {post.status === 'for_sale' && (
           <Link to={`/artwork/${post.id}`} className="post-icon-btn post-marketplace-btn" title="View in Marketplace">
             <ShoppingBag size={22} />
@@ -91,6 +100,7 @@ export default function Feed() {
   const [loading, setLoading] = useState(true);
   const [followingIds, setFollowingIds] = useState([]);
   const [likedIds, setLikedIds] = useState([]);
+  const [savedIds, setSavedIds] = useState([]);
   const [showComposer, setShowComposer] = useState(false);
   const [commentsPostId, setCommentsPostId] = useState(null);
 
@@ -100,14 +110,26 @@ export default function Feed() {
       api.get('/feed'),
       api.get('/users/me/following').catch(() => []),
       api.get('/users/me/likes').catch(() => []),
+      api.get('/users/me/saved/ids').catch(() => []),
     ])
-      .then(([feedPosts, following, likes]) => {
+      .then(([feedPosts, following, likes, saved]) => {
         setPosts(feedPosts);
         setFollowingIds(following);
         setLikedIds(likes);
+        setSavedIds(saved);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
+  };
+
+  const handleToggleSave = async (post) => {
+    if (!user) { navigate('/login'); return; }
+    try {
+      const data = await api.post(`/artworks/${post.id}/save`);
+      setSavedIds(prev => data.saved
+        ? (prev.includes(post.id) ? prev : [...prev, post.id])
+        : prev.filter(id => id !== post.id));
+    } catch {}
   };
 
   useEffect(() => { loadFeed(); }, []);
@@ -186,6 +208,8 @@ export default function Feed() {
                 onToggleFollow={handleToggleFollow}
                 liked={likedIds.includes(post.id)}
                 onToggleLike={handleToggleLike}
+                saved={savedIds.includes(post.id)}
+                onToggleSave={handleToggleSave}
                 isSelf={user && post.artistId === user.id}
                 onOpenComments={(p) => setCommentsPostId(p.id)}
               />
