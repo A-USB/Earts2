@@ -21,10 +21,20 @@ function text(value, label, maxLength, { required = false, minLength = 0, multil
   return null;
 }
 
-function email(value) {
+function email(value, maxLength = 254) {
   if (typeof value !== 'string') return 'Enter a valid email address';
   const normalized = value.trim().toLowerCase();
-  return normalized.length <= 254 && EMAIL_PATTERN.test(normalized) ? null : 'Enter a valid email address (max 254 characters)';
+  return normalized.length <= maxLength && EMAIL_PATTERN.test(normalized)
+    ? null
+    : `Enter a valid email address (max ${maxLength} characters)`;
+}
+
+function signupPassword(value) {
+  if (typeof value !== 'string' || value.length < 7) return 'Password must be at least 7 characters';
+  if (value.length > 17) return 'Password must be 17 characters or fewer';
+  if (!/\d/.test(value)) return 'Password must include at least one number';
+  if (!/[^A-Za-z0-9\s]/.test(value)) return 'Password must include at least one special character';
+  return null;
 }
 
 function enumValue(value, choices, label) {
@@ -67,4 +77,4 @@ function price(value, { required = false } = {}) {
     : 'Price must be greater than 0 and no more than 1,000,000,000';
 }
 
-module.exports = { CATEGORIES, ROLES, text, email, enumValue, stringArray, safeImage, price };
+module.exports = { CATEGORIES, ROLES, text, email, signupPassword, enumValue, stringArray, safeImage, price };
