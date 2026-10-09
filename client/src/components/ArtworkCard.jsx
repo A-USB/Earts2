@@ -1,8 +1,8 @@
-import { Heart, Tag, ShoppingCart, Users } from 'lucide-react';
+import { Heart, Tag, ShoppingCart, Users, Bookmark } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import './ArtworkCard.css';
 
-export default function ArtworkCard({ artwork, onClick, onBuyClick }) {
+export default function ArtworkCard({ artwork, onClick, onBuyClick, saved = false, onToggleSave }) {
   const formatLikes = (n) => n >= 1000 ? `${(n/1000).toFixed(1)}k` : n;
 
   const hasCollaborators = artwork.collaborators && artwork.collaborators.length > 0;
@@ -30,6 +30,19 @@ export default function ArtworkCard({ artwork, onClick, onBuyClick }) {
             </span>
           )}
         </div>
+
+        {onToggleSave && (
+          <button
+            type="button"
+            className={`artwork-save-btn ${saved ? 'saved' : ''}`}
+            onClick={(event) => { event.preventDefault(); event.stopPropagation(); onToggleSave(artwork); }}
+            title={saved ? 'Remove from saved artworks' : 'Save artwork'}
+            aria-label={saved ? 'Remove from saved artworks' : 'Save artwork'}
+            aria-pressed={saved}
+          >
+            <Bookmark size={16} fill={saved ? 'currentColor' : 'none'} />
+          </button>
+        )}
 
         {onBuyClick && artwork.status === 'for_sale' && (
           <button
