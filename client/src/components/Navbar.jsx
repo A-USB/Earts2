@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Search, Bell, Menu, X, ChevronDown } from 'lucide-react';
+import { Search, Menu, X, ChevronDown } from 'lucide-react';
 import Avatar from './Avatar';
 import { EartsLogo } from './EartsLogo';
 import ThemeToggle from './ThemeToggle';
@@ -146,10 +146,6 @@ export default function Navbar() {
               <ThemeToggle />
               {user ? (
                 <>
-                  <Link to="/notifications" className="icon-btn notif-btn" title="Notifications">
-                    <Bell size={18} />
-                    <span className="notif-dot" />
-                  </Link>
                   <div className="avatar-menu" onClick={() => setDropdownOpen(!dropdownOpen)}>
                     <Avatar seed={(user.firstName||'') + (user.lastName||'')} size={34} />
                     <ChevronDown size={14} />
