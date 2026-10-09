@@ -32,6 +32,23 @@
   padding: 12px;
 }
 .artwork-card:hover .artwork-overlay { opacity: 1; }
+.artwork-save-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.72);
+  border-radius: 50%;
+  background: rgba(18,18,35,.72);
+  color: white;
+  cursor: pointer;
+}
+.artwork-save-btn.saved { color: #ff6b9d; background: white; }
+.artwork-save-btn:hover { transform: scale(1.06); }
 .artwork-category {
   font-size: 11px;
   background: rgba(255,255,255,0.95);
