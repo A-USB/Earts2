@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import Navbar from './components/Navbar'
@@ -12,12 +13,12 @@ import Feed from './pages/Feed'
 import Marketplace from './pages/Marketplace'
 import Profile from './pages/Profile'
 import ArtworkDetail from './pages/ArtworkDetail'
-import Gallery from './pages/Gallery'
 import UploadArtwork from './pages/UploadArtwork'
 import Settings from './pages/Settings'
 import Notifications from './pages/Notifications'
 import Logout from './pages/Logout'
 import NotFound from './pages/NotFound'
+import FeedTransition from './components/FeedTransition'
 import './App.css'
 
 // These routes always keep the classic top navbar, logged in or not
@@ -27,8 +28,17 @@ const CHROMELESS_ROUTES = ['/login', '/signup', '/logout'];
 
 function HomeRoute() {
   const { user, loading } = useAuth();
-  if (loading) return null;
-  if (user) return <Navigate to="/feed" replace />;
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (loading || !user) return;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const timeout = window.setTimeout(() => navigate('/feed', { replace: true }), reducedMotion ? 100 : 900);
+    return () => window.clearTimeout(timeout);
+  }, [loading, navigate, user]);
+
+  if (loading) return localStorage.getItem('earts_token') ? <FeedTransition /> : null;
+  if (user) return <FeedTransition />;
   return <Home />;
 }
 
