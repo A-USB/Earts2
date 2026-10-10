@@ -65,11 +65,16 @@ export default function GoogleAuthButton({ accountType = 'artist', role = 'Artis
 
   return (
     <div className="google-auth-container">
-      <div ref={buttonRef} className={`google-gsi-button${ready ? '' : ' is-loading'}`} aria-label="Continue with Google" />
+      <div
+        ref={buttonRef}
+        className={`google-gsi-button${ready ? '' : ' is-loading'}${loading ? ' is-signing-in' : ''}`}
+        aria-label="Continue with Google"
+        aria-hidden={loading}
+      />
       {!googleClientId && <p className="google-auth-help">Google sign-in isn’t configured yet.</p>}
       {googleClientId && loadError && <p className="google-auth-help">Google sign-in couldn’t load. Please use email and password instead.</p>}
       {googleClientId && !ready && <span className="sr-only">Loading Google sign-in…</span>}
-      {loading && <div className="google-auth-loading">Signing in with Google…</div>}
+      {loading && <div className="google-auth-loading" role="status">Signing in with Google…</div>}
     </div>
   );
 }
