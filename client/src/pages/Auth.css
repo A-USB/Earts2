@@ -396,6 +396,46 @@
   transform: translateY(-1px);
 }
 
+.google-auth-container {
+  position: relative;
+  width: 100%;
+  min-height: 42px;
+  margin-bottom: 12px;
+}
+
+.google-gsi-button {
+  display: flex;
+  justify-content: center;
+  min-height: 40px;
+}
+
+.google-auth-help,
+.google-auth-loading {
+  margin: 6px 0 0;
+  color: var(--text-light);
+  font-size: 12px;
+  text-align: center;
+}
+
+.google-auth-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--bg-card) 80%, transparent);
+  color: var(--text-dark);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
 .auth-divider {
   display: flex;
   align-items: center;
