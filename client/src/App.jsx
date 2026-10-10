@@ -9,6 +9,8 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import Feed from './pages/Feed'
 import Marketplace from './pages/Marketplace'
 import Profile from './pages/Profile'
@@ -22,9 +24,9 @@ import FeedTransition from './components/FeedTransition'
 import './App.css'
 
 // These routes always keep the classic top navbar, logged in or not
-const TOP_NAV_ROUTES = ['/', '/login', '/signup', '/logout'];
+const TOP_NAV_ROUTES = ['/', '/login', '/signup', '/logout', '/forgot-password', '/reset-password'];
 // Auth screens render with no navbar/footer at all (standalone focused screen)
-const CHROMELESS_ROUTES = ['/login', '/signup', '/logout'];
+const CHROMELESS_ROUTES = ['/login', '/signup', '/logout', '/forgot-password', '/reset-password'];
 
 function HomeRoute() {
   const { user, loading } = useAuth();
@@ -53,6 +55,8 @@ function Layout() {
       <Route path="/" element={<HomeRoute />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/logout" element={<Logout />} />
       <Route path="/explore" element={<Marketplace />} />
       <Route path="/gallery" element={<Marketplace />} />
