@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const { OAuth2Client } = require('google-auth-library');
 const { CATEGORIES, ROLES, text: validateText, email: validateEmail, signupPassword, enumValue, stringArray, safeImage, price: validatePrice } = require('./validation');
 
 const EXPLORER_INTERESTS = new Set(['Painting', 'Digital Art', 'Illustration', 'Photography', 'Sculpture', 'Mixed Media', 'Watercolour', 'Abstract']);
@@ -25,6 +27,9 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? '' : 'earts_secret_2024');
 if (!SECRET) throw new Error('JWT_SECRET must be set in production');
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
+app.set('trust proxy', 1);
 
 // CORS configuration (allow deployed domains or localhost during development)
 const allowedOrigins = process.env.CLIENT_ORIGIN
@@ -43,6 +48,60 @@ app.use(cors({
 
 app.use(express.json({ limit: '4.5mb' }));
 app.use(express.urlencoded({ limit: '100kb', extended: true, parameterLimit: 50 }));
+
+const authRateLimits = new Map();
+function limitAuthRequests(maxRequests, windowMs) {
+  return (req, res, next) => {
+    const now = Date.now();
+    const key = `${req.path}:${req.ip}`;
+    const current = authRateLimits.get(key);
+    if (!current || current.expiresAt <= now) {
+      authRateLimits.set(key, { count: 1, expiresAt: now + windowMs });
+    } else if (current.count >= maxRequests) {
+      res.set('Retry-After', String(Math.ceil((current.expiresAt - now) / 1000)));
+      return res.status(429).json({ error: 'Too many attempts. Please try again later.' });
+    } else {
+      current.count += 1;
+    }
+    if (authRateLimits.size > 10000) {
+      for (const [entry, value] of authRateLimits) {
+        if (value.expiresAt <= now) authRateLimits.delete(entry);
+      }
+    }
+    next();
+  };
+}
+
+async function sendPasswordResetEmail(email, resetUrl) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) throw new Error('Password reset email is not configured');
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: process.env.RESEND_FROM_EMAIL || 'Earts <onboarding@resend.dev>',
+      to: [email],
+      subject: 'Reset your Earts password',
+      text: `We received a request to reset your Earts password. Use this link within 30 minutes: ${resetUrl}\n\nIf you did not request this, you can ignore this email.`,
+      html: `<p>We received a request to reset your Earts password.</p><p><a href="${resetUrl}">Reset your password</a></p><p>This link expires in 30 minutes and can only be used once. If you did not request this, you can ignore this email.</p>`
+    })
+  });
+  if (!response.ok) throw new Error(`Resend rejected the email request (${response.status})`);
+}
+
+function getClientOrigin() {
+  const configuredOrigin = process.env.CLIENT_ORIGIN?.split(',')[0]?.trim();
+  const origin = configuredOrigin || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5173');
+  if (!origin) throw new Error('CLIENT_ORIGIN must be configured to send password reset links');
+  const parsed = new URL(origin);
+  if (process.env.NODE_ENV === 'production' && parsed.protocol !== 'https:') {
+    throw new Error('CLIENT_ORIGIN must use HTTPS in production');
+  }
+  return parsed.origin;
+}
 
 // Connect to MongoDB
 connectDB();
@@ -193,7 +252,7 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', limitAuthRequests(10, 15 * 60 * 1000), async (req, res) => {
   try {
     const { email, password } = req.body;
     const errors = [validateEmail(email), validateText(password, 'Password', 128, { required: true, minLength: 1 })].filter(Boolean);
@@ -212,59 +271,106 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Helper function to decode base64url Google JWT payload
-function decodeGoogleToken(credential) {
+app.post('/api/auth/forgot-password', limitAuthRequests(5, 15 * 60 * 1000), async (req, res) => {
+  const genericResponse = {
+    message: 'If an account exists for that email, we’ll send a password reset link.'
+  };
   try {
-    const base64Url = credential.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-    return JSON.parse(jsonPayload);
-  } catch {
-    return null;
+    const { email } = req.body;
+    const emailError = validateEmail(email, 60);
+    if (emailError) return res.status(400).json({ error: emailError });
+    if (!process.env.RESEND_API_KEY) {
+      return res.status(503).json({ error: 'Password reset email is not configured yet.' });
+    }
+    let clientOrigin;
+    try {
+      clientOrigin = getClientOrigin();
+    } catch {
+      return res.status(503).json({ error: 'Password reset email is not configured yet.' });
+    }
+
+    const user = await User.findOne({ email: email.trim().toLowerCase() });
+    if (!user) return res.json(genericResponse);
+
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    user.passwordResetTokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+    user.passwordResetExpiresAt = new Date(Date.now() + 30 * 60 * 1000);
+    await user.save();
+
+    try {
+      const resetUrl = new URL('/reset-password', clientOrigin);
+      resetUrl.hash = new URLSearchParams({ token: rawToken }).toString();
+      await sendPasswordResetEmail(user.email, resetUrl.toString());
+    } catch (emailError) {
+      console.error(`Password reset email delivery failed: ${emailError.message}`);
+    }
+    res.json(genericResponse);
+  } catch (err) {
+    console.error('Password reset request failed:', err.message);
+    res.json(genericResponse);
   }
-}
+});
 
-app.post('/api/auth/google', async (req, res) => {
+app.post('/api/auth/reset-password', limitAuthRequests(10, 15 * 60 * 1000), async (req, res) => {
   try {
-    const { credential, email: bodyEmail, firstName: bodyFirst, lastName: bodyLast, avatar: bodyAvatar, googleId: bodyGoogleId, accountType, role } = req.body;
+    const { token, password } = req.body;
+    if (typeof token !== 'string' || !/^[a-f0-9]{64}$/i.test(token)) {
+      return res.status(400).json({ error: 'This reset link is invalid or expired. Request a new one.' });
+    }
+    const passwordError = signupPassword(password);
+    if (passwordError) return res.status(400).json({ error: passwordError });
 
-    let email = bodyEmail;
-    let firstName = bodyFirst;
-    let lastName = bodyLast;
-    let avatar = bodyAvatar;
-    let googleId = bodyGoogleId;
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await User.findOne({
+      passwordResetTokenHash: tokenHash,
+      passwordResetExpiresAt: { $gt: new Date() }
+    });
+    if (!user) return res.status(400).json({ error: 'This reset link is invalid or expired. Request a new one.' });
 
-    if (credential) {
-      const payload = decodeGoogleToken(credential);
-      if (payload && payload.email) {
-        email = payload.email;
-        firstName = payload.given_name || payload.name?.split(' ')[0] || 'Artist';
-        lastName = payload.family_name || payload.name?.split(' ').slice(1).join(' ') || '';
-        avatar = payload.picture || null;
-        googleId = payload.sub || null;
-      }
+    user.password = await bcrypt.hash(password, 10);
+    user.passwordResetTokenHash = null;
+    user.passwordResetExpiresAt = null;
+    await user.save();
+    res.json({ message: 'Your password has been reset. You can now sign in.' });
+  } catch (err) {
+    console.error('Password reset failed:', err.message);
+    res.status(500).json({ error: 'Unable to reset your password right now. Please try again.' });
+  }
+});
+
+app.post('/api/auth/google', limitAuthRequests(20, 15 * 60 * 1000), async (req, res) => {
+  try {
+    const { credential, accountType, role } = req.body;
+    if (!GOOGLE_CLIENT_ID) return res.status(503).json({ error: 'Google sign-in is not configured' });
+    if (typeof credential !== 'string' || credential.length > 12000) {
+      return res.status(400).json({ error: 'A valid Google credential is required' });
     }
 
-    if (!email) {
-      return res.status(400).json({ error: 'Valid Google account info is required' });
+    let payload;
+    try {
+      const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: GOOGLE_CLIENT_ID });
+      payload = ticket.getPayload();
+    } catch {
+      return res.status(401).json({ error: 'Google sign-in could not verify your account. Please try again.' });
     }
+    if (!payload?.email || payload.email_verified !== true || !payload.sub) {
+      return res.status(401).json({ error: 'Use a verified Google account to sign in.' });
+    }
+
+    const email = payload.email;
+    const firstName = payload.given_name || payload.name?.split(' ')[0] || 'Creator';
+    const lastName = payload.family_name || payload.name?.split(' ').slice(1).join(' ') || '';
+    const avatar = payload.picture || null;
+    const googleId = payload.sub;
     const googleErrors = [
       validateEmail(email, 60),
       validateText(firstName || 'Creator', 'First name', 30, { required: true }),
       validateText(lastName || '', 'Last name', 30),
       enumValue(accountType || 'artist', new Set(['artist', 'collector']), 'account type'),
-      enumValue(role || 'Artist', ROLES, 'role'),
+      (accountType || 'artist') === 'artist' ? enumValue(role || 'Artist', ROLES, 'role') : null,
       avatar != null && (typeof avatar !== 'string' || avatar.length > 2048 || !/^https:\/\//i.test(avatar))
         ? 'Google profile image URL is invalid'
         : null,
-      credential != null && (typeof credential !== 'string' || credential.length > 12000)
-        ? 'Google credential is too large'
-        : null
     ].filter(Boolean);
     if (googleErrors.length) return res.status(400).json({ error: googleErrors[0] });
 
@@ -273,7 +379,7 @@ app.post('/api/auth/google', async (req, res) => {
     let user = await User.findOne({ email: normalizedEmail });
 
     if (user) {
-      // If user exists, link Google ID and update avatar if empty
+      // Google has verified control of this email, so linking is safe.
       let updated = false;
       if (!user.googleId && googleId) {
         user.googleId = googleId;
