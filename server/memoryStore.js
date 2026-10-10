@@ -113,6 +113,8 @@ class MemoryDoc {
     delete copy._id;
     delete copy.__v;
     if (copy.password) delete copy.password;
+    delete copy.passwordResetTokenHash;
+    delete copy.passwordResetExpiresAt;
     return copy;
   }
 
@@ -154,6 +156,10 @@ function matchQuery(doc, query = {}) {
       }
       if (val.$ne !== undefined) {
         if (docVal === val.$ne) return false;
+        continue;
+      }
+      if (val.$gt !== undefined) {
+        if (!(docVal > val.$gt)) return false;
         continue;
       }
     }
