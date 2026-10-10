@@ -6,6 +6,8 @@ const userSchema = new mongoose.Schema({
   lastName: { type: String, required: true, trim: true, maxlength: 30 },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true, maxlength: 254 },
   password: { type: String, required: false, maxlength: 128 },
+  passwordResetTokenHash: { type: String, select: false, default: null },
+  passwordResetExpiresAt: { type: Date, select: false, default: null },
   googleId: { type: String, sparse: true, default: null },
   role: { type: String, default: 'Artist' },
   accountType: { type: String, enum: ['artist', 'collector'], default: 'artist' },
@@ -29,6 +31,8 @@ const userSchema = new mongoose.Schema({
       delete ret._id;
       delete ret.__v;
       delete ret.password;
+      delete ret.passwordResetTokenHash;
+      delete ret.passwordResetExpiresAt;
       return ret;
     }
   }
