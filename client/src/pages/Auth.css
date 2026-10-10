@@ -409,6 +409,10 @@
   min-height: 40px;
 }
 
+.google-gsi-button.is-signing-in {
+  visibility: hidden;
+}
+
 .google-auth-help,
 .google-auth-loading {
   margin: 6px 0 0;
@@ -420,9 +424,13 @@
 .google-auth-loading {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
-  background: color-mix(in srgb, var(--bg-card) 80%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-card);
   color: var(--text-dark);
 }
 
