@@ -204,7 +204,7 @@ export default function Signup() {
               </div>
 
               <div className="form-group">
-                <label>I want to...</label>
+                <label>I am an...</label>
                 <div className="account-type-cards">
                   <button
                     type="button"
