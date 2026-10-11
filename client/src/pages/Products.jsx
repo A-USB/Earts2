@@ -20,7 +20,7 @@ export default function Products() {
         <div className="container">
           <span className="eyebrow">Our Products</span>
           <h1>Tools that put artists first</h1>
-          <p>Everything you need to build your creative career on Earts. Start free, scale as you grow.</p>
+          <p>Explore upcoming tools for artists. Plans and add-ons are not available for purchase yet.</p>
         </div>
       </div>
 
@@ -28,8 +28,8 @@ export default function Products() {
         {/* Plans */}
         <div className="plans-section">
           <div className="section-center" style={{textAlign:'center',marginBottom:'40px'}}>
-            <h2>Choose your plan</h2>
-            <p style={{color:'var(--text-mid)', marginTop:'8px'}}>Start free, upgrade when you're ready.</p>
+            <h2>Plans preview</h2>
+            <p role="note" style={{color:'var(--text-mid)', marginTop:'8px'}}>Preview pricing only · subscriptions and billing are not enabled.</p>
           </div>
           <div className="plans-grid">
             {subscriptions.map(plan => (
@@ -40,7 +40,7 @@ export default function Products() {
                 <p className="plan-desc">{plan.description}</p>
                 <div className="plan-price">
                   <span className="price-amt">${plan.price}</span>
-                  <span className="price-period">/month</span>
+                  <span className="price-period">/month preview</span>
                 </div>
                 <ul className="plan-features">
                   {plan.features.map(f => (
@@ -48,7 +48,7 @@ export default function Products() {
                   ))}
                 </ul>
                 <Link to="/signup" className={plan.popular ? 'btn-primary' : 'btn-outline'} style={{justifyContent:'center', marginTop:'auto'}}>
-                  Get started
+                  Create free account
                 </Link>
               </div>
             ))}
@@ -58,7 +58,7 @@ export default function Products() {
         {/* Add-ons */}
         <div className="addons-section">
           <h2>Power-ups & Add-ons</h2>
-          <p>Enhance your Earts experience with these optional tools.</p>
+          <p>These add-ons are previews and cannot be purchased yet.</p>
           <div className="addons-grid">
             {addons.map(addon => (
               <div key={addon.id} className="addon-card card">
@@ -71,8 +71,8 @@ export default function Products() {
                   </div>
                 </div>
                 <div className="addon-price">
-                  {addon.price === 0 ? <span className="free-tag">Free</span> : <span>${addon.price}/mo</span>}
-                  <button className="btn-outline" style={{padding:'6px 16px',fontSize:'13px'}}>Add</button>
+                  {addon.price === 0 ? <span className="free-tag">Preview</span> : <span>${addon.price} preview</span>}
+                  <button className="btn-outline" style={{padding:'6px 16px',fontSize:'13px'}} disabled>Coming soon</button>
                 </div>
               </div>
             ))}
@@ -84,10 +84,10 @@ export default function Products() {
           <h2>Frequently asked questions</h2>
           <div className="faq-grid">
             {[
-              { q: 'Can I switch plans anytime?', a: 'Yes, you can upgrade or downgrade your plan at any time. Changes take effect on your next billing cycle.' },
-              { q: 'How do payouts work?', a: "We process payouts monthly to your connected bank account or PayPal. You keep 85% of every sale." },
-              { q: 'Is there a free tier?', a: 'Yes! You can create a profile and browse for free. The Starter Kit unlocks selling and advanced features.' },
-              { q: 'Can I cancel anytime?', a: 'Absolutely. No lock-in contracts. Cancel from your account settings with one click.' },
+              { q: 'Can I create an account for free?', a: 'Yes. You can create an artist or explorer account and use the community features without subscribing.' },
+              { q: 'Are subscriptions and add-ons available?', a: 'Not yet. The plans and prices shown here are previews; Earts does not currently charge subscription or add-on fees.' },
+              { q: 'Does artwork checkout process payment?', a: 'No. Checkout is a demo only. It does not collect card details or move money, and demo orders are not real sales.' },
+              { q: 'How can I share artwork?', a: 'Create an artist account, complete your profile, and use Upload to add artwork to your portfolio.' },
             ].map(faq => (
               <div key={faq.q} className="faq-item card">
                 <h4>{faq.q}</h4>
