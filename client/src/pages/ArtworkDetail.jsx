@@ -5,6 +5,8 @@ import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
 import PurchaseModal from '../components/PurchaseModal';
+import ReportAction from '../components/ReportAction';
+import LoadError from '../components/LoadError';
 import './ArtworkDetail.css';
 
 const STATUS_LABEL = { for_sale: 'Available', not_for_sale: 'Not for sale', sold: 'Sold' };
@@ -17,6 +19,8 @@ export default function ArtworkDetail() {
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
   const [showPurchase, setShowPurchase] = useState(false);
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState('');
@@ -24,6 +28,7 @@ export default function ArtworkDetail() {
 
   useEffect(() => {
     setLoading(true);
+    setLoadError('');
     Promise.all([
       api.get(`/artworks/${id}`),
       api.get(`/artworks/${id}/comments`).catch(() => []),
@@ -36,9 +41,12 @@ export default function ArtworkDetail() {
         setLiked(myLikes.includes(art.id));
         setSaved(mySaved.includes(art.id));
       })
-      .catch(() => navigate('/marketplace'))
+      .catch(error => {
+        setArtwork(null);
+        setLoadError(error.status === 404 ? 'This artwork may have been removed.' : (error.message || 'Unable to load this artwork.'));
+      })
       .finally(() => setLoading(false));
-  }, [id, user?.id, navigate]);
+  }, [id, user?.id, navigate, refreshKey]);
 
   const handleLike = async () => {
     if (!user) { navigate('/login'); return; }
@@ -102,6 +110,12 @@ export default function ArtworkDetail() {
       <div className="skeleton" style={{width:'100%',height:'400px',borderRadius:'16px'}} />
     </div>
   );
+  if (loadError) return (
+    <div className="container" style={{ padding: '80px 24px' }}>
+      <LoadError title="Artwork couldn’t load" message={loadError} onRetry={() => setRefreshKey(key => key + 1)} />
+      <div style={{ textAlign: 'center' }}><Link className="btn-ghost" to="/marketplace">Back to Marketplace</Link></div>
+    </div>
+  );
   if (!artwork) return null;
 
   const formatLikes = n => n >= 1000 ? `${(n/1000).toFixed(1)}k` : n;
@@ -137,6 +151,7 @@ export default function ArtworkDetail() {
               <button className="share-btn btn-ghost">
                 <Share2 size={16} /> Share
               </button>
+              {!isOwnArtwork && <ReportAction targetType="artwork" targetId={artwork.id} />}
             </div>
 
             <div className="comments-section card">
@@ -179,7 +194,7 @@ export default function ArtworkDetail() {
               <div className="artists-involved-block">
                 <span className="artist-role-label">Lead Artist</span>
                 <Link to={`/profile/${artwork.artist.username}`} className="artist-link card">
-                  <Avatar seed={(artwork.artist.firstName||'')+(artwork.artist.lastName||'')} size={46} />
+                  <Avatar seed={artwork.artist.avatarSeed || (artwork.artist.firstName||'')+(artwork.artist.lastName||'')} src={artwork.artist.avatar} size={46} />
                   <div>
                     <strong>{artwork.artist.firstName} {artwork.artist.lastName}</strong>
                     <span>{artwork.artist.role}</span>
@@ -233,7 +248,7 @@ export default function ArtworkDetail() {
                   <ShoppingCart size={18} /> Purchase artwork
                 </button>
                 <p className="purchase-note">
-                  Secure transaction · Artist receives 85% of sale price
+                  Demo checkout · no payment is processed
                 </p>
               </div>
             )}
@@ -257,7 +272,6 @@ export default function ArtworkDetail() {
         <PurchaseModal
           artwork={artwork}
           onClose={() => setShowPurchase(false)}
-          onSuccess={() => setArtwork(prev => ({ ...prev, status: 'sold' }))}
         />
       )}
     </div>
