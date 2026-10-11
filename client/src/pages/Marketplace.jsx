@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import ArtworkCard from '../components/ArtworkCard';
 import PurchaseModal from '../components/PurchaseModal';
 import Avatar from '../components/Avatar';
+import LoadError from '../components/LoadError';
 import './Marketplace.css';
 
 const CATEGORIES = [
@@ -27,6 +28,8 @@ export default function Marketplace() {
   const [artworks, setArtworks] = useState([]);
   const [featuredArtists, setFeaturedArtists] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Filter Modes: 'for_sale' (Marketplace shop) | 'all' (Full Exhibition & Discovery)
   const [viewMode, setViewMode] = useState(searchParams.get('mode') || 'for_sale');
@@ -57,6 +60,7 @@ export default function Marketplace() {
 
   useEffect(() => {
     setLoading(true);
+    setLoadError('');
     const q = category !== 'All' ? `?category=${category}` : '';
 
     Promise.all([
@@ -95,9 +99,9 @@ export default function Marketplace() {
         const artists = usersData.filter(u => u.accountType === 'artist').slice(0, 5);
         setFeaturedArtists(artists);
       })
-      .catch(console.error)
+      .catch(error => setLoadError(error.message || 'Unable to load the marketplace.'))
       .finally(() => setLoading(false));
-  }, [category, search, sort, priceRange, viewMode]);
+  }, [category, search, sort, priceRange, viewMode, refreshKey]);
 
   return (
     <div className="marketplace-page page-wrapper">
@@ -148,7 +152,7 @@ export default function Marketplace() {
                   to={`/profile/${artist.username}`}
                   className="creator-card card"
                 >
-                  <Avatar name={`${artist.firstName} ${artist.lastName}`} size={40} />
+                  <Avatar seed={artist.avatarSeed || `${artist.firstName}${artist.lastName}`} src={artist.avatar} size={40} />
                   <div className="creator-card-info">
                     <strong>{artist.firstName} {artist.lastName}</strong>
                     <span>{artist.role} • {artist.location || 'Global'}</span>
@@ -247,6 +251,8 @@ export default function Marketplace() {
               </div>
             ))}
           </div>
+        ) : loadError ? (
+          <LoadError title="Marketplace couldn’t load" message={loadError} onRetry={() => setRefreshKey(key => key + 1)} />
         ) : artworks.length > 0 ? (
           <div className="marketplace-grid">
             {artworks.map(a => (
@@ -283,7 +289,6 @@ export default function Marketplace() {
         <PurchaseModal
           artwork={buyTarget}
           onClose={() => setBuyTarget(null)}
-          onSuccess={() => setArtworks(prev => prev.filter(a => a.id !== buyTarget.id))}
         />
       )}
     </div>
