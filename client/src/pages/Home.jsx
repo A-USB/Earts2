@@ -8,16 +8,15 @@ import Avatar from '../components/Avatar';
 import './Home.css';
 
 const STATS = [
-  { value: '12k+', label: 'Artists worldwide', highlight: '12' },
-  { value: '80+', label: 'Countries reached', highlight: '80' },
-  { value: '200k+', label: 'Earned by artists', highlight: '200', prefix: '$' },
-  { value: '48k+', label: 'Artworks shared', highlight: '48' },
+  { key: 'artists', label: 'Artists' },
+  { key: 'explorers', label: 'Explorers' },
+  { key: 'artworks', label: 'Artworks shared' },
 ];
 
 const VALUES = [
   { icon: '🤝', title: 'Community first', desc: 'Artists support artists. Every feature we build strengthens the collective.' },
   { icon: '🎨', title: 'Creative freedom', desc: 'No gatekeeping. Every style and medium has a home here with the art.' },
-  { icon: '⭐', title: 'Fair recognition', desc: 'Artists own their work and keep the majority of what they earn.' },
+  { icon: '⭐', title: 'Artist-led', desc: 'Artists can present their work, build a portfolio, and connect with explorers.' },
   { icon: '🌍', title: 'Global inclusion', desc: 'Art has no borders. We celebrate creators from every culture.' },
 ];
 
@@ -29,18 +28,17 @@ const TEAM = [
 ];
 
 const TIMELINE = [
-  { year: '2022', title: 'Earts founded', desc: 'Four artists with a dream built the first version of Earts in a shared studio in Madrid.' },
-  { year: '2023', title: '10,000 artists joined', desc: 'The community grew to 10k artists across 40+ countries in just one year.' },
-  { year: '2024', title: '$100k earned by artists', desc: 'Our marketplace hit $100,000 in artist earnings — proof the model works.' },
-  { year: '2025', title: 'Global expansion', desc: 'We opened regional hubs in Nairobi, Tokyo, and São Paulo.' },
-  { year: '2026', title: 'Today', desc: '12k+ artists, 80 countries, and a community that keeps growing every day.' },
+  { year: '01', title: 'Choose your space', desc: 'Join Earts as an artist sharing original work or an explorer discovering artists.' },
+  { year: '02', title: 'Build your profile', desc: 'Tell the community about your creative interests and the work you make.' },
+  { year: '03', title: 'Explore and connect', desc: 'Discover artwork, follow artists, and save pieces to revisit.' },
+  { year: '04', title: 'Share your work', desc: 'Artists can publish pieces and curate their portfolio for the community.' },
 ];
 
 const FAQ = [
-  { q: 'Can I switch plans anytime?', a: 'Yes, you can upgrade or downgrade your plan at any time. Changes take effect on your next billing cycle.' },
-  { q: 'How do payouts work?', a: "We process payouts monthly to your connected bank account or PayPal. You keep 85% of every sale." },
-  { q: 'Is there a free tier?', a: 'Yes! You can create a profile and browse for free. The Starter Kit unlocks selling and advanced features.' },
-  { q: 'Can I cancel anytime?', a: 'Absolutely. No lock-in contracts. Cancel from your account settings with one click.' },
+  { q: 'Can I create an account for free?', a: 'Yes. You can create an artist or explorer account and use the community features without subscribing.' },
+  { q: 'Are subscriptions and add-ons available?', a: 'Not yet. The plans and prices shown here are previews; Earts does not currently charge subscription or add-on fees.' },
+  { q: 'Does artwork checkout process payment?', a: 'No. Checkout is a demo only. It does not collect card details or move money, and demo orders are not real sales.' },
+  { q: 'How can I share artwork?', a: 'Create an artist account, complete your profile, and use Upload to add artwork to your portfolio.' },
 ];
 
 // Fade/slide-in reveal as sections scroll into view
@@ -68,12 +66,14 @@ export default function Home() {
   const location = useLocation();
   const [trending, setTrending] = useState([]);
   const [products, setProducts] = useState([]);
+  const [stats, setStats] = useState(null);
 
   const exploreLink = user ? '/marketplace' : '/signup';
 
   useEffect(() => {
     api.get('/artworks?trending=true').then(setTrending).catch(console.error);
     api.get('/products').then(setProducts).catch(console.error);
+    api.get('/stats').then(setStats).catch(() => setStats(null));
   }, []);
 
   // Smooth-scroll to the tab/section matching the URL hash (e.g. /#about)
@@ -137,12 +137,10 @@ export default function Home() {
         {/* Stats */}
         <section className="stats-bar">
           <div className="container stats-inner">
-            {STATS.map(s => (
-              <div key={s.label} className="stat-item">
-                <div className="stat-value">
-                  {s.prefix && <span className="stat-prefix">{s.prefix}</span>}
-                  <span className="stat-num">{s.highlight}</span>
-                  <span className="stat-suffix">k+</span>
+            {stats && STATS.map(s => (
+              <div key={s.key} className="stat-item">
+                <div className="stat-value" aria-label={`${stats[s.key].toLocaleString()} ${s.label}`}>
+                  <span className="stat-num">{stats[s.key].toLocaleString()}</span>
                 </div>
                 <span className="stat-label">{s.label}</span>
               </div>
@@ -231,8 +229,8 @@ export default function Home() {
               {[
                 { icon: '🎨', title: 'Create your profile', desc: 'Set up your artist identity, add your bio, and showcase your style.' },
                 { icon: '🖼️', title: 'Upload your work', desc: 'Share your artwork in any medium — digital, oil, watercolour, sculpture.' },
-                { icon: '🌍', title: 'Connect globally', desc: 'Join a community of 12k+ artists across 80 countries.' },
-                { icon: '💰', title: 'Earn from your craft', desc: 'Set your prices and sell directly to collectors worldwide.' },
+                { icon: '🌍', title: 'Connect through art', desc: 'Discover creators, follow their work, and share what inspires you.' },
+                { icon: '💾', title: 'Save your favourites', desc: 'Keep artworks you like in your collection to revisit later.' },
               ].map((step, i) => (
                 <div key={i} className="step-card card">
                   <div className="step-icon">{step.icon}</div>
@@ -314,8 +312,8 @@ export default function Home() {
         <section className="timeline-section reveal">
           <div className="container">
             <div className="section-center">
-              <span className="eyebrow">Our journey</span>
-              <h2>How we got here</h2>
+              <span className="eyebrow">Getting started</span>
+              <h2>Make Earts your creative space</h2>
             </div>
             <div className="timeline">
               {TIMELINE.map((item, i) => (
@@ -340,7 +338,7 @@ export default function Home() {
             <div className="section-header centered">
               <span className="eyebrow">Our Products</span>
               <h2>Tools that put artists first</h2>
-              <p>Everything you need to build your creative career on Earts. Start free, scale as you grow.</p>
+              <p>Explore upcoming tools for artists. Plans and add-ons are not available for purchase yet.</p>
             </div>
           </div>
         </section>
@@ -348,8 +346,8 @@ export default function Home() {
         <div className="container products-body">
           <section className="plans-section reveal">
             <div className="section-center" style={{textAlign:'center',marginBottom:'40px'}}>
-              <h2>Choose your plan</h2>
-              <p style={{color:'var(--text-mid)', marginTop:'8px'}}>Start free, upgrade when you're ready.</p>
+              <h2>Plans preview</h2>
+              <p role="note" style={{color:'var(--text-mid)', marginTop:'8px'}}>Preview pricing only · subscriptions and billing are not enabled.</p>
             </div>
             <div className="plans-grid">
               {subscriptions.map(plan => (
@@ -360,7 +358,7 @@ export default function Home() {
                   <p className="plan-desc">{plan.description}</p>
                   <div className="plan-price">
                     <span className="price-amt">${plan.price}</span>
-                    <span className="price-period">/month</span>
+                    <span className="price-period">/month preview</span>
                   </div>
                   <ul className="plan-features">
                     {plan.features.map(f => (
@@ -368,7 +366,7 @@ export default function Home() {
                     ))}
                   </ul>
                   <Link to="/signup" className={plan.popular ? 'btn-primary' : 'btn-outline'} style={{justifyContent:'center', marginTop:'auto'}}>
-                    Get started
+                    Create free account
                   </Link>
                 </div>
               ))}
@@ -377,7 +375,7 @@ export default function Home() {
 
           <section className="addons-section reveal">
             <h2>Power-ups & Add-ons</h2>
-            <p>Enhance your Earts experience with these optional tools.</p>
+            <p>These add-ons are previews and cannot be purchased yet.</p>
             <div className="addons-grid">
               {addons.map(addon => (
                 <div key={addon.id} className="addon-card card">
@@ -390,8 +388,8 @@ export default function Home() {
                     </div>
                   </div>
                   <div className="addon-price">
-                    {addon.price === 0 ? <span className="free-tag">Free</span> : <span>${addon.price}/mo</span>}
-                    <button className="btn-outline" style={{padding:'6px 16px',fontSize:'13px'}}>Add</button>
+                    {addon.price === 0 ? <span className="free-tag">Preview</span> : <span>${addon.price} preview</span>}
+                    <button className="btn-outline" style={{padding:'6px 16px',fontSize:'13px'}} disabled>Coming soon</button>
                   </div>
                 </div>
               ))}
