@@ -1,8 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Save, User, Palette, Bell, Lock, LogOut } from 'lucide-react';
+import { Save, User, Palette, Bell, Lock, LogOut, Camera } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import Avatar from '../components/Avatar';
+import AvatarPicker from '../components/AvatarPicker';
+import { AVATAR_PRESETS } from '../utils/avatarPresets';
+import { prepareAvatarImage } from '../utils/prepareAvatarImage';
 import './Settings.css';
 
 const TABS = [
@@ -35,6 +39,9 @@ export default function Settings() {
   const [form, setForm] = useState({ firstName:'', lastName:'', bio:'', location:'', role:'', tags:[], tools:[], availableFor:[], coverColor:'' });
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (!user) { navigate('/login'); return; }
@@ -70,6 +77,39 @@ export default function Settings() {
       setTimeout(() => setSaved(false), 2500);
     } catch (err) { alert(err.message); }
     finally { setLoading(false); }
+  };
+
+  const handleAvatarChoice = async (avatarSeed) => {
+    setAvatarBusy(true);
+    setAvatarError('');
+    try {
+      const updated = await api.patch('/users/me', { avatar: null, avatarSeed });
+      updateUser(updated);
+    } catch (err) {
+      setAvatarError(err.message || 'Unable to update your avatar.');
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
+
+  const handleAvatarUpload = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setAvatarBusy(true);
+    setAvatarError('');
+    try {
+      const avatar = await prepareAvatarImage(file);
+      const updated = await api.patch('/users/me', {
+        avatar,
+        avatarSeed: user.avatarSeed || AVATAR_PRESETS[0].id
+      });
+      updateUser(updated);
+    } catch (err) {
+      setAvatarError(err.message || 'Unable to upload this photo.');
+    } finally {
+      setAvatarBusy(false);
+    }
   };
 
   if (!user) return null;
@@ -165,6 +205,22 @@ export default function Settings() {
               <div className="settings-section">
                 <h3>Profile Appearance</h3>
                 <p className="section-desc">{user.accountType === 'collector' ? 'Customise the appearance of your explorer profile.' : 'Customise how your profile looks to other artists.'}</p>
+
+                <div className="settings-avatar-editor">
+                  <h4>Profile photo</h4>
+                  <Avatar
+                    seed={user.avatarSeed || `${user.firstName || ''}${user.lastName || ''}`}
+                    src={user.avatar}
+                    size={88}
+                  />
+                  <p>Choose an Earts illustration or upload a JPG, PNG, or WebP photo. Google profile photos aren’t used.</p>
+                  <AvatarPicker value={user.avatarSeed || ''} onChange={handleAvatarChoice} label="Choose a profile avatar" disabled={avatarBusy} />
+                  <input ref={fileInputRef} className="settings-avatar-file" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleAvatarUpload} />
+                  <button type="button" className="btn-outline settings-avatar-upload" onClick={() => fileInputRef.current?.click()} disabled={avatarBusy}>
+                    <Camera size={16} /> {avatarBusy ? 'Updating…' : 'Upload a photo'}
+                  </button>
+                  {avatarError && <p className="settings-avatar-error" role="alert">{avatarError}</p>}
+                </div>
 
                 <div className="form-group">
                   <label>Cover Gradient</label>
