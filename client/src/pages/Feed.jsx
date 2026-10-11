@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
 import CreatePostModal from '../components/CreatePostModal';
 import PostCommentsModal from '../components/PostCommentsModal';
+import LoadError from '../components/LoadError';
 import './Feed.css';
 
 function timeAgo(ts) {
@@ -26,7 +27,7 @@ function Post({ post, isFollowing, onToggleFollow, liked, onToggleLike, saved, o
     <article className="post-card card">
       <div className="post-header">
         <Link to={`/profile/${post.artistUsername || ''}`} className="post-author">
-          <Avatar seed={post.artistName} size={38} />
+          <Avatar seed={post.artistAvatarSeed || post.artistName} src={post.artistAvatar} size={38} />
           <div>
             <strong>{post.artistName}</strong>
             <span>{timeAgo(post.createdAt)}</span>
@@ -98,6 +99,7 @@ export default function Feed() {
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [followingIds, setFollowingIds] = useState([]);
   const [likedIds, setLikedIds] = useState([]);
   const [savedIds, setSavedIds] = useState([]);
@@ -106,6 +108,7 @@ export default function Feed() {
 
   const loadFeed = () => {
     setLoading(true);
+    setLoadError('');
     Promise.all([
       api.get('/feed'),
       api.get('/users/me/following').catch(() => []),
@@ -118,7 +121,7 @@ export default function Feed() {
         setLikedIds(likes);
         setSavedIds(saved);
       })
-      .catch(console.error)
+      .catch(error => setLoadError(error.message || 'Unable to load your feed.'))
       .finally(() => setLoading(false));
   };
 
@@ -181,7 +184,7 @@ export default function Feed() {
       <div className="container feed-container">
         {user?.accountType !== 'collector' && (
           <div className="composer-bar card" onClick={() => setShowComposer(true)}>
-            <Avatar seed={(user?.firstName||'')+(user?.lastName||'')} size={40} />
+            <Avatar seed={user?.avatarSeed || (user?.firstName||'')+(user?.lastName||'')} src={user?.avatar} size={40} />
             <span>Share what you're working on...</span>
             <button className="btn-primary composer-btn" onClick={(e) => { e.stopPropagation(); setShowComposer(true); }}>
               <ImagePlus size={16} /> Post
@@ -198,6 +201,8 @@ export default function Feed() {
               </div>
             ))}
           </div>
+        ) : loadError ? (
+          <LoadError title="Your feed couldn’t load" message={loadError} onRetry={loadFeed} />
         ) : posts.length > 0 ? (
           <div className="posts-list">
             {posts.map(post => (
@@ -219,7 +224,7 @@ export default function Feed() {
           <div className="empty-state">
             <span>🎨</span>
             <h3>Your feed is empty</h3>
-            <p>Follow some artists or share your own work to get started</p>
+            <p>{user?.accountType === 'collector' ? 'Follow artists to see their new work here.' : 'Follow artists or share your own work to get started.'}</p>
           </div>
         )}
       </div>
