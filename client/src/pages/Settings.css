@@ -70,6 +70,13 @@
 
 /* Appearance */
 .cover-options { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.settings-avatar-editor { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+.settings-avatar-editor h4 { margin: 0; color: var(--text-dark); }
+.settings-avatar-editor > p { max-width: 560px; margin: 0; color: var(--text-mid); font-size: 13px; line-height: 1.55; }
+.settings-avatar-editor .avatar-picker { width: 100%; max-width: 520px; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.settings-avatar-file { display: none; }
+.settings-avatar-upload { display: inline-flex; align-items: center; gap: 8px; }
+.settings-avatar-error { color: #c0392b !important; }
 .cover-swatch {
   width: 48px; height: 32px;
   border-radius: var(--radius-sm);
