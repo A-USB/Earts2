@@ -113,7 +113,7 @@ export default function Signup() {
         accountType,
         ...profile
       });
-      navigate('/feed');
+      navigate('/choose-avatar');
     } catch (err) {
       setError(err.message || 'Registration failed');
     } finally {
