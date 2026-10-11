@@ -32,7 +32,7 @@ export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
   const tabs = isExplorer
-    ? [{ id: 'all', label: 'All' }, { id: 'purchases', label: 'Purchases' }, { id: 'artists', label: 'Artists you follow' }]
+    ? [{ id: 'all', label: 'All' }, { id: 'purchases', label: 'Demo orders' }, { id: 'artists', label: 'Artists you follow' }]
     : FILTER_TABS;
 
   useEffect(() => {
@@ -114,7 +114,7 @@ export default function Notifications() {
                 <span className="notif-unread-badge">{unreadCount} new</span>
               )}
             </div>
-            <p className="notif-subtitle">{isExplorer ? 'Updates from artists you follow and your purchases' : 'Activity, sales, and interactions across your art'}</p>
+            <p className="notif-subtitle">{isExplorer ? 'Updates from artists you follow and demo order records' : 'Activity and interactions across your art'}</p>
           </div>
 
           {unreadCount > 0 && (
@@ -186,7 +186,7 @@ export default function Notifications() {
                     <span className="notif-time">{item.time || formatTimeAgo(item.createdAt)}</span>
                     {(item.type === 'sale' || item.type === 'purchase') && (
                       <span className="notif-sale-tag">
-                        <Tag size={12} /> {item.type === 'purchase' ? `Paid $${item.targetPrice}` : `+$${item.targetPrice} earned`}
+                        <Tag size={12} /> Demo · ${item.targetPrice}
                       </span>
                     )}
                   </div>
@@ -225,7 +225,7 @@ export default function Notifications() {
             <div className="notifications-empty">
               <span className="empty-bell-icon">🔔</span>
               <h3>No notifications in this filter</h3>
-              <p>{isExplorer ? 'New work from followed artists and purchase confirmations will appear here.' : 'When people interact with your artwork, the updates will appear here.'}</p>
+              <p>{isExplorer ? 'New work from followed artists and demo order records will appear here.' : 'When people interact with your artwork, the updates will appear here.'}</p>
               {activeTab !== 'all' && (
                 <button className="btn-outline" onClick={() => setActiveTab('all')}>
                   Show all notifications
