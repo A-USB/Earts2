@@ -7,6 +7,8 @@ import {
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
+import ReportAction from '../components/ReportAction';
+import LoadError from '../components/LoadError';
 import './Profile.css';
 import '../components/PurchaseModal.css';
 import '../components/CreatePostModal.css';
@@ -112,6 +114,8 @@ export default function Profile() {
   const [artworks, setArtworks] = useState([]);
   const [tab, setTab] = useState('All');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
   const [copied, setCopied] = useState(false);
 
   // Collector-only data (own profile)
@@ -138,14 +142,15 @@ export default function Profile() {
       return;
     }
     setLoading(true);
+    setLoadError('');
     api.get(`/users/${username}`)
       .then(data => { setProfile(data); setArtworks(data.artworks || []); })
-      .catch((err) => {
-        console.error('Failed to load user profile:', username, err);
+      .catch(error => {
+        if (error.status !== 404) setLoadError(error.message || 'Unable to load this profile.');
         setProfile(null);
       })
       .finally(() => setLoading(false));
-  }, [username, me, navigate]);
+  }, [username, me, navigate, refreshKey]);
 
   useEffect(() => {
     if (isOwn && isCollector) {
@@ -207,6 +212,9 @@ export default function Profile() {
   );
 
   if (!profile) {
+    if (loadError) {
+      return <div className="profile-page page-wrapper"><div className="container profile-container"><LoadError title="Profile couldn’t load" message={loadError} onRetry={() => setRefreshKey(key => key + 1)} /></div></div>;
+    }
     return (
       <div className="profile-page page-wrapper">
         <div className="container profile-container">
@@ -248,7 +256,7 @@ export default function Profile() {
         ? [
             { label: 'Following', value: profile.following },
             { label: 'Saved Pieces', value: saved.length },
-            { label: 'Purchases', value: orders.length },
+            { label: 'Demo orders', value: orders.length },
           ]
         : [
             { label: 'Following', value: profile.following },
@@ -303,7 +311,7 @@ export default function Profile() {
             <div className="profile-avatar-row">
               <div className="profile-avatar-wrapper">
                 <Avatar
-                  seed={profile.firstName + profile.lastName}
+                  seed={profile.avatarSeed || profile.firstName + profile.lastName}
                   src={profile.avatar}
                   size={128}
                   className="profile-avatar-img"
@@ -330,6 +338,7 @@ export default function Profile() {
                       {copied ? <Check size={16} color="#27AE60" /> : <Share2 size={16} />}
                       {copied && <span className="copied-tooltip">Copied!</span>}
                     </button>
+                    <ReportAction targetType="user" targetId={profile.username} />
                   </>
                 ) : (
                   <>
@@ -444,7 +453,7 @@ export default function Profile() {
                   <div className="artwork-section-header">
                     <h3>Collection</h3>
                     <div className="artwork-tabs">
-                      {['Saved', 'Purchases'].map(t => (
+                      {['Saved', 'Demo Orders'].map(t => (
                         <button
                           key={t}
                           className={`art-tab ${collectorTab === t ? 'active' : ''}`}
@@ -477,8 +486,8 @@ export default function Profile() {
                     ) : (
                       <div className="empty-collection card">
                         <ShoppingBag size={32} />
-                        <h4>No purchases yet</h4>
-                        <p>Original art pieces you acquire from artists will be securely recorded here.</p>
+                        <h4>No demo orders yet</h4>
+                        <p>Demo orders appear here. No payments are processed in this version.</p>
                         <Link to="/marketplace" className="btn-outline">Explore Marketplace</Link>
                       </div>
                     )
