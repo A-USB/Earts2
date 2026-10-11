@@ -20,7 +20,8 @@ const {
   Collection,
   SavedArtwork,
   Notification,
-  Product
+  Product,
+  Report
 } = require('./db');
 
 const app = express();
@@ -29,6 +30,8 @@ const SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' 
 if (!SECRET) throw new Error('JWT_SECRET must be set in production');
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
+const moderatorUserIds = new Set((process.env.MODERATOR_USER_IDS || '').split(',').map(value => value.trim()).filter(Boolean));
+const AVATAR_SEEDS = new Set(Array.from({ length: 12 }, (_, index) => `earts-avatar-${String(index + 1).padStart(2, '0')}`));
 app.set('trust proxy', 1);
 
 // CORS configuration (allow deployed domains or localhost during development)
@@ -139,6 +142,11 @@ const auth = (req, res, next) => {
   } catch {
     res.status(401).json({ error: 'Invalid or expired token' });
   }
+};
+
+const requireModerator = (req, res, next) => {
+  if (!moderatorUserIds.has(req.userId)) return res.status(403).json({ error: 'Moderator access is not enabled for this account.' });
+  next();
 };
 
 function validateArtworkPayload(payload, { partial = false } = {}) {
@@ -360,7 +368,6 @@ app.post('/api/auth/google', limitAuthRequests(20, 15 * 60 * 1000), async (req, 
     const email = payload.email;
     const firstName = payload.given_name || payload.name?.split(' ')[0] || 'Creator';
     const lastName = payload.family_name || payload.name?.split(' ').slice(1).join(' ') || '';
-    const avatar = payload.picture || null;
     const googleId = payload.sub;
     const googleErrors = [
       validateEmail(email, 60),
@@ -368,15 +375,13 @@ app.post('/api/auth/google', limitAuthRequests(20, 15 * 60 * 1000), async (req, 
       validateText(lastName || '', 'Last name', 30),
       enumValue(accountType || 'artist', new Set(['artist', 'collector']), 'account type'),
       (accountType || 'artist') === 'artist' ? enumValue(role || 'Artist', ROLES, 'role') : null,
-      avatar != null && (typeof avatar !== 'string' || avatar.length > 2048 || !/^https:\/\//i.test(avatar))
-        ? 'Google profile image URL is invalid'
-        : null,
     ].filter(Boolean);
     if (googleErrors.length) return res.status(400).json({ error: googleErrors[0] });
 
     // Check if user already exists
     const normalizedEmail = email.trim().toLowerCase();
     let user = await User.findOne({ email: normalizedEmail });
+    const isNewUser = !user;
 
     if (user) {
       // Google has verified control of this email, so linking is safe.
@@ -385,8 +390,8 @@ app.post('/api/auth/google', limitAuthRequests(20, 15 * 60 * 1000), async (req, 
         user.googleId = googleId;
         updated = true;
       }
-      if (!user.avatar && avatar) {
-        user.avatar = avatar;
+      if (user.avatar && !user.avatarSeed) {
+        user.avatar = null;
         updated = true;
       }
       if (updated) await user.save();
@@ -408,7 +413,8 @@ app.post('/api/auth/google', limitAuthRequests(20, 15 * 60 * 1000), async (req, 
         firstName: firstName || 'Creator',
         lastName: lastName || '',
         email: normalizedEmail,
-        avatar: avatar || null,
+        avatar: null,
+        avatarSeed: null,
         googleId: googleId || null,
         role: role || 'Artist',
         accountType: accountType === 'collector' ? 'collector' : 'artist'
@@ -416,7 +422,7 @@ app.post('/api/auth/google', limitAuthRequests(20, 15 * 60 * 1000), async (req, 
     }
 
     const token = jwt.sign({ id: user.id }, SECRET, { expiresIn: '7d' });
-    res.json({ token, user: user.toJSON() });
+    res.json({ token, user: user.toJSON(), isNewUser });
   } catch (err) {
     console.error('Google Auth Error:', err);
     res.status(500).json({ error: err.message || 'Google authentication failed' });
@@ -460,7 +466,7 @@ app.get('/api/users/:username', async (req, res) => {
 
 app.patch('/api/users/me', auth, async (req, res) => {
   try {
-    const allowedFields = new Set(['firstName', 'lastName', 'bio', 'location', 'role', 'tags', 'tools', 'availableFor', 'coverColor']);
+    const allowedFields = new Set(['firstName', 'lastName', 'bio', 'location', 'role', 'tags', 'tools', 'availableFor', 'coverColor', 'avatar', 'avatarSeed']);
     const unknownField = Object.keys(req.body).find(key => !allowedFields.has(key));
     if (unknownField) return res.status(400).json({ error: 'One or more profile fields are not editable' });
     const currentUser = await User.findById(req.userId);
@@ -478,6 +484,13 @@ app.patch('/api/users/me', auth, async (req, res) => {
       updates.tags !== undefined ? validateChoiceArray(updates.tags, new Set(['Painting', 'Digital Art', 'Illustration', 'Photography', 'Sculpture', 'Mixed Media', 'Watercolour', 'Abstract', 'Digital art', 'Oil', 'Printmaking']), 'Tags') : null,
       updates.tools !== undefined ? validateChoiceArray(updates.tools, new Set(['Procreate', 'Photoshop', 'Illustrator', 'Ink', 'Watercolour', 'Oil paint', 'Canvas', 'Clay', 'Metal', 'Wood']), 'Tools') : null,
       updates.availableFor !== undefined ? validateChoiceArray(updates.availableFor, new Set(['Commissions', 'Collaborations', 'Workshop', 'Exhibitions', 'Residencies']), 'Availability') : null,
+      updates.avatar !== undefined ? safeImage(updates.avatar) : null,
+      typeof updates.avatar === 'string' && updates.avatar && Buffer.byteLength(updates.avatar.split(',')[1] || '', 'base64') > 128 * 1024
+        ? 'Profile photos must be 128 KB or smaller after processing'
+        : null,
+      updates.avatarSeed !== undefined && updates.avatarSeed !== null && !AVATAR_SEEDS.has(updates.avatarSeed)
+        ? 'Choose one of the available Earts avatars'
+        : null,
       updates.coverColor !== undefined && (typeof updates.coverColor !== 'string' || updates.coverColor.length > 160 || !/^(#[\da-f]{3,8}|linear-gradient\([\d\s.,%#a-f()deg-]+\))$/i.test(updates.coverColor))
         ? 'Choose a valid profile cover color'
         : null
@@ -934,7 +947,17 @@ app.get('/api/feed', auth, async (req, res) => {
     }).limit(20).sort({ createdAt: -1 });
 
     const combined = [...followingArtworks, ...otherArtworks].slice(0, 30);
-    res.json(combined.map(a => a.toJSON()));
+    const artistIds = [...new Set(combined.map(artwork => artwork.artistId).filter(Boolean))];
+    const artists = await User.find({ _id: { $in: artistIds } });
+    const artistsById = new Map(artists.map(artist => [artist.id, artist]));
+    res.json(combined.map(artwork => {
+      const artist = artistsById.get(artwork.artistId);
+      return {
+        ...artwork.toJSON(),
+        artistAvatar: artist?.avatar || null,
+        artistAvatarSeed: artist?.avatarSeed || null
+      };
+    }));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -946,55 +969,32 @@ app.post('/api/artworks/:id/purchase', auth, async (req, res) => {
     const artwork = await Artwork.findById(req.params.id);
     if (!artwork) return res.status(404).json({ error: 'Artwork not found' });
     if (artwork.status !== 'for_sale') return res.status(400).json({ error: 'This piece is not for sale' });
+    if (['cardName', 'cardNumber', 'expiry', 'cvv'].some(field => field in req.body)) {
+      return res.status(400).json({ error: 'This demo checkout does not accept payment details.' });
+    }
+    if (artwork.artistId === req.userId) return res.status(400).json({ error: 'You cannot purchase your own artwork.' });
 
-    const { cardName, cardNumber, expiry, cvv } = req.body;
-    const cleanNumber = typeof cardNumber === 'string' ? cardNumber.replace(/[\s-]/g, '') : '';
-    const paymentErrors = [
-      validateText(cardName, 'Name on card', 80, { required: true }),
-      !/^\d{12,19}$/.test(cleanNumber) ? 'Enter a valid card number' : null,
-      typeof expiry !== 'string' || !/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiry) ? 'Enter a valid expiry date (MM/YY)' : null,
-      typeof cvv !== 'string' || !/^\d{3,4}$/.test(cvv) ? 'Enter a valid security code' : null
-    ].filter(Boolean);
-    if (paymentErrors.length) return res.status(400).json({ error: paymentErrors[0] });
+    const buyer = await User.findById(req.userId);
+    if (!buyer) return res.status(404).json({ error: 'User not found.' });
 
     const order = await Order.create({
       buyerId: req.userId,
       artworkId: artwork.id,
       price: artwork.price || 0,
-      cardLast4: cleanNumber.slice(-4),
+      status: 'demo',
       createdAt: Date.now()
     });
 
-    artwork.status = 'sold';
-    await artwork.save();
-
-    await User.findByIdAndUpdate(artwork.artistId, { $inc: { artworksSold: 1 } });
-
-    // Send sale notification to artist
-    const buyer = await User.findById(req.userId);
-    if (buyer) {
-      await Notification.create({
-        userId: artwork.artistId,
-        type: 'sale',
-        actorName: `${buyer.firstName} ${buyer.lastName}`,
-        actorUsername: buyer.username,
-        text: 'purchased your artwork',
-        targetTitle: artwork.title,
-        targetId: artwork.id,
-        targetPrice: artwork.price,
-        targetColor: artwork.color
-      });
-      await Notification.create({
-        userId: buyer.id,
-        type: 'purchase',
-        actorName: 'Earts',
-        text: 'Your purchase was confirmed for',
-        targetTitle: artwork.title,
-        targetId: artwork.id,
-        targetPrice: artwork.price,
-        targetColor: artwork.color
-      });
-    }
+    await Notification.create({
+      userId: buyer.id,
+      type: 'purchase',
+      actorName: 'Earts',
+      text: 'Your demo purchase was recorded for',
+      targetTitle: artwork.title,
+      targetId: artwork.id,
+      targetPrice: artwork.price,
+      targetColor: artwork.color
+    });
 
     res.json({ success: true, order: order.toJSON() });
   } catch (err) {
@@ -1030,6 +1030,100 @@ app.patch('/api/notifications/:id/read', auth, async (req, res) => {
   }
 });
 
+// ================= TRUST & SAFETY REPORTS =================
+const REPORT_REASONS = new Set(['copyright', 'harassment', 'inappropriate', 'spam', 'other']);
+const REPORT_STATUSES = new Set(['open', 'reviewed', 'actioned', 'dismissed']);
+
+app.post('/api/reports', auth, limitAuthRequests(5, 60 * 60 * 1000), async (req, res) => {
+  try {
+    const allowedFields = new Set(['targetType', 'targetId', 'reason', 'details']);
+    if (Object.keys(req.body).some(field => !allowedFields.has(field))) {
+      return res.status(400).json({ error: 'One or more report fields are not allowed.' });
+    }
+    const { targetType, targetId, reason, details = '' } = req.body;
+    if (!['artwork', 'user'].includes(targetType)) return res.status(400).json({ error: 'Choose a valid report target.' });
+    const targetIdError = validateText(targetId, 'Report target', 100, { required: true });
+    const reasonError = enumValue(reason, REPORT_REASONS, 'report reason');
+    const detailsError = validateText(details, 'Additional details', 1000, { multiline: true });
+    if (targetIdError || reasonError || detailsError) {
+      return res.status(400).json({ error: targetIdError || reasonError || detailsError });
+    }
+
+    const target = targetType === 'artwork'
+      ? await Artwork.findById(targetId)
+      : await User.findOne({ username: targetId });
+    if (!target) return res.status(404).json({ error: 'The reported content could not be found.' });
+    if (targetType === 'user' && target.id === req.userId) return res.status(400).json({ error: 'You cannot report your own profile.' });
+    if (targetType === 'artwork' && target.artistId === req.userId) return res.status(400).json({ error: 'You cannot report your own artwork.' });
+
+    const existingReport = await Report.findOne({
+      reporterId: req.userId,
+      targetType,
+      targetId: targetType === 'user' ? target.username : target.id,
+      status: 'open'
+    });
+    if (existingReport) return res.status(409).json({ error: 'You already reported this content. Our team will review it.' });
+
+    const report = await Report.create({
+      reporterId: req.userId,
+      targetType,
+      targetId: targetType === 'user' ? target.username : target.id,
+      reason,
+      details: details.trim(),
+      status: 'open',
+      createdAt: Date.now()
+    });
+    res.status(201).json({ id: report.id, status: report.status, message: 'Thanks. Your report was sent for review.' });
+  } catch (err) {
+    if (err?.name === 'CastError') return res.status(404).json({ error: 'The reported content could not be found.' });
+    res.status(500).json({ error: 'Unable to submit this report right now.' });
+  }
+});
+
+app.get('/api/moderation/reports', auth, requireModerator, async (req, res) => {
+  try {
+    const status = req.query.status;
+    if (status && !REPORT_STATUSES.has(status)) return res.status(400).json({ error: 'Choose a valid report status.' });
+    const reports = await Report.find(status ? { status } : {}).sort({ createdAt: -1 }).limit(100);
+    const enriched = await Promise.all(reports.map(async report => {
+      const target = report.targetType === 'artwork'
+        ? await Artwork.findById(report.targetId)
+        : await User.findOne({ username: report.targetId });
+      const reporter = await User.findById(report.reporterId);
+      return {
+        ...report.toJSON(),
+        target: target ? {
+          id: target.id,
+          label: report.targetType === 'artwork' ? target.title : `${target.firstName} ${target.lastName}`,
+          username: report.targetType === 'user' ? target.username : undefined
+        } : null,
+        reporter: reporter ? { username: reporter.username, name: `${reporter.firstName} ${reporter.lastName}` } : null
+      };
+    }));
+    res.json(enriched);
+  } catch (err) {
+    res.status(500).json({ error: 'Unable to load reports right now.' });
+  }
+});
+
+app.patch('/api/moderation/reports/:id', auth, requireModerator, async (req, res) => {
+  try {
+    if (Object.keys(req.body).some(field => field !== 'status') || !REPORT_STATUSES.has(req.body.status)) {
+      return res.status(400).json({ error: 'Choose a valid report status.' });
+    }
+    const report = await Report.findOneAndUpdate(
+      { _id: req.params.id },
+      { status: req.body.status, resolvedAt: req.body.status === 'open' ? null : Date.now() },
+      { new: true }
+    );
+    if (!report) return res.status(404).json({ error: 'Report not found.' });
+    res.json(report.toJSON());
+  } catch (err) {
+    if (err?.name === 'CastError') return res.status(404).json({ error: 'Report not found.' });
+    res.status(500).json({ error: 'Unable to update this report right now.' });
+  }
+});
+
 app.patch('/api/notifications/read-all', auth, async (req, res) => {
   try {
     await Notification.updateMany({ userId: req.userId }, { read: true });
@@ -1058,13 +1152,17 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-app.get('/api/stats', (req, res) => {
-  res.json({
-    artists: '12k+',
-    countries: '80+',
-    earned: '$200k+',
-    artworks: '48k+'
-  });
+app.get('/api/stats', async (req, res) => {
+  try {
+    const [artists, explorers, artworks] = await Promise.all([
+      User.countDocuments({ accountType: 'artist' }),
+      User.countDocuments({ accountType: 'collector' }),
+      Artwork.countDocuments()
+    ]);
+    res.json({ artists, explorers, artworks });
+  } catch {
+    res.status(500).json({ error: 'Unable to load community statistics.' });
+  }
 });
 
 app.use((err, req, res, next) => {
