@@ -147,7 +147,7 @@ export default function Navbar() {
               {user ? (
                 <>
                   <div className="avatar-menu" onClick={() => setDropdownOpen(!dropdownOpen)}>
-                    <Avatar seed={(user.firstName||'') + (user.lastName||'')} size={34} />
+                    <Avatar seed={user.avatarSeed || (user.firstName||'') + (user.lastName||'')} src={user.avatar} size={34} />
                     <ChevronDown size={14} />
                     {dropdownOpen && (
                       <div className="avatar-dropdown">
