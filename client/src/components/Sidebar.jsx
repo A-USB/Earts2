@@ -149,7 +149,7 @@ export default function Sidebar() {
           title={user ? `${user.firstName} ${user.lastName}` : 'Account'}
         >
           <div className="sidebar-user-avatar">
-            <Avatar seed={(user?.firstName || '') + (user?.lastName || '')} size={34} />
+            <Avatar seed={user?.avatarSeed || (user?.firstName || '') + (user?.lastName || '')} src={user?.avatar} size={34} />
           </div>
           <div className="sidebar-label sidebar-user-info">
             <strong>{user?.firstName} {user?.lastName}</strong>
