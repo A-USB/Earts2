@@ -1,0 +1,47 @@
+.load-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  max-width: 720px;
+  margin: 36px auto;
+  padding: 24px;
+  border: 1px solid var(--border);
+  color: var(--text-mid);
+}
+
+.load-error > svg {
+  flex: 0 0 auto;
+  color: var(--primary);
+}
+
+.load-error h2 {
+  margin: 0 0 3px;
+  color: var(--navy);
+  font-family: 'Syne', sans-serif;
+  font-size: 17px;
+}
+
+.load-error p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.load-error button {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 560px) {
+  .load-error {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .load-error button {
+    margin-left: 40px;
+  }
+}
