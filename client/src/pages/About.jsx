@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { api } from '../utils/api';
 import Avatar from '../components/Avatar';
 import './About.css';
 
@@ -16,34 +18,45 @@ const TEAM = [
 ];
 
 const STATS = [
-  { value: '12k+', label: 'Artists worldwide', color: '#5B4BF5' },
-  { value: '80+', label: 'Countries reached', color: '#FF6B9D' },
-  { value: '$200k+', label: 'Income genetated by artists', color: '#00BCD4' },
-  { value: '48k', label: 'Artworks shared', color: '#FF6B35' },
+  { key: 'artists', label: 'Artists', color: '#5B4BF5' },
+  { key: 'explorers', label: 'Explorers', color: '#FF6B9D' },
+  { key: 'artworks', label: 'Artworks shared', color: '#00BCD4' },
+];
+
+const TIMELINE = [
+  { year: '01', title: 'Choose your space', desc: 'Join Earts as an artist sharing original work or an explorer discovering artists.' },
+  { year: '02', title: 'Build your profile', desc: 'Tell the community about your creative interests and the work you make.' },
+  { year: '03', title: 'Explore and connect', desc: 'Discover artwork, follow artists, and save pieces to revisit.' },
+  { year: '04', title: 'Share your work', desc: 'Artists can publish pieces and curate their portfolio for the community.' },
 ];
 
 export default function About() {
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    api.get('/stats').then(setStats).catch(() => setStats(null));
+  }, []);
+
   return (
     <div className="about-page page-wrapper">
       {/* Story */}
       <section className="about-hero">
         <div className="container about-hero-inner">
           <div className="about-hero-left">
-            <span className="eyebrow">Our Story</span>
-            <h1>Born from a love of art and a need for community</h1>
+            <span className="eyebrow">About Earts</span>
+            <h1>A creative community for sharing and discovering art</h1>
             <p>
-              Earts was founded in 2022 by a group of artists who felt unseen on existing platforms.
-              We built the space we always wished existed — one that truly puts creators first.
+              Earts brings artists and explorers together to share original work, discover new creators, and build creative connections.
             </p>
           </div>
-          <div className="about-stats">
+          {stats && <div className="about-stats">
             {STATS.map(s => (
               <div key={s.label} className="about-stat-card" style={{ background: s.color }}>
-                <span className="about-stat-value">{s.value}</span>
+                <span className="about-stat-value">{stats[s.key].toLocaleString()}</span>
                 <span className="about-stat-label">{s.label}</span>
               </div>
             ))}
-          </div>
+          </div>}
         </div>
       </section>
 
@@ -104,17 +117,11 @@ export default function About() {
       <section className="timeline-section">
         <div className="container">
           <div className="section-center">
-            <span className="eyebrow">Our journey</span>
-            <h2>How we made it</h2>
+            <span className="eyebrow">Getting started</span>
+            <h2>Make Earts your creative space</h2>
           </div>
           <div className="timeline">
-            {[
-              { year: '2022', title: 'Earts founded', desc: 'Four artists with a dream built the first version of Earts in a shared studio in Madrid.' },
-              { year: '2023', title: '10,000 artists joined', desc: 'The community grew to 10k artists across 40+ countries in just one year.' },
-              { year: '2024', title: '$100k earned by artists', desc: 'Our marketplace hit $100,000 in artist earnings — proof the model works.' },
-              { year: '2025', title: 'Global expansion', desc: 'We opened regional hubs in Nairobi, Tokyo, and São Paulo.' },
-              { year: '2026', title: 'Today', desc: '12k+ artists, 80 countries, and a community that keeps growing day by day.' },
-            ].map((item, i) => (
+            {TIMELINE.map((item, i) => (
               <div key={i} className="timeline-item">
                 <div className="timeline-year">{item.year}</div>
                 <div className="timeline-dot" />
