@@ -18,8 +18,8 @@ export default function GoogleAuthButton({ accountType = 'artist', role = 'Artis
     }
     setLoading(true);
     try {
-      await loginWithGoogle({ credential, accountType, role });
-      navigate('/feed');
+      const result = await loginWithGoogle({ credential, accountType, role });
+      navigate(result.isNewUser ? '/choose-avatar' : '/feed');
     } catch (error) {
       onError?.(error.message || 'Google sign-in failed. Please try again.');
     } finally {
