@@ -339,6 +339,7 @@ const memoryStore = {
   collections: new MemoryCollection('collections'),
   savedArtworks: new MemoryCollection('savedArtworks'),
   notifications: new MemoryCollection('notifications'),
+  reports: new MemoryCollection('reports'),
 };
 
 let memorySeeded = false;
