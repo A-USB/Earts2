@@ -22,7 +22,8 @@ function hashStr(str) {
 function pick(arr, seed) { return arr[seed % arr.length]; }
 
 export default function Avatar({ seed = 'default', size = 72, className = '', src = null }) {
-  if (src) {
+  const hasCustomPhoto = typeof src === 'string' && /^data:image\/(png|jpeg|webp|gif);base64,/i.test(src);
+  if (hasCustomPhoto) {
     return (
       <img
         src={src}
