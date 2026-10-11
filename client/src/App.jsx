@@ -20,13 +20,15 @@ import Settings from './pages/Settings'
 import Notifications from './pages/Notifications'
 import Logout from './pages/Logout'
 import NotFound from './pages/NotFound'
+import Moderation from './pages/Moderation'
+import ChooseAvatar from './pages/ChooseAvatar'
 import FeedTransition from './components/FeedTransition'
 import './App.css'
 
 // These routes always keep the classic top navbar, logged in or not
 const TOP_NAV_ROUTES = ['/', '/login', '/signup', '/logout', '/forgot-password', '/reset-password'];
 // Auth screens render with no navbar/footer at all (standalone focused screen)
-const CHROMELESS_ROUTES = ['/login', '/signup', '/logout', '/forgot-password', '/reset-password'];
+const CHROMELESS_ROUTES = ['/login', '/signup', '/choose-avatar', '/logout', '/forgot-password', '/reset-password'];
 
 function HomeRoute() {
   const { user, loading } = useAuth();
@@ -48,13 +50,14 @@ function Layout() {
   const location = useLocation();
   const { user } = useAuth();
   const hideChrome = CHROMELESS_ROUTES.includes(location.pathname);
-  const useSidebar = !!user && !TOP_NAV_ROUTES.includes(location.pathname);
+  const useSidebar = !!user && !TOP_NAV_ROUTES.includes(location.pathname) && location.pathname !== '/choose-avatar';
 
   const routes = (
     <Routes>
       <Route path="/" element={<HomeRoute />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/choose-avatar" element={<ProtectedRoute><ChooseAvatar /></ProtectedRoute>} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/logout" element={<Logout />} />
@@ -66,6 +69,7 @@ function Layout() {
       <Route path="/artwork/:id" element={<ArtworkDetail />} />
       <Route path="/upload" element={<ProtectedRoute><UploadArtwork /></ProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+      <Route path="/moderation" element={<ProtectedRoute><Moderation /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
