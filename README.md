@@ -62,4 +62,10 @@ Register a new account via `/signup`, or use the pre-seeded users:
 - `nadia@earts.com`
 - `ara@earts.com`
 
-> **Note:** The server uses in-memory storage. Data resets on restart. Swap `users`/`artworks` arrays for a real database (MongoDB, PostgreSQL, etc.) in production.
+## Safety and checkout notes
+
+- Artwork and profile reports are submitted through `/api/reports`. To review them, set `MODERATOR_USER_IDS` on the backend to a comma-separated list of trusted account IDs, then open `/moderation` while signed in as one of those accounts. Find account IDs in the MongoDB `users` collection. Never put moderator IDs in a `VITE_` variable.
+- Artwork checkout is currently a demo flow. It records a sample order but does not collect card details or process a payment. Do not describe demo orders as completed real sales.
+- MongoDB is used when configured. The in-memory store is only a development fallback; fallback data is temporary and disappears when the process restarts.
+
+GitHub Actions runs frontend lint/build and backend syntax checks for pushes and pull requests to `main`.
