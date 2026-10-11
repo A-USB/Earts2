@@ -1,0 +1,186 @@
+.moderation-page {
+  min-height: 70vh;
+  padding: 48px 24px;
+  background: var(--bg);
+}
+
+.moderation-container {
+  max-width: 960px;
+}
+
+.moderation-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.moderation-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 8px;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.moderation-header h1 {
+  margin: 0 0 4px;
+  color: var(--navy);
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(28px, 4vw, 38px);
+}
+
+.moderation-header p,
+.moderation-empty p {
+  margin: 0;
+  color: var(--text-mid);
+}
+
+.moderation-filter,
+.moderation-action-label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-mid);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.moderation-filter select,
+.moderation-report select {
+  min-width: 150px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-dark);
+  font: inherit;
+}
+
+.moderation-list {
+  display: grid;
+  gap: 14px;
+}
+
+.moderation-report {
+  padding: 20px;
+  border: 1px solid var(--border);
+}
+
+.moderation-report-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.moderation-reason {
+  color: var(--navy);
+  font-weight: 700;
+}
+
+.moderation-target {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 5px 0 0;
+  color: var(--text-mid);
+  font-size: 14px;
+}
+
+.moderation-target strong {
+  color: var(--text-dark);
+}
+
+.moderation-target a {
+  display: inline-flex;
+  color: var(--primary);
+}
+
+.moderation-status {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.moderation-report-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 14px 0;
+  color: var(--text-light);
+  font-size: 12px;
+}
+
+.moderation-details {
+  margin: 0 0 16px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text-mid);
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
+.moderation-action-label {
+  margin-bottom: 6px;
+}
+
+.moderation-report select {
+  min-width: 190px;
+}
+
+.moderation-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 56px 24px;
+  text-align: center;
+}
+
+.moderation-empty > svg {
+  color: var(--primary);
+}
+
+.moderation-empty h2 {
+  margin: 0;
+  color: var(--navy);
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+}
+
+.moderation-error {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-sm);
+  background: #fef2f2;
+  color: #b42318;
+  font-size: 14px;
+}
+
+.moderation-skeleton {
+  height: 150px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(90deg, var(--border-subtle), var(--bg-card), var(--border-subtle));
+  animation: moderation-shimmer 1.2s linear infinite;
+}
+
+@keyframes moderation-shimmer {
+  to { background-position: 200% 0; }
+}
+
+@media (max-width: 640px) {
+  .moderation-page { padding: 28px 16px; }
+  .moderation-header { align-items: flex-start; flex-direction: column; }
+  .moderation-report-heading,
+  .moderation-report-meta { flex-direction: column; }
+  .moderation-target { flex-wrap: wrap; }
+}
