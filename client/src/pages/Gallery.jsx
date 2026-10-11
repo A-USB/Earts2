@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
-  Search, SlidersHorizontal, X, Compass, Sparkles,
-  TrendingUp, Users, ArrowRight, Heart, Tag
+  Search, SlidersHorizontal, X, Sparkles, Users, ArrowRight
 } from 'lucide-react';
 import { api } from '../utils/api';
-import { useAuth } from '../context/AuthContext';
 import ArtworkCard from '../components/ArtworkCard';
 import Avatar from '../components/Avatar';
+import LoadError from '../components/LoadError';
 import './Gallery.css';
 
 const CATEGORIES = [
@@ -20,11 +19,12 @@ const SORT_OPTIONS = [
 ];
 
 export default function Gallery() {
-  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [artworks, setArtworks] = useState([]);
   const [featuredArtists, setFeaturedArtists] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
   const [category, setCategory] = useState(searchParams.get('category') || 'All');
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [sort, setSort] = useState('Latest');
@@ -35,6 +35,7 @@ export default function Gallery() {
   // Fetch Artworks and Featured Artists
   useEffect(() => {
     setLoading(true);
+    setLoadError('');
     const q = category !== 'All' ? `?category=${category}` : '';
     
     Promise.all([
@@ -70,9 +71,9 @@ export default function Gallery() {
         const artists = usersData.filter(u => u.accountType === 'artist').slice(0, 5);
         setFeaturedArtists(artists);
       })
-      .catch(console.error)
+      .catch(error => setLoadError(error.message || 'Unable to load the gallery.'))
       .finally(() => setLoading(false));
-  }, [category, search, sort, priceRange, statusFilter]);
+  }, [category, search, sort, priceRange, statusFilter, refreshKey]);
 
   return (
     <div className="gallery-page page-wrapper">
@@ -126,7 +127,7 @@ export default function Gallery() {
                   to={`/profile/${artist.username}`}
                   className="featured-artist-pill card"
                 >
-                  <Avatar name={`${artist.firstName} ${artist.lastName}`} size={42} />
+                  <Avatar seed={artist.avatarSeed || `${artist.firstName}${artist.lastName}`} src={artist.avatar} size={42} />
                   <div className="artist-pill-info">
                     <strong>{artist.firstName} {artist.lastName}</strong>
                     <span>{artist.role} • {artist.location || 'Global'}</span>
@@ -232,6 +233,8 @@ export default function Gallery() {
               </div>
             ))}
           </div>
+        ) : loadError ? (
+          <LoadError title="Gallery couldn’t load" message={loadError} onRetry={() => setRefreshKey(key => key + 1)} />
         ) : artworks.length > 0 ? (
           <div className="gallery-grid">
             {artworks.map(a => (
