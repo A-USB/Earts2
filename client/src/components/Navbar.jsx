@@ -60,7 +60,7 @@ export default function Navbar() {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}`);
+      navigate(`/search?query=${encodeURIComponent(searchQuery)}`);
       setSearchOpen(false);
     }
   };
