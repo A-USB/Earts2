@@ -44,6 +44,7 @@ function Post({ post, isFollowing, onToggleFollow, liked, onToggleLike, saved, o
       </div>
 
       <Link to={`/artwork/${post.id}`} className="post-media" style={{ background: post.color || '#C8C8E8' }}>
+        {post.imageUrl && <img src={post.imageUrl} alt={post.title || 'Artwork'} className="post-media-image" loading="lazy" />}
         {post.status === 'for_sale' && post.price && (
           <span className="post-price-tag"><Tag size={12} /> ${post.price}</span>
         )}
