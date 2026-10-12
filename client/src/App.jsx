@@ -13,6 +13,7 @@ import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import Feed from './pages/Feed'
 import Marketplace from './pages/Marketplace'
+import ArtistSearch from './pages/ArtistSearch'
 import Profile from './pages/Profile'
 import ArtworkDetail from './pages/ArtworkDetail'
 import UploadArtwork from './pages/UploadArtwork'
@@ -65,6 +66,7 @@ function Layout() {
       <Route path="/gallery" element={<Marketplace />} />
       <Route path="/feed" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
       <Route path="/marketplace" element={<Marketplace />} />
+      <Route path="/search" element={<ArtistSearch />} />
       <Route path="/profile/:username" element={<Profile />} />
       <Route path="/artwork/:id" element={<ArtworkDetail />} />
       <Route path="/upload" element={<ProtectedRoute><UploadArtwork /></ProtectedRoute>} />
