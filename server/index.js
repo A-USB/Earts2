@@ -449,6 +449,36 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
+app.get('/api/users/search', async (req, res) => {
+  try {
+    const query = String(req.query.q || '').trim().slice(0, 100);
+    const filter = { accountType: 'artist' };
+    if (query) {
+      const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const match = new RegExp(escapedQuery, 'i');
+      filter.$or = [
+        { username: match },
+        { firstName: match },
+        { lastName: match },
+        { role: match },
+        { location: match },
+        { tags: match },
+        { tools: match }
+      ];
+    }
+    const artists = await User.find(filter)
+      .select('username firstName lastName role accountType bio location avatar avatarSeed followers tags tools')
+      .sort({ followers: -1, createdAt: -1 })
+      .limit(40);
+    res.json(artists.map(artist => {
+      const { id, username, firstName, lastName, role, accountType, bio, location, avatar, avatarSeed, followers, tags, tools } = artist.toJSON();
+      return { id, username, firstName, lastName, role, accountType, bio, location, avatar, avatarSeed, followers, tags, tools };
+    }));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/users/:username', async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username });
