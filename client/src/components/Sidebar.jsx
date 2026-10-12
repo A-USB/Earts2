@@ -20,22 +20,11 @@ export default function Sidebar() {
   const [pinned, setPinned] = useState(false);
   const [hovering, setHovering] = useState(false);
   const expanded = pinned || hovering;
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState(null);
   const userButtonRef = useRef(null);
 
   const isProfileActive = user?.username ? location.pathname.startsWith(`/profile/${user.username}`) : false;
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/marketplace?search=${encodeURIComponent(searchQuery)}`);
-      setSearchOpen(false);
-      setSearchQuery('');
-    }
-  };
 
   const navItems = [
     { to: '/feed', label: 'Feed', icon: Rss, show: true },
@@ -91,30 +80,10 @@ export default function Sidebar() {
       <div className="sidebar-divider" />
 
       <div className="sidebar-utility">
-        {searchOpen ? (
-          <form onSubmit={handleSearch} className="sidebar-search-form">
-            <Search size={18} />
-            <input
-              autoFocus
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search..."
-              maxLength={100}
-              onBlur={() => !searchQuery && setSearchOpen(false)}
-            />
-          </form>
-        ) : (
-          <button
-            className="sidebar-link"
-            onClick={() => { setPinned(true); setSearchOpen(true); }}
-            title="Search artworks"
-          >
-            <span className="sidebar-icon-box">
-              <Search size={20} />
-            </span>
-            <span className="sidebar-label">Search</span>
-          </button>
-        )}
+        <Link to="/search" className={`sidebar-link ${location.pathname === '/search' ? 'active' : ''}`} title="Search artists">
+          <span className="sidebar-icon-box"><Search size={20} /></span>
+          <span className="sidebar-label">Search</span>
+        </Link>
 
         <ThemeToggle variant="sidebar" />
 
