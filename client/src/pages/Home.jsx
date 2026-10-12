@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowRight, ChevronRight, Check, Zap } from 'lucide-react';
+import { ArrowRight, Bookmark, ChevronRight, Palette, Search, ShoppingBag } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import ArtworkCard from '../components/ArtworkCard';
@@ -8,9 +8,9 @@ import Avatar from '../components/Avatar';
 import './Home.css';
 
 const STATS = [
-  { key: 'artists', label: 'Artists' },
-  { key: 'explorers', label: 'Explorers' },
-  { key: 'artworks', label: 'Artworks shared' },
+  { key: 'artists', label: 'Artists', color: '#A99BFF' },
+  { key: 'explorers', label: 'Explorers', color: '#FF8DBB' },
+  { key: 'artworks', label: 'Artworks shared', color: '#69D7E8' },
 ];
 
 const VALUES = [
@@ -28,15 +28,23 @@ const TEAM = [
 ];
 
 const TIMELINE = [
-  { year: '01', title: 'Choose your space', desc: 'Join Earts as an artist sharing original work or an explorer discovering artists.' },
-  { year: '02', title: 'Build your profile', desc: 'Tell the community about your creative interests and the work you make.' },
-  { year: '03', title: 'Explore and connect', desc: 'Discover artwork, follow artists, and save pieces to revisit.' },
-  { year: '04', title: 'Share your work', desc: 'Artists can publish pieces and curate their portfolio for the community.' },
+  { date: 'JAN 2026', title: 'The Earts idea begins', desc: 'The project starts with a goal: build a creative space where artists can share their work and people can discover it.', color: '#A99BFF' },
+  { date: 'JUN 29, 2026', title: 'The first platform foundation', desc: 'The first recorded Earts codebase brings together a React client and an Express backend for an artist community.', color: '#69D7E8' },
+  { date: 'SEP 19–25, 2026', title: 'Community and marketplace take shape', desc: 'Artist profiles, artwork uploads, a feed, marketplace browsing, collaborations, and notifications turn the foundation into a working community.', color: '#FF8DBB' },
+  { date: 'OCT 4–9, 2026', title: 'Accounts, roles, and trust', desc: 'Authentication, artist and explorer journeys, artwork saving, password recovery, and stronger input validation improve the experience.', color: '#FFB45E' },
+  { date: 'NOW · OCT 2026', title: 'Improving discovery and reliability', desc: 'Current work focuses on artist search, reliable photo uploads, and polishing the experience across the app.', color: '#71D6A5' },
+];
+
+const FEATURES = [
+  { icon: Palette, title: 'Showcase your work', desc: 'Create an artist profile, upload artwork, and organize pieces into a portfolio.', color: '#A99BFF' },
+  { icon: Search, title: 'Discover artists', desc: 'Search creators by name, username, style, or location and visit their profiles.', color: '#69D7E8' },
+  { icon: Bookmark, title: 'Connect and collect', desc: 'Follow artists, like and comment on work, and save pieces to revisit later.', color: '#FF8DBB' },
+  { icon: ShoppingBag, title: 'Explore the marketplace', desc: 'Browse original artworks and see what artists have listed. Checkout is currently a demo and does not process payments.', color: '#FFB45E' },
 ];
 
 const FAQ = [
   { q: 'Can I create an account for free?', a: 'Yes. You can create an artist or explorer account and use the community features without subscribing.' },
-  { q: 'Are subscriptions and add-ons available?', a: 'Not yet. The plans and prices shown here are previews; Earts does not currently charge subscription or add-on fees.' },
+  { q: 'Are there subscription fees?', a: 'No. Earts does not currently offer paid subscriptions or creator plans. Current community features are free to use.' },
   { q: 'Does artwork checkout process payment?', a: 'No. Checkout is a demo only. It does not collect card details or move money, and demo orders are not real sales.' },
   { q: 'How can I share artwork?', a: 'Create an artist account, complete your profile, and use Upload to add artwork to your portfolio.' },
 ];
@@ -65,15 +73,15 @@ export default function Home() {
   const { user } = useAuth();
   const location = useLocation();
   const [trending, setTrending] = useState([]);
-  const [products, setProducts] = useState([]);
+  const [featuredArtists, setFeaturedArtists] = useState([]);
   const [stats, setStats] = useState(null);
 
   const exploreLink = user ? '/marketplace' : '/signup';
 
   useEffect(() => {
     api.get('/artworks?trending=true').then(setTrending).catch(console.error);
-    api.get('/products').then(setProducts).catch(console.error);
     api.get('/stats').then(setStats).catch(() => setStats(null));
+    api.get('/users/search').then(artists => setFeaturedArtists(artists.slice(0, 4))).catch(() => setFeaturedArtists([]));
   }, []);
 
   // Smooth-scroll to the tab/section matching the URL hash (e.g. /#about)
@@ -87,9 +95,6 @@ export default function Home() {
   }, [location.hash]);
 
   useScrollReveal();
-
-  const subscriptions = products.filter(p => p.type === 'subscription');
-  const addons = products.filter(p => p.type === 'addon');
 
   return (
     <div className="home">
@@ -138,7 +143,7 @@ export default function Home() {
         <section className="stats-bar">
           <div className="container stats-inner">
             {stats && STATS.map(s => (
-              <div key={s.key} className="stat-item">
+              <div key={s.key} className="stat-item" style={{ '--stat-accent': s.color }}>
                 <div className="stat-value" aria-label={`${stats[s.key].toLocaleString()} ${s.label}`}>
                   <span className="stat-num">{stats[s.key].toLocaleString()}</span>
                 </div>
@@ -177,7 +182,7 @@ export default function Home() {
             <div className="cta-banner">
               <div className="cta-content">
                 <h3>Ready to share your art with the world?</h3>
-                <p>Join 12,000+ artists already building their creative career on Earts.</p>
+                <p>{stats ? `Join ${stats.artists} ${stats.artists === 1 ? 'artist' : 'artists'} and ${stats.explorers} ${stats.explorers === 1 ? 'explorer' : 'explorers'} in the growing Earts community.` : 'Join artists and explorers building a creative community on Earts.'}</p>
               </div>
               <Link to={user ? '/marketplace' : '/signup'} className="cta-btn">
                 Start for free <ArrowRight size={16} />
@@ -195,22 +200,17 @@ export default function Home() {
                 <span className="eyebrow">Community</span>
                 <h2>Featured artists</h2>
               </div>
-              <Link to={exploreLink} className="view-all">View all <ChevronRight size={16} /></Link>
+              <Link to="/search" className="view-all">Browse artists <ChevronRight size={16} /></Link>
             </div>
             <div className="artists-grid">
-              {[
-                { name: 'Nadia Reyes', role: 'Painter', works: 23, color: '#F093FB', username: 'nadia_reyes' },
-                { name: 'arahibris2011', role: 'Illustrator', works: 31, color: '#4facfe', username: 'arahibris2011' },
-                { name: 'Jane Murungi', role: 'Sculptor', works: 103, color: '#FF6B9D', username: 'jane_murungi' },
-                { name: 'Hussina Patel', role: 'Mixed Media', works: 19, color: '#f6d365', username: 'hussina_patel' },
-              ].map(artist => (
-                <Link to={`/profile/${artist.username}`} key={artist.name} className="artist-card card">
-                  <Avatar seed={artist.name} size={72} />
-                  <h4>{artist.name}</h4>
-                  <span className="artist-role">{artist.role}</span>
-                  <span className="artist-works">{artist.works} artworks</span>
+              {featuredArtists.map(artist => (
+                <Link to={`/profile/${artist.username}`} key={artist.id} className="artist-card card">
+                  <Avatar seed={artist.avatarSeed || `${artist.firstName}${artist.lastName}`} src={artist.avatar} size={72} />
+                  <h4>{artist.firstName} {artist.lastName}</h4>
+                  <span className="artist-role">{artist.role || 'Artist'}</span>
+                  <span className="artist-works">{artist.followers || 0} followers</span>
                   <span className="follow-btn btn-outline" style={{ marginTop: '12px', padding: '6px 18px', fontSize: '13px' }}>
-                    Follow
+                    View profile
                   </span>
                 </Link>
               ))}
@@ -312,15 +312,16 @@ export default function Home() {
         <section className="timeline-section reveal">
           <div className="container">
             <div className="section-center">
-              <span className="eyebrow">Getting started</span>
-              <h2>Make Earts your creative space</h2>
+              <span className="eyebrow">Our journey</span>
+              <h2>From an idea to a creative community</h2>
+              <p className="timeline-intro">A look at how Earts has grown—and what we’re working on now.</p>
             </div>
             <div className="timeline">
-              {TIMELINE.map((item, i) => (
-                <div key={i} className="timeline-item">
-                  <div className="timeline-year">{item.year}</div>
+              {TIMELINE.map(item => (
+                <div key={item.date} className="timeline-item" style={{ '--milestone-accent': item.color }}>
+                  <div className="timeline-year">{item.date}</div>
                   <div className="timeline-dot" />
-                  <div className="timeline-content card">
+                  <div className="timeline-content">
                     <h4>{item.title}</h4>
                     <p>{item.desc}</p>
                   </div>
@@ -336,63 +337,26 @@ export default function Home() {
         <section className="products-hero reveal">
           <div className="container">
             <div className="section-header centered">
-              <span className="eyebrow">Our Products</span>
-              <h2>Tools that put artists first</h2>
-              <p>Explore upcoming tools for artists. Plans and add-ons are not available for purchase yet.</p>
+              <span className="eyebrow">What you can do</span>
+              <h2>Everything you need to find your place on Earts</h2>
+              <p>Explore the tools you can use today. Earts has no paid plans or subscription fees.</p>
             </div>
           </div>
         </section>
 
         <div className="container products-body">
-          <section className="plans-section reveal">
-            <div className="section-center" style={{textAlign:'center',marginBottom:'40px'}}>
-              <h2>Plans preview</h2>
-              <p role="note" style={{color:'var(--text-mid)', marginTop:'8px'}}>Preview pricing only · subscriptions and billing are not enabled.</p>
-            </div>
-            <div className="plans-grid">
-              {subscriptions.map(plan => (
-                <div key={plan.id} className={`plan-card card ${plan.popular ? 'plan-popular' : ''}`}>
-                  {plan.popular && <div className="popular-badge"><Zap size={12}/> Most popular</div>}
-                  <div className="plan-icon" style={{background: plan.color}} />
-                  <h3>{plan.name}</h3>
-                  <p className="plan-desc">{plan.description}</p>
-                  <div className="plan-price">
-                    <span className="price-amt">${plan.price}</span>
-                    <span className="price-period">/month preview</span>
-                  </div>
-                  <ul className="plan-features">
-                    {plan.features.map(f => (
-                      <li key={f}><Check size={14} /> {f}</li>
-                    ))}
-                  </ul>
-                  <Link to="/signup" className={plan.popular ? 'btn-primary' : 'btn-outline'} style={{justifyContent:'center', marginTop:'auto'}}>
-                    Create free account
-                  </Link>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="addons-section reveal">
-            <h2>Power-ups & Add-ons</h2>
-            <p>These add-ons are previews and cannot be purchased yet.</p>
-            <div className="addons-grid">
-              {addons.map(addon => (
-                <div key={addon.id} className="addon-card card">
-                  <div className="addon-icon" style={{background: addon.color}} />
-                  <div className="addon-content">
-                    <h4>{addon.name}</h4>
-                    <p>{addon.description}</p>
-                    <div className="addon-features">
-                      {addon.features.map(f => <span key={f} className="addon-feat">{f}</span>)}
-                    </div>
-                  </div>
-                  <div className="addon-price">
-                    {addon.price === 0 ? <span className="free-tag">Preview</span> : <span>${addon.price} preview</span>}
-                    <button className="btn-outline" style={{padding:'6px 16px',fontSize:'13px'}} disabled>Coming soon</button>
-                  </div>
-                </div>
-              ))}
+          <section className="features-section reveal">
+            <div className="features-grid">
+              {FEATURES.map(feature => {
+                const Icon = feature.icon;
+                return (
+                  <article className="feature-card card" key={feature.title} style={{ '--feature-accent': feature.color }}>
+                    <span className="feature-icon"><Icon size={22} /></span>
+                    <h3>{feature.title}</h3>
+                    <p>{feature.desc}</p>
+                  </article>
+                );
+              })}
             </div>
           </section>
 
