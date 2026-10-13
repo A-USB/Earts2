@@ -29,6 +29,8 @@
 
 /* Deep Cosmic Midnight Dark Mode Tokens */
 [data-theme="dark"] {
+  --gradient-hero: linear-gradient(135deg, #6D5EF7 0%, #4B33C9 50%, #2A1B7A 100%);
+  --gradient-card: linear-gradient(135deg, #6D5EF7 0%, #4B33C9 50%, #2A1B7A 100%);
   --primary: #7C6EFA;
   --primary-dark: #6352E8;
   --primary-light: rgba(124, 110, 250, 0.2);
