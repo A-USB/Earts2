@@ -71,6 +71,8 @@ body {
   color: var(--text-dark);
 }
 
+[data-theme="dark"] .eyebrow { color: #9ECFFF; }
+
 h1, h2, h3, h4 { font-family: 'Syne', sans-serif; line-height: 1.2; }
 
 a { text-decoration: none; color: inherit; }
