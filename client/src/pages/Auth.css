@@ -1,6 +1,8 @@
 .auth-page {
   min-height: 100vh;
-  background: var(--bg);
+  background:
+    linear-gradient(135deg, rgba(240, 241, 246, 0.8), rgba(228, 225, 225, 0.48)),
+    url('/auth-background-light.png') center / cover fixed no-repeat;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -32,7 +34,7 @@
 
 /* Unified Auth Card - 520px 520px split with 650px height */
 .auth-card {
-  background: var(--bg-card);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
@@ -48,7 +50,9 @@
 
 /* Left Sidepanel */
 .auth-left {
-  background: linear-gradient(150deg, #5B4BF5 0%, #7C3AED 50%, #4F46E5 100%);
+  background:
+    linear-gradient(135deg, rgba(130, 120, 221, 0.8) 0%, rgba(62, 2, 203, 0.8) 52%, rgba(50, 8, 118, 0.8) 100%),
+    url('/signup-artwork.avif') center 42% / cover no-repeat;
   padding: 68px 48px 52px 48px;
   display: flex;
   flex-direction: column;
@@ -90,7 +94,7 @@
   font-weight: 700;
   letter-spacing: 0.13em;
   text-transform: uppercase;
-  margin-bottom: 18px;
+  margin-bottom: 48px;
   display: block;
 }
 
@@ -101,14 +105,14 @@
   font-weight: 800;
   letter-spacing: -0.025em;
   line-height: 1.24;
-  margin-bottom: 22px;
+  margin-bottom: 50px;
 }
 
 .auth-left p {
   font-size: 15.5px;
   color: rgba(255, 255, 255, 0.82);
   line-height: 1.62;
-  margin-bottom: 32px;
+  margin-bottom: 45px;
 }
 
 .auth-features {
@@ -180,7 +184,7 @@
 .auth-perk {
   display: flex;
   align-items: flex-start;
-  gap: 15px;
+  gap: 20px;
 }
 
 .perk-icon {
@@ -195,7 +199,7 @@
   align-items: center;
   justify-content: center;
   color: white;
-  margin-top: 2px;
+  margin-top: 5px;
 }
 
 .auth-perk strong {
@@ -204,7 +208,7 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-weight: 600;
   color: white;
-  margin-bottom: 3px;
+  margin-bottom: 1px;
   letter-spacing: -0.01em;
 }
 
@@ -216,6 +220,8 @@
 
 /* Right Content - Balanced vertical spacing + Framing */
 .auth-right {
+  background: rgba(255, 255, 255, 0.7);
+  
   padding: 34px 44px;
   display: flex;
   flex-direction: column;
@@ -224,24 +230,20 @@
 }
 
 .auth-header-block {
-  margin-bottom: 12px;
+  margin-bottom: 4px;
 }
 
 .auth-right h2 {
   font-size: 26px;
   color: var(--text-dark);
-  margin-bottom: 4px;
+  margin-bottom: 7px;
   font-family: 'Syne', sans-serif !important;
   font-weight: 800;
   letter-spacing: -0.025em;
   line-height: 1.2;
 }
 
-.auth-subtitle {
-  font-size: 13.5px;
-  color: var(--text-mid);
-  margin-bottom: 14px;
-}
+
 
 /* Auth Stepper Styles */
 .auth-stepper {
@@ -523,7 +525,7 @@
 .account-type-cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 19px;
 }
 
 .account-type-card {
@@ -600,7 +602,7 @@
 .auth-form input::placeholder {
   color: var(--text-light);
   opacity: 0.85;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .auth-form input:focus,
@@ -720,19 +722,25 @@
 
 /* Dark Mode Styles for Auth */
 [data-theme="dark"] .auth-page {
-  background: radial-gradient(circle at 15% 15%, rgba(91, 75, 245, 0.15) 0%, transparent 45%),
-    radial-gradient(circle at 85% 85%, rgba(255, 107, 157, 0.1) 0%, transparent 45%),
-    #0B0B16;
+  background:
+    linear-gradient(135deg, rgba(19, 19, 80, 0.9), rgba(4, 4, 55, 0.9)),
+    url('/auth-background-dark.png') center / cover fixed no-repeat;
 }
 
 [data-theme="dark"] .auth-card {
-  background: #141427;
+  background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.09);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
 }
 
+[data-theme="dark"] .auth-right {
+  background: rgba(20, 20, 39, 0.78);
+}
+
 [data-theme="dark"] .auth-left {
-  background: linear-gradient(150deg, #18153A 0%, #201338 50%, #111024 100%);
+  background:
+    linear-gradient(135deg, rgba(11, 6, 64, 0.9) 0%, rgba(18, 5, 82, 0.9) 50%, rgba(5, 2, 40, 0.9) 100%),
+    url('/signup-artwork.avif') center 42% / cover no-repeat;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -1026,4 +1034,134 @@
 [data-theme="dark"] .google-cancel-btn:hover {
   background: #1C1C35;
   color: #FFFFFF;
+}
+
+/* Full-viewport layout for signup credentials only. Login and profile setup retain the auth card layout. */
+.signup-fullscreen.auth-page {
+  min-height: 100vh;
+  justify-content: flex-start;
+  padding: 0;
+}
+
+.signup-fullscreen .signup-card-topbar {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 5;
+  pointer-events: none;
+  max-width: none;
+  height: 116px;
+  padding: 0 clamp(40px, 6vw, 96px);
+  margin: 0;
+}
+
+.signup-fullscreen .signup-card-topbar .auth-logo-link { pointer-events: auto; }
+
+.signup-fullscreen .auth-card {
+  position: relative;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  max-width: none;
+  min-height: 100vh;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.signup-fullscreen .auth-left {
+  min-height: 100vh;
+  padding: clamp(114px, calc(11vh + 10px), 142px) clamp(40px, 6vw, 96px) 58px;
+}
+
+.signup-fullscreen .auth-left::before {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, transparent 70%);
+}
+
+.signup-fullscreen .auth-right {
+  min-height: 100vh;
+  padding: clamp(92px, 10vh, 120px) clamp(32px, 4.5vw, 72px) 32px;
+  align-items: center;
+}
+
+.signup-fullscreen .signup-stepper-row,
+.signup-fullscreen .auth-right > .auth-form {
+  width: min(100%, 460px);
+}
+
+.signup-stepper-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.signup-stepper-row .auth-stepper {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.signup-fullscreen .signup-stepper-row { margin-bottom: 12px; }
+.signup-stepper-theme-toggle {
+  position: relative;
+  z-index: 6;
+  flex: 0 0 38px;
+}
+.signup-fullscreen .auth-form { gap: 12px; }
+.signup-fullscreen .account-type-card { min-height: 90px; }
+.signup-fullscreen .auth-switch { margin-top: 12px; }
+
+.signup-page:not(.signup-fullscreen) .auth-topbar {
+  max-width: 600px;
+}
+
+.signup-profile-card {
+  display: block;
+  width: 100%;
+  max-width: 600px;
+  min-height: 0;
+}
+
+.signup-profile-card .auth-right {
+  width: 100%;
+  padding: clamp(28px, 4vw, 48px) clamp(24px, 5vw, 56px);
+}
+
+.signup-profile-card .auth-stepper { margin-bottom: 22px; }
+.signup-profile-card .auth-header-block { margin-bottom: 8px; }
+.signup-profile-card .auth-right h2 { margin-bottom: 7px; }
+.signup-profile-card .auth-subtitle {
+  margin: 0;
+  color: var(--text-mid);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.signup-profile-card .auth-form { gap: 18px; }
+.signup-profile-card .form-group { gap: 9px; }
+.signup-profile-card .auth-form input,
+.signup-profile-card .auth-form select { padding: 13px 16px; }
+.signup-profile-card .auth-stepper-actions { margin-top: 4px; gap: 14px; }
+.signup-profile-card .auth-switch { margin-top: 18px; }
+
+@media (max-height: 820px) and (min-width: 901px) {
+  .signup-fullscreen .auth-left { padding-top: 104px; }
+  .signup-fullscreen .auth-right { padding-top: 82px; }
+}
+
+@media (max-width: 900px) {
+  .signup-fullscreen .auth-card {
+    grid-template-columns: 1fr;
+  }
+
+  .signup-fullscreen .auth-left {
+    display: flex;
+    min-height: 440px;
+    height: auto;
+    padding: 110px clamp(24px, 7vw, 64px) 58px;
+  }
+
+  .signup-fullscreen .signup-card-topbar { padding-inline: clamp(24px, 7vw, 64px); }
+
+  .signup-fullscreen .auth-right {
+    min-height: auto;
+    padding: 36px clamp(24px, 7vw, 64px);
+  }
 }
