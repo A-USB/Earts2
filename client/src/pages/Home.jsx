@@ -181,22 +181,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* CTA Banner */}
-        <section className="cta-section reveal">
-          <div className="container">
-            <div className="cta-banner">
-              <div className="cta-content">
-                <h3>Ready to share your art with the world?</h3>
-                <p>{stats ? `Join ${stats.artists} ${stats.artists === 1 ? 'artist' : 'artists'} and ${stats.explorers} ${stats.explorers === 1 ? 'explorer' : 'explorers'} in the growing Earts community.` : 'Join artists and explorers building a creative community on Earts.'}</p>
-              </div>
-              <Link to={user ? '/marketplace' : '/signup'} className="cta-btn">
-                Start for free <ArrowRight size={16} />
-              </Link>
-              <div className="cta-blob" />
-            </div>
-          </div>
-        </section>
-
         {/* Featured Artists */}
         <section className="artists-section reveal">
           <div className="container">
@@ -319,7 +303,7 @@ export default function Home() {
             <div className="section-center">
               <span className="eyebrow">Our journey</span>
               <h2>From an idea to a creative community</h2>
-              <p className="timeline-intro">A look at how Earts has grown—and what we’re working on now.</p>
+              <p className="timeline-intro">A look at how Earts has grown — and what we’re working on now.</p>
             </div>
             <div className="timeline">
               {TIMELINE.map(item => (
@@ -376,6 +360,22 @@ export default function Home() {
               ))}
             </div>
           </section>
+        </div>
+      </section>
+
+      {/* CTA Banner at the end of the landing page, before the app footer */}
+      <section className="cta-section">
+        <div className="container">
+          <div className="cta-banner">
+            <div className="cta-content">
+              <h3>Ready to share your art with the world?</h3>
+              <p>{stats ? `Join ${stats.artists} ${stats.artists === 1 ? 'artist' : 'artists'} and ${stats.explorers} ${stats.explorers === 1 ? 'explorer' : 'explorers'} in the growing Earts community.` : 'Join artists and explorers building a creative community on Earts.'}</p>
+            </div>
+            <Link to={user ? '/marketplace' : '/signup'} className="cta-btn">
+              Start for free <ArrowRight size={16} />
+            </Link>
+            <div className="cta-blob" />
+          </div>
         </div>
       </section>
     </div>
