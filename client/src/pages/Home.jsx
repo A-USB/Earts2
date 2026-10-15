@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowRight, Bookmark, ChevronRight, Palette, Search, ShoppingBag } from 'lucide-react';
+import { ArrowRight, Bookmark, ChevronRight, Compass, Palette, Plus, Search, ShoppingBag, Users } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import ArtworkCard from '../components/ArtworkCard';
@@ -8,10 +8,13 @@ import Avatar from '../components/Avatar';
 import './Home.css';
 
 const STATS = [
-  { key: 'artists', label: 'Artists', color: '#A99BFF' },
-  { key: 'explorers', label: 'Explorers', color: '#FF8DBB' },
-  { key: 'artworks', label: 'Artworks shared', color: '#69D7E8' },
+  { key: 'artists', label: 'Artists', color: '#A99BFF', Icon: Users },
+  { key: 'explorers', label: 'Explorers', color: '#FF8DBB', Icon: Compass },
+  { key: 'artworks', label: 'Artworks shared', color: '#69D7E8', Icon: Palette },
 ];
+
+// Keep the landing page populated immediately while live counts load from the API.
+const LANDING_STATS_FALLBACK = { artists: 9, explorers: 1, artworks: 19 };
 
 const VALUES = [
   { icon: '🤝', title: 'Community first', desc: 'Artists support artists. Every feature we build strengthens the collective.' },
@@ -74,13 +77,13 @@ export default function Home() {
   const location = useLocation();
   const [trending, setTrending] = useState([]);
   const [featuredArtists, setFeaturedArtists] = useState([]);
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState(LANDING_STATS_FALLBACK);
 
   const exploreLink = user ? '/marketplace' : '/signup';
 
   useEffect(() => {
     api.get('/artworks?trending=true').then(setTrending).catch(console.error);
-    api.get('/stats').then(setStats).catch(() => setStats(null));
+    api.get('/stats').then(setStats).catch(() => {});
     api.get('/users/search').then(artists => setFeaturedArtists(artists.slice(0, 4))).catch(() => setFeaturedArtists([]));
   }, []);
 
@@ -144,8 +147,10 @@ export default function Home() {
           <div className="container stats-inner">
             {stats && STATS.map(s => (
               <div key={s.key} className="stat-item" style={{ '--stat-accent': s.color }}>
+                <s.Icon className="stat-icon" size={19} strokeWidth={2.1} aria-hidden="true" />
                 <div className="stat-value" aria-label={`${stats[s.key].toLocaleString()} ${s.label}`}>
                   <span className="stat-num">{stats[s.key].toLocaleString()}</span>
+                  <span className="stat-growth" aria-hidden="true"><Plus size={12} strokeWidth={3} /></span>
                 </div>
                 <span className="stat-label">{s.label}</span>
               </div>
