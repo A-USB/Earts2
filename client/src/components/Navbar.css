@@ -1,7 +1,7 @@
 .navbar {
-  background: rgba(255, 255, 255, 0.97);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
@@ -216,7 +216,7 @@
 
 /* Dark Mode Styles for Navbar */
 [data-theme="dark"] .navbar {
-  background: rgba(11, 11, 22, 0.96);
+  background: rgba(14, 14, 33, 0.85);
   border-bottom-color: var(--border);
 }
 
