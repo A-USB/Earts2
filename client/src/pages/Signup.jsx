@@ -8,6 +8,7 @@ import {
   Sparkles,
   ArrowRight,
   ArrowLeft,
+  ChevronDown,
   Palette,
   Briefcase,
   MapPin,
@@ -487,13 +488,16 @@ export default function Signup() {
                     <label className="label-with-icon">
                       <Palette size={14} /> Creative Specialty
                     </label>
-                    <select value={form.role} onChange={set("role")} required>
-                      {ROLES.map((r) => (
-                        <option key={r} value={r}>
-                          {r}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="auth-select-wrap">
+                      <select value={form.role} onChange={set("role")} required>
+                        {ROLES.map((r) => (
+                          <option key={r} value={r}>
+                            {r}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="auth-select-chevron" size={17} aria-hidden="true" />
+                    </div>
                   </div>
 
                   <div className="form-row">
