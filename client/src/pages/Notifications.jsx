@@ -75,7 +75,7 @@ export default function Notifications() {
   const filtered = notifications.filter(n => {
     if (activeTab === 'purchases') return n.type === 'purchase';
     if (activeTab === 'artists') return n.type === 'new_artwork';
-    if (activeTab === 'interactions') return n.type === 'like' || n.type === 'comment';
+    if (activeTab === 'interactions') return n.type === 'like' || n.type === 'comment' || n.type === 'reply';
     if (activeTab === 'sales') return n.type === 'sale';
     if (activeTab === 'network') return n.type === 'follow';
     return true;
@@ -86,6 +86,7 @@ export default function Notifications() {
       case 'like':
         return <Heart size={16} fill="#FF6B9D" color="#FF6B9D" />;
       case 'comment':
+      case 'reply':
         return <MessageCircle size={16} color="#5B4BF5" />;
       case 'sale':
       case 'purchase':
