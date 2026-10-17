@@ -37,7 +37,7 @@ export default function FeedTransition() {
         <div className="feed-transition-stage" aria-hidden="true">
           <svg className="feed-transition-art" viewBox="0 0 1200 560" preserveAspectRatio="xMidYMid meet">
             <defs>
-              <linearGradient id={paintId} gradientUnits="userSpaceOnUse" x1="270" y1="0" x2="1000" y2="0">
+              <linearGradient id={paintId} gradientUnits="userSpaceOnUse" x1="50" y1="0" x2="780" y2="0">
                 <stop offset="0" stopColor={violet} />
                 <stop offset=".55" stopColor={mid} />
                 <stop offset="1" stopColor={pink} />
