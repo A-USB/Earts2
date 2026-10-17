@@ -132,11 +132,11 @@
 [data-theme="dark"] .pcm-tab.active { color: var(--bg); }
 
 .pcm-notes { flex: 1; min-height: 0; overflow-y: auto; }
+.pcm-thread { border-bottom: 1px dashed var(--border); }
 .pcm-note {
   display: flex;
   gap: 12px;
   padding: 16px 24px;
-  border-bottom: 1px dashed var(--border);
   transition: background 0.15s;
 }
 .pcm-note.has-pin { cursor: pointer; }
@@ -207,6 +207,14 @@
 .pcm-post-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* Phones: the notes become a sheet under the piece */
+.pcm-reply { display: flex; align-items: flex-start; gap: 10px; padding: 0 24px 14px 40px; color: var(--text-mid); }
+.pcm-reply-link { flex: none; margin-top: -6px; color: var(--border); }
+.pcm-reply .pcm-note-body p { font-size: 13.5px; }
+.pcm-reply-btn { min-height: 44px; margin: 0 0 -8px; padding: 0 8px 0 0; background: none; color: var(--primary); font-size: 12px; font-weight: 700; }
+.pcm-reply-btn:hover { text-decoration: underline; }
+.pcm-artist-tag { padding: 1px 8px; border-radius: 99px; background: var(--primary-dark); color: #fff; font-size: 11px; font-weight: 700; }
+.pcm-replying { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 13px; color: var(--text-dark); }
+
 @media (max-width: 820px) {
   .pcm-overlay { padding: 52px 0 0; align-items: stretch; }
   .pcm-back { left: 8px; top: 4px; }
@@ -223,3 +231,8 @@
 @media (prefers-reduced-motion: reduce) {
   .pcm-overlay, .pcm-modal { animation: none; }
 }
+
+.pcm-pin-controls[hidden] { display: none; }
+.pcm-post-btn { margin-left: auto; }
+
+.pcm-note > :first-child, .pcm-reply > :not(.pcm-note-body):not(.pcm-reply-link) { flex: none; }
