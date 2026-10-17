@@ -8,6 +8,7 @@ const commentSchema = new mongoose.Schema({
   text: { type: String, required: true, trim: true, maxlength: 600 },
   pinX: { type: Number, min: 0, max: 100, default: null },
   pinY: { type: Number, min: 0, max: 100, default: null },
+  parentId: { type: String, default: null, index: true },
   createdAt: { type: Number, default: () => Date.now() }
 }, {
   toJSON: {
