@@ -21,7 +21,8 @@ const {
   SavedArtwork,
   Notification,
   Product,
-  Report
+  Report,
+  Message
 } = require('./db');
 
 const app = express();
@@ -836,6 +837,39 @@ app.post('/api/artworks/:id/like', auth, async (req, res) => {
   }
 });
 
+// ================= ARTWORK IMAGES =================
+// Images are stored as base64 data URIs. Sending them inside list JSON makes pages huge, so lists
+// carry a small URL instead and the browser fetches (and caches) each image on its own.
+function imageVersion(dataUri) {
+  return crypto.createHash('md5').update(`${dataUri.length}:${dataUri.slice(-96)}`).digest('hex').slice(0, 12);
+}
+
+function withImageUrl(req, artworkJson) {
+  const img = artworkJson.imageUrl;
+  if (typeof img === 'string' && img.startsWith('data:image/')) {
+    return { ...artworkJson, imageUrl: `${req.protocol}://${req.get('host')}/api/artworks/${artworkJson.id}/image?v=${imageVersion(img)}` };
+  }
+  return artworkJson;
+}
+
+app.get('/api/artworks/:id/image', async (req, res) => {
+  try {
+    const artwork = await Artwork.findById(req.params.id);
+    const img = artwork?.imageUrl;
+    if (!img) return res.status(404).end();
+    const match = img.match(/^data:(image\/(?:png|jpeg|webp|gif));base64,(.+)$/i);
+    if (!match) return res.redirect(302, img);
+    res.set({
+      'Content-Type': match[1],
+      'Cache-Control': 'public, max-age=31536000, immutable',
+      'Cross-Origin-Resource-Policy': 'cross-origin'
+    });
+    res.send(Buffer.from(match[2], 'base64'));
+  } catch (err) {
+    res.status(500).end();
+  }
+});
+
 // ================= COMMENTS ROUTES =================
 app.get('/api/artworks/:id/comments', async (req, res) => {
   try {
@@ -865,6 +899,19 @@ app.post('/api/artworks/:id/comments', auth, async (req, res) => {
       pin = { pinX, pinY };
     }
 
+    // Replies attach to the top-level note they answer (one level deep keeps threads readable)
+    let parentId = null;
+    let parent = null;
+    if (req.body.parentId) {
+      parent = await Comment.findById(String(req.body.parentId));
+      if (!parent || parent.artworkId !== artwork.id) return res.status(400).json({ error: 'The note you are replying to no longer exists' });
+      if (parent.parentId) {
+        parent = await Comment.findById(parent.parentId) || parent;
+      }
+      parentId = parent.id;
+      pin = {};
+    }
+
     const comment = await Comment.create({
       artworkId: artwork.id,
       userId: req.userId,
@@ -872,11 +919,12 @@ app.post('/api/artworks/:id/comments', auth, async (req, res) => {
       username: user.username,
       text,
       ...pin,
+      parentId,
       createdAt: Date.now()
     });
 
     // Notify artist
-    if (artwork.artistId !== req.userId) {
+    if (artwork.artistId !== req.userId && !(parent && parent.userId === artwork.artistId)) {
       await Notification.create({
         userId: artwork.artistId,
         type: 'comment',
@@ -889,7 +937,98 @@ app.post('/api/artworks/:id/comments', auth, async (req, res) => {
       });
     }
 
+    if (parent && parent.userId !== req.userId) {
+      await Notification.create({
+        userId: parent.userId,
+        type: 'reply',
+        actorName: `${user.firstName} ${user.lastName}`,
+        actorUsername: user.username,
+        text: `replied to your note: "${text.slice(0, 60)}${text.length > 60 ? '...' : ''}" on`,
+        targetTitle: artwork.title,
+        targetId: artwork.id,
+        targetColor: artwork.color
+      });
+    }
+
     res.status(201).json(comment.toJSON());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ================= MESSAGES ROUTES =================
+const conversationKey = (a, b) => [String(a), String(b)].sort().join(':');
+const publicPerson = u => ({
+  id: u.id, username: u.username, firstName: u.firstName, lastName: u.lastName,
+  avatar: u.avatar || null, avatarSeed: u.avatarSeed || null, role: u.role || ''
+});
+
+app.get('/api/messages/conversations', auth, async (req, res) => {
+  try {
+    const mine = await Message.find({ $or: [{ senderId: req.userId }, { recipientId: req.userId }] }).sort({ createdAt: -1 }).limit(500);
+    const threads = new Map();
+    for (const m of mine) {
+      const otherId = m.senderId === req.userId ? m.recipientId : m.senderId;
+      if (!threads.has(otherId)) threads.set(otherId, { otherId, last: m, unread: 0 });
+      if (m.recipientId === req.userId && !m.read) threads.get(otherId).unread += 1;
+    }
+    const people = threads.size ? await User.find({ _id: { $in: [...threads.keys()] } }) : [];
+    const byId = new Map(people.map(u => [u.id, u]));
+    const list = [...threads.values()]
+      .filter(t => byId.has(t.otherId))
+      .map(t => ({
+        user: publicPerson(byId.get(t.otherId)),
+        lastMessage: { text: t.last.text, createdAt: t.last.createdAt, fromMe: t.last.senderId === req.userId },
+        unread: t.unread
+      }));
+    res.json(list);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/messages/unread-count', auth, async (req, res) => {
+  try {
+    const unread = await Message.find({ recipientId: req.userId, read: false });
+    res.json({ count: unread.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/messages/with/:username', auth, async (req, res) => {
+  try {
+    const other = await User.findOne({ username: req.params.username });
+    if (!other) return res.status(404).json({ error: 'User not found' });
+    const key = conversationKey(req.userId, other.id);
+    const query = { conversationId: key };
+    const after = Number(req.query.after);
+    if (Number.isFinite(after) && after > 0) query.createdAt = { $gt: after };
+    const messages = await Message.find(query).sort({ createdAt: 1 }).limit(300);
+    // Opening the thread marks what they sent as read
+    await Message.updateMany({ conversationId: key, recipientId: req.userId, read: false }, { read: true });
+    res.json({ user: publicPerson(other), messages: messages.map(m => m.toJSON()) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/messages/with/:username', auth, limitAuthRequests(30, 60 * 1000), async (req, res) => {
+  try {
+    const other = await User.findOne({ username: req.params.username });
+    if (!other) return res.status(404).json({ error: 'User not found' });
+    if (other.id === req.userId) return res.status(400).json({ error: 'You cannot message yourself' });
+    const textError = validateText(req.body.text, 'Message', 1000, { required: true, multiline: true });
+    if (textError) return res.status(400).json({ error: textError });
+    const message = await Message.create({
+      conversationId: conversationKey(req.userId, other.id),
+      senderId: req.userId,
+      recipientId: other.id,
+      text: req.body.text.trim(),
+      read: false,
+      createdAt: Date.now()
+    });
+    res.status(201).json(message.toJSON());
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -975,29 +1114,33 @@ app.delete('/api/collections/:id', auth, async (req, res) => {
 // ================= FEED ROUTE =================
 app.get('/api/feed', auth, async (req, res) => {
   try {
+    // Paged by createdAt (newest first) so a page stays small however many artworks exist.
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 8, 1), 20);
+    const before = Number(req.query.before);
+    const query = { artistId: { $ne: req.userId } };
+    if (Number.isFinite(before) && before > 0) query.createdAt = { $lt: before };
+
+    const rows = await Artwork.find(query).sort({ createdAt: -1 }).limit(limit + 1);
+    const hasMore = rows.length > limit;
+    const page = rows.slice(0, limit);
+
     const follows = await Follow.find({ followerId: req.userId });
-    const followingIds = follows.map(f => f.followingId);
+    const followingIds = new Set(follows.map(f => String(f.followingId)));
+    // Within a page, work from people you follow comes first
+    const ordered = [...page.filter(a => followingIds.has(String(a.artistId))), ...page.filter(a => !followingIds.has(String(a.artistId)))];
 
-    const followingArtworks = await Artwork.find({
-      artistId: { $in: followingIds }
-    }).sort({ createdAt: -1 });
-
-    const otherArtworks = await Artwork.find({
-      artistId: { $nin: [...followingIds, req.userId] }
-    }).limit(20).sort({ createdAt: -1 });
-
-    const combined = [...followingArtworks, ...otherArtworks].slice(0, 30);
-    const artistIds = [...new Set(combined.map(artwork => artwork.artistId).filter(Boolean))];
+    const artistIds = [...new Set(page.map(artwork => artwork.artistId).filter(Boolean))];
     const artists = await User.find({ _id: { $in: artistIds } });
     const artistsById = new Map(artists.map(artist => [artist.id, artist]));
-    res.json(combined.map(artwork => {
+    const items = ordered.map(artwork => {
       const artist = artistsById.get(artwork.artistId);
-      return {
+      return withImageUrl(req, {
         ...artwork.toJSON(),
         artistAvatar: artist?.avatar || null,
         artistAvatarSeed: artist?.avatarSeed || null
-      };
-    }));
+      });
+    });
+    res.json({ items, nextCursor: hasMore ? page[page.length - 1].createdAt : null });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1048,8 +1191,8 @@ app.get('/api/notifications', auth, async (req, res) => {
     const user = await User.findById(req.userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
     const types = user.accountType === 'collector'
-      ? ['purchase', 'new_artwork']
-      : ['like', 'comment', 'sale', 'follow', 'feature', 'new_artwork'];
+      ? ['purchase', 'new_artwork', 'reply']
+      : ['like', 'comment', 'reply', 'sale', 'follow', 'feature', 'new_artwork'];
     const list = await Notification.find({ userId: req.userId, type: { $in: types } }).sort({ createdAt: -1 }).limit(50);
     res.json(list.map(n => n.toJSON()));
   } catch (err) {
