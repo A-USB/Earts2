@@ -38,7 +38,7 @@ function HomeRoute() {
   useEffect(() => {
     if (loading || !user) return;
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const timeout = window.setTimeout(() => navigate('/feed', { replace: true }), reducedMotion ? 100 : 900);
+    const timeout = window.setTimeout(() => navigate('/feed', { replace: true }), reducedMotion ? 100 : 2400);
     return () => window.clearTimeout(timeout);
   }, [loading, navigate, user]);
 
