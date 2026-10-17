@@ -6,6 +6,8 @@ const commentSchema = new mongoose.Schema({
   userName: { type: String, required: true },
   username: { type: String, required: true },
   text: { type: String, required: true, trim: true, maxlength: 600 },
+  pinX: { type: Number, min: 0, max: 100, default: null },
+  pinY: { type: Number, min: 0, max: 100, default: null },
   createdAt: { type: Number, default: () => Date.now() }
 }, {
   toJSON: {
