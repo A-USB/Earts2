@@ -19,6 +19,7 @@ import ArtworkDetail from './pages/ArtworkDetail'
 import UploadArtwork from './pages/UploadArtwork'
 import Settings from './pages/Settings'
 import Notifications from './pages/Notifications'
+import Messages from './pages/Messages'
 import Logout from './pages/Logout'
 import NotFound from './pages/NotFound'
 import Moderation from './pages/Moderation'
@@ -71,6 +72,8 @@ function Layout() {
       <Route path="/artwork/:id" element={<ArtworkDetail />} />
       <Route path="/upload" element={<ProtectedRoute><UploadArtwork /></ProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+      <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+      <Route path="/messages/:username" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
       <Route path="/moderation" element={<ProtectedRoute><Moderation /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
