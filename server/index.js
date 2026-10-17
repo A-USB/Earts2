@@ -855,6 +855,15 @@ app.post('/api/artworks/:id/comments', auth, async (req, res) => {
     const textError = validateText(req.body.text, 'Comment', 600, { required: true, multiline: true });
     if (textError) return res.status(400).json({ error: textError });
     const text = req.body.text.trim();
+    // Optional pin: where on the artwork this note points (percent of width/height)
+    let pin = {};
+    if (req.body.pinX != null || req.body.pinY != null) {
+      const pinX = Number(req.body.pinX);
+      const pinY = Number(req.body.pinY);
+      const valid = [pinX, pinY].every(n => Number.isFinite(n) && n >= 0 && n <= 100);
+      if (!valid) return res.status(400).json({ error: 'Pin position must be between 0 and 100' });
+      pin = { pinX, pinY };
+    }
 
     const comment = await Comment.create({
       artworkId: artwork.id,
@@ -862,6 +871,7 @@ app.post('/api/artworks/:id/comments', auth, async (req, res) => {
       userName: `${user.firstName} ${user.lastName}`,
       username: user.username,
       text,
+      ...pin,
       createdAt: Date.now()
     });
 
