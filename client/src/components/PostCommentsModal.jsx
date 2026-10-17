@@ -34,6 +34,8 @@ export default function PostCommentsModal({ post, onClose, onCountChange }) {
   const listRef = useRef(null);
   const noteRefs = useRef({});
   const canvasRef = useRef(null);
+  const inputRef = useRef(null);
+  const [replyTo, setReplyTo] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,14 +64,30 @@ export default function PostCommentsModal({ post, onClose, onCountChange }) {
     };
   }, [onClose]);
 
+  // Top-level notes, with replies grouped under the note they answer
+  const topLevel = useMemo(() => comments.filter(c => !c.parentId), [comments]);
+  const repliesByParent = useMemo(() => {
+    const map = {};
+    comments.filter(c => c.parentId).forEach(c => { (map[c.parentId] ||= []).push(c); });
+    return map;
+  }, [comments]);
+
   // Pin numbers follow the order notes were left in
   const pinNumbers = useMemo(() => {
     const map = {};
-    comments.filter(hasPin).forEach((c, i) => { map[c.id] = i + 1; });
+    topLevel.filter(hasPin).forEach((c, i) => { map[c.id] = i + 1; });
     return map;
-  }, [comments]);
-  const pinned = comments.filter(hasPin);
-  const shown = tab === 'pinned' ? pinned : comments;
+  }, [topLevel]);
+  const pinned = topLevel.filter(hasPin);
+  const shown = tab === 'pinned' ? pinned : topLevel;
+
+  const startReply = (c) => {
+    if (!user) return;
+    setReplyTo(c);
+    setPinMode(false);
+    setDraftPin(null);
+    requestAnimationFrame(() => inputRef.current?.focus());
+  };
 
   const scrollToBottom = () => {
     requestAnimationFrame(() => {
@@ -125,7 +143,7 @@ export default function PostCommentsModal({ post, onClose, onCountChange }) {
     const value = text.trim();
     if (!value || posting) return;
 
-    const pin = draftPin ? { pinX: Math.round(draftPin.x * 10) / 10, pinY: Math.round(draftPin.y * 10) / 10 } : {};
+    const pin = draftPin && !replyTo ? { pinX: Math.round(draftPin.x * 10) / 10, pinY: Math.round(draftPin.y * 10) / 10 } : {};
 
     // Optimistic: show the note immediately, swap in the server copy after
     const tempId = `temp_${Date.now()}`;
@@ -137,22 +155,26 @@ export default function PostCommentsModal({ post, onClose, onCountChange }) {
       userName: user ? `${user.firstName} ${user.lastName}` : 'You',
       text: value,
       createdAt: Date.now(),
+      parentId: replyTo?.id || null,
       ...pin,
     }]);
     setText('');
     setDraftPin(null);
     setPinMode(false);
+    const replyingTo = replyTo;
+    setReplyTo(null);
     setPosting(true);
     scrollToBottom();
 
     try {
-      const c = await api.post(`/artworks/${post.id}/comments`, { text: value, ...pin });
+      const c = await api.post(`/artworks/${post.id}/comments`, { text: value, ...(replyingTo ? { parentId: replyingTo.id } : pin) });
       setComments(prev => prev.map(x => x.id === tempId ? c : x));
     } catch {
       // Roll back: remove the optimistic note, restore the draft, explain why
       setComments(prev => prev.filter(x => x.id !== tempId));
       setText(prev => prev || value);
       if (draftPin) setDraftPin(draftPin);
+      if (replyingTo) setReplyTo(replyingTo);
       setPostError("Couldn't post your note — please try again.");
     } finally {
       setPosting(false);
@@ -160,6 +182,15 @@ export default function PostCommentsModal({ post, onClose, onCountChange }) {
   };
 
   const profile = `/profile/${post.artistUsername || ''}`;
+
+  const renderMeta = (c) => (
+    <div className="pcm-note-meta">
+      {hasPin(c) && <span className="pcm-badge" aria-label={`Pinned note ${pinNumbers[c.id]}`}>{pinNumbers[c.id]}</span>}
+      <strong>{c.userName}</strong>
+      {c.userId === post.artistId && <span className="pcm-artist-tag">Artist</span>}
+      <span>· {timeAgo(c.createdAt)}</span>
+    </div>
+  );
 
   return (
     <div className="pcm-overlay" onClick={onClose}>
@@ -248,21 +279,37 @@ export default function PostCommentsModal({ post, onClose, onCountChange }) {
               </p>
             ) : (
               shown.map(c => (
-                <div
-                  key={c.id}
-                  ref={el => { noteRefs.current[c.id] = el; }}
-                  className={`pcm-note ${activeId === c.id ? 'active' : ''} ${hasPin(c) ? 'has-pin' : ''}`}
-                  onClick={() => hasPin(c) && selectNote(c.id)}
-                >
-                  <Avatar seed={c.userName} size={36} />
-                  <div className="pcm-note-body">
-                    <div className="pcm-note-meta">
-                      {hasPin(c) && <span className="pcm-badge" aria-label={`Pinned note ${pinNumbers[c.id]}`}>{pinNumbers[c.id]}</span>}
-                      <strong>{c.userName}</strong>
-                      <span>· {timeAgo(c.createdAt)}</span>
+                <div key={c.id} className="pcm-thread">
+                  <div
+                    ref={el => { noteRefs.current[c.id] = el; }}
+                    className={`pcm-note ${activeId === c.id ? 'active' : ''} ${hasPin(c) ? 'has-pin' : ''}`}
+                    onClick={() => hasPin(c) && selectNote(c.id)}
+                  >
+                    <Avatar seed={c.userName} size={36} />
+                    <div className="pcm-note-body">
+                      {renderMeta(c)}
+                      <p>{c.text}</p>
+                      {user && !String(c.id).startsWith('temp_') && (
+                        <button type="button" className="pcm-reply-btn" onClick={(e) => { e.stopPropagation(); startReply(c); }}>Reply</button>
+                      )}
                     </div>
-                    <p>{c.text}</p>
                   </div>
+
+                  {(repliesByParent[c.id] || []).map(r => (
+                    <div key={r.id} className="pcm-reply">
+                      <svg className="pcm-reply-link" width="22" height="30" viewBox="0 0 22 30" aria-hidden="true">
+                        <path d="M2 0C2 20 6 27 21 27" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      </svg>
+                      <Avatar seed={r.userName} size={30} />
+                      <div className="pcm-note-body">
+                        {renderMeta(r)}
+                        <p>{r.text}</p>
+                        {user && !String(r.id).startsWith('temp_') && (
+                          <button type="button" className="pcm-reply-btn" onClick={() => startReply(r)}>Reply</button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ))
             )}
@@ -271,17 +318,26 @@ export default function PostCommentsModal({ post, onClose, onCountChange }) {
           {postError && <div className="pcm-error" role="alert">{postError}</div>}
 
           <form className="pcm-composer" onSubmit={handleSubmit}>
-            <label htmlFor="pcm-note-input">Leave a note</label>
+            {replyTo ? (
+              <div className="pcm-replying">
+                <span>Replying to <strong>{replyTo.userName}</strong></span>
+                <button type="button" className="pcm-link-btn" onClick={() => setReplyTo(null)}>Cancel</button>
+              </div>
+            ) : (
+              <label htmlFor="pcm-note-input">Leave a note</label>
+            )}
             <input
               id="pcm-note-input"
-              placeholder={user ? 'What stands out to you?' : 'Sign in to leave a note'}
+              ref={inputRef}
+              aria-label={replyTo ? `Reply to ${replyTo.userName}` : undefined}
+              placeholder={!user ? 'Sign in to leave a note' : replyTo ? 'Write a reply…' : 'What stands out to you?'}
               value={text}
               onChange={e => setText(e.target.value)}
               disabled={!user}
               maxLength={600}
             />
             <div className="pcm-composer-row">
-              <div className="pcm-pin-controls">
+              <div className="pcm-pin-controls" hidden={Boolean(replyTo)}>
                 <button
                   type="button"
                   className={`pcm-pin-toggle ${pinMode || draftPin ? 'on' : ''}`}
@@ -297,7 +353,7 @@ export default function PostCommentsModal({ post, onClose, onCountChange }) {
                 )}
               </div>
               <button type="submit" className="pcm-post-btn" disabled={!user || posting || !text.trim()}>
-                Post note
+                {replyTo ? 'Post reply' : 'Post note'}
               </button>
             </div>
           </form>
