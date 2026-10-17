@@ -8,6 +8,7 @@ const User = require('./models/User');
 const Artwork = require('./models/Artwork');
 const Product = require('./models/Product');
 const Comment = require('./models/Comment');
+const Message = require('./models/Message');
 const Notification = require('./models/Notification');
 const Order = require('./models/Order');
 const Follow = require('./models/Follow');
@@ -122,6 +123,7 @@ const ProxiedLike = createModelProxy('Like', Like, memoryStore.likes);
 const ProxiedCollection = createModelProxy('Collection', Collection, memoryStore.collections);
 const ProxiedSavedArtwork = createModelProxy('SavedArtwork', SavedArtwork, memoryStore.savedArtworks);
 const ProxiedReport = createModelProxy('Report', Report, memoryStore.reports);
+const ProxiedMessage = createModelProxy('Message', Message, memoryStore.messages);
 
 module.exports = {
   connectDB,
@@ -137,5 +139,6 @@ module.exports = {
   Collection: ProxiedCollection,
   SavedArtwork: ProxiedSavedArtwork,
   Report: ProxiedReport,
+  Message: ProxiedMessage,
   memoryStore
 };
