@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Droplet, StickyNote, ShoppingBag, ImagePlus, Bookmark } from 'lucide-react';
 import { api } from '../utils/api';
@@ -10,6 +10,7 @@ import LoadError from '../components/LoadError';
 import './Feed.css';
 
 const DAY = 86400000;
+const PAGE_SIZE = 8;
 
 function timeAgo(ts) {
   if (!ts) return '';
@@ -50,7 +51,7 @@ function Piece({ post, isFollowing, onToggleFollow, liked, onToggleLike, saved, 
     <article className="wall-piece">
       <Link to={`/artwork/${post.id}`} className="wall-mat" aria-label={`Open ${post.title || 'artwork'}`}>
         {post.imageUrl ? (
-          <img src={post.imageUrl} alt={post.title || 'Artwork'} loading="lazy" />
+          <img src={post.imageUrl} alt={post.title || 'Artwork'} loading="lazy" decoding="async" />
         ) : (
           <div className="wall-mat-empty" style={{ background: post.color || '#C8C8E8' }} />
         )}
@@ -141,18 +142,22 @@ export default function Feed() {
   const [commentsPostId, setCommentsPostId] = useState(null);
   const [noteCounts, setNoteCounts] = useState({});
   const [filter, setFilter] = useState('all');
+  const [cursor, setCursor] = useState(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const sentinelRef = useRef(null);
 
   const loadFeed = () => {
     setLoading(true);
     setLoadError('');
     Promise.all([
-      api.get('/feed'),
+      api.get(`/feed?limit=${PAGE_SIZE}`),
       api.get('/users/me/following').catch(() => []),
       api.get('/users/me/likes').catch(() => []),
       api.get('/users/me/saved/ids').catch(() => []),
     ])
       .then(([feedPosts, following, likes, saved]) => {
-        setPosts(feedPosts);
+        setPosts(feedPosts.items);
+        setCursor(feedPosts.nextCursor);
         setFollowingIds(following);
         setLikedIds(likes);
         setSavedIds(saved);
@@ -162,6 +167,32 @@ export default function Feed() {
   };
 
   useEffect(() => { loadFeed(); }, []);
+
+  // Load the next page of the wall (also triggered automatically as you near the bottom)
+  const loadMore = useCallback(async () => {
+    if (!cursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const next = await api.get(`/feed?limit=${PAGE_SIZE}&before=${cursor}`);
+      setPosts(prev => {
+        const have = new Set(prev.map(p => p.id));
+        return [...prev, ...next.items.filter(p => !have.has(p.id))];
+      });
+      setCursor(next.nextCursor);
+    } catch {} finally {
+      setLoadingMore(false);
+    }
+  }, [cursor, loadingMore]);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !cursor || typeof IntersectionObserver === 'undefined') return undefined;
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) loadMore();
+    }, { rootMargin: '700px 0px' });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [cursor, loadMore, loading]);
 
   const handleToggleSave = async (post) => {
     if (!user) { navigate('/login'); return; }
@@ -292,7 +323,7 @@ export default function Feed() {
                 {col.map(renderPiece)}
               </div>
             ))}
-            {visible.length === 0 && (
+            {visible.length === 0 && !cursor && (
               <div className="wall-empty">
                 <h3>{posts.length === 0 ? 'Your wall is empty' : 'Nothing matches this filter'}</h3>
                 <p>
@@ -302,6 +333,14 @@ export default function Feed() {
                 </p>
               </div>
             )}
+          </div>
+        )}
+
+        {!loading && !loadError && cursor && (
+          <div ref={sentinelRef} className="wall-more">
+            <button type="button" className="wall-chip" onClick={loadMore} disabled={loadingMore}>
+              {loadingMore ? 'Loading more…' : 'Show more'}
+            </button>
           </div>
         )}
       </div>
