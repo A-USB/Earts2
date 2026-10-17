@@ -1,59 +1,130 @@
 import { useId } from 'react';
 import { EartsLogo } from './EartsLogo';
+import { STROKE_BODY, STROKE_FLYAWAYS, STROKE_GAPS } from './welcomeStroke';
 import './FeedTransition.css';
 
+// One pass of the welcome animation (seconds). App.jsx waits a little longer than this before opening the feed.
+const DUR = '2.2s';
+// Timeline as fractions of DUR: brush appears, swings along the arc, lifts off.
+const MOTION_PATH = 'M40 336C170 210 330 135 500 123S680 120 745 131L800 138';
+const SPLINES = '0 0 1 1;.35 .1 .25 1;0 0 1 1';
+const DRAW_TIMES = '0;.08;.62;1';
+
 export default function FeedTransition() {
-  const reactId = useId().replace(/:/g, '');
-  const gradientId = `feed-transition-gradient-${reactId}`;
-  const handleGradientId = `feed-transition-handle-${reactId}`;
-  const bristleGradientId = `feed-transition-bristles-${reactId}`;
-  const clipId = `feed-transition-clip-${reactId}`;
+  const id = useId().replace(/:/g, '');
+  const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dark = typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'dark';
+
+  const violet = dark ? '#7C6EFA' : '#5B4BF5';
+  const mid = dark ? '#9B7BFF' : '#8B5CF6';
+  const pink = dark ? '#FF7FA9' : '#FF6B9D';
+  const paper = dark ? '#0B0B16' : '#F8FAFC';
+
+  const paintId = `ft-paint-${id}`;
+  const tipId = `ft-tip-${id}`;
+  const ferruleId = `ft-ferrule-${id}`;
+  const handleId = `ft-handle-${id}`;
+  const maskId = `ft-mask-${id}`;
+
+  // SMIL animations are skipped for reduced motion so the stroke simply shows, finished.
+  const anim = (props) => (reduced ? null : <animate dur={DUR} fill="freeze" {...props} />);
 
   return (
     <div className="feed-transition" role="status" aria-label="Opening your Earts feed">
       <div className="feed-transition-content">
-        <EartsLogo size={72} className="feed-transition-logo" />
+        <EartsLogo size={64} className="feed-transition-logo" />
+
         <div className="feed-transition-stage" aria-hidden="true">
-          <svg className="feed-transition-art" viewBox="0 0 520 170" preserveAspectRatio="xMidYMid meet">
+          <svg className="feed-transition-art" viewBox="0 0 1200 560" preserveAspectRatio="xMidYMid meet">
             <defs>
-              <linearGradient id={gradientId} gradientUnits="userSpaceOnUse" x1="30" y1="0" x2="505" y2="0">
-                <stop offset="0" stopColor="#6D4AE8" />
-                <stop offset="0.6" stopColor="#9A55DC" />
-                <stop offset="1" stopColor="#E85FA8" />
+              <linearGradient id={paintId} gradientUnits="userSpaceOnUse" x1="270" y1="0" x2="1000" y2="0">
+                <stop offset="0" stopColor={violet} />
+                <stop offset=".55" stopColor={mid} />
+                <stop offset="1" stopColor={pink} />
               </linearGradient>
-              <linearGradient id={handleGradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#D9977A" />
-                <stop offset="0.5" stopColor="#B87555" />
-                <stop offset="1" stopColor="#8F5640" />
+
+              {/* Paint on the brush tip shifts from violet to pink in step with the stroke */}
+              <linearGradient id={tipId} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="-72" y2="0">
+                <stop offset="0" stopColor={reduced ? pink : violet}>
+                  {anim({ attributeName: 'stop-color', values: `${violet};${violet};${pink};${pink}`, keyTimes: DRAW_TIMES })}
+                </stop>
+                <stop offset=".38" stopColor={mid} />
+                <stop offset=".56" stopColor="#C9C2F8" />
+                <stop offset="1" stopColor="#EDE9FE" />
               </linearGradient>
-              <linearGradient id={bristleGradientId} x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0" stopColor="#6D4AE8" />
-                <stop offset="1" stopColor="#E85FA8" />
+
+              <linearGradient id={ferruleId} x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stopColor="#E4E1FA" />
+                <stop offset=".3" stopColor="#A9A5CC" />
+                <stop offset=".65" stopColor="#F6F5FF" />
+                <stop offset="1" stopColor="#8582A8" />
               </linearGradient>
-              <clipPath id={clipId}>
-                <path d="M150 24 L196 18 Q216 20 218 30 L218 60 Q216 70 196 72 L150 66 Z" />
-              </clipPath>
+              <linearGradient id={handleId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#7A6BFF" />
+                <stop offset=".5" stopColor="#5B4BF5" />
+                <stop offset="1" stopColor="#4338CA" />
+              </linearGradient>
+
+              {/* The mask reveals the stroke along the brush's path */}
+              <mask id={maskId} maskUnits="userSpaceOnUse" x="-100" y="-50" width="1100" height="600">
+                <path
+                  d={MOTION_PATH}
+                  pathLength="1"
+                  fill="none"
+                  stroke="#fff"
+                  strokeWidth="190"
+                  strokeDasharray="1"
+                  strokeDashoffset={reduced ? 0 : 1}
+                >
+                  {anim({ attributeName: 'stroke-dashoffset', values: '1;1;0;0', keyTimes: DRAW_TIMES, calcMode: 'spline', keySplines: SPLINES })}
+                </path>
+              </mask>
             </defs>
-            <path className="feed-transition-stroke" pathLength="1" d="M30 135 C130 62 300 22 505 54" stroke={`url(#${gradientId})`} />
-            <g className="feed-transition-brush">
-              <animateMotion dur="760ms" begin="80ms" fill="freeze" rotate="auto" path="M30 135 C130 62 300 22 505 54" />
-              <g transform="translate(-218 -45)">
-              <path d="M10 34 C4 34 2 40 2 45 C2 50 4 56 10 56 C40 56 60 52 80 54 L114 58 L114 32 L80 36 C60 38 40 34 10 34 Z" fill="#286B4B" />
-              <path d="M14 37 C40 38 60 41 112 36" stroke="#4FA77C" strokeOpacity=".5" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-              <circle cx="15" cy="45" r="3.4" fill="var(--bg-card, #fff)" />
-              <rect x="112" y="22" width="40" height="46" rx="3" fill={`url(#${handleGradientId})`} />
-              <path d="M118 22 V68 M146 22 V68" stroke="#7A4633" strokeOpacity=".45" strokeWidth="1.5" />
-              <circle cx="125" cy="62" r="1.8" fill="#6B3D2C" />
-              <circle cx="140" cy="62" r="1.8" fill="#6B3D2C" />
-              <g clipPath={`url(#${clipId})`}>
-                <rect x="150" y="14" width="70" height="62" fill="#252334" />
-                <path d="M152 30 H218 M152 38 H218 M152 46 H218 M152 54 H218 M152 62 H218" stroke="#565268" strokeWidth="1.4" />
-                <rect x="188" y="14" width="32" height="62" fill={`url(#${bristleGradientId})`} opacity=".95" />
+
+            <g transform="translate(220 90)">
+              <g mask={`url(#${maskId})`}>
+                <path d={STROKE_BODY} fill={`url(#${paintId})`} />
+                <g fill="none" strokeLinecap="round" stroke={`url(#${paintId})`}>
+                  {STROKE_FLYAWAYS.map((s, i) => <path key={i} d={s.d} strokeWidth={s.w} />)}
+                </g>
+                <g fill="none" strokeLinecap="round" stroke={paper}>
+                  {STROKE_GAPS.map((s, i) => <path key={i} d={s.d} strokeWidth={s.w} />)}
+                </g>
               </g>
-              </g>
+
+              {!reduced && (
+                <>
+                  {/* Spatter as the brush lifts away */}
+                  <g fill={pink} opacity="0">
+                    <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;.62;.7;1" dur={DUR} fill="freeze" />
+                    <circle cx="772" cy="104" r="3.4" />
+                    <circle cx="792" cy="152" r="2.4" />
+                    <circle cx="752" cy="92" r="2" />
+                    <circle cx="806" cy="124" r="3" />
+                  </g>
+
+                  {/* A flat brush: pale bristles, metal ferrule, violet handle with a hang hole */}
+                  <g opacity="0">
+                    <animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;.06;.64;.74;1" dur={DUR} fill="freeze" />
+                    <g>
+                      <animateMotion dur={DUR} fill="freeze" rotate="auto" calcMode="spline" keyPoints="0;0;1;1" keyTimes={DRAW_TIMES} keySplines={SPLINES} path={MOTION_PATH} />
+                      <g transform="rotate(45)">
+                        <path d="M0 -42L-2 -30L1 -18L-1 -6L2 6L-1 18L1 30L-1 42L-72 36L-72 -36Z" fill={`url(#${tipId})`} />
+                        <path d="M-6 -30H-66M-6 -16H-66M-6 0H-66M-6 16H-66M-6 30H-66" stroke="#fff" strokeOpacity=".35" strokeWidth="1.2" />
+                        <path d="M-72 -37L-112 -33L-112 33L-72 37Z" fill={`url(#${ferruleId})`} />
+                        <path d="M-84 -36V36M-100 -34V34" stroke="#5f5c86" strokeWidth="1.2" />
+                        <path d="M-112 -26C-140 -24 -165 -16 -200 -14C-235 -12 -255 -17 -268 -17Q-278 -17 -278 0Q-278 17 -268 17C-255 17 -235 12 -200 14C-165 16 -140 24 -112 26Z" fill={`url(#${handleId})`} />
+                        <path d="M-118 -20C-150 -19 -175 -12 -205 -9" stroke="#fff" strokeOpacity=".4" strokeWidth="2" fill="none" strokeLinecap="round" />
+                        <circle cx="-264" cy="0" r="5.5" fill="#1A1A3E" />
+                      </g>
+                    </g>
+                  </g>
+                </>
+              )}
             </g>
           </svg>
         </div>
+
         <span className="feed-transition-caption">Your creative space is ready</span>
       </div>
     </div>
