@@ -3,18 +3,20 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import {
-  Rss, ShoppingBag, ImagePlus, User, Search, Bell,
+  Rss, ShoppingBag, ImagePlus, User, Search, Bell, MessageSquare,
   PanelLeftClose, PanelLeftOpen, Settings as SettingsIcon, LogOut
 } from 'lucide-react';
 import Avatar from './Avatar';
 import { EartsIcon } from './EartsLogo';
 import ThemeToggle from './ThemeToggle';
 import useUnreadNotificationCount from '../hooks/useUnreadNotificationCount';
+import useUnreadMessageCount from '../hooks/useUnreadMessageCount';
 import './Sidebar.css';
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
   const unreadCount = useUnreadNotificationCount(user?.id);
+  const unreadMessages = useUnreadMessageCount(user?.id);
   const location = useLocation();
   const navigate = useNavigate();
   const [pinned, setPinned] = useState(false);
@@ -31,6 +33,7 @@ export default function Sidebar() {
     { to: '/marketplace', label: 'Marketplace', icon: ShoppingBag, show: true },
     { to: '/upload', label: 'Upload', icon: ImagePlus, show: user?.accountType !== 'collector' },
     { to: '/notifications', label: 'Notifications', icon: Bell, show: true },
+    { to: '/messages', label: 'Messages', icon: MessageSquare, show: true },
     { to: user?.username ? `/profile/${user.username}` : '/login', label: 'My Profile', icon: User, show: true, active: isProfileActive },
     { to: '/settings', label: 'Settings', icon: SettingsIcon, show: true },
   ];
@@ -70,6 +73,7 @@ export default function Sidebar() {
               <span className="sidebar-icon-box">
                 <Icon size={20} />
                 {item.to === '/notifications' && unreadCount > 0 && <span className="sidebar-notif-dot">{unreadCount > 99 ? '99+' : unreadCount}</span>}
+                {item.to === '/messages' && unreadMessages > 0 && <span className="sidebar-notif-dot">{unreadMessages > 99 ? '99+' : unreadMessages}</span>}
               </span>
               <span className="sidebar-label">{item.label}</span>
             </Link>
