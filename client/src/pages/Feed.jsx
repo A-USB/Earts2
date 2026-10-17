@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, MessageCircle, ShoppingBag, ImagePlus, Tag, Bookmark } from 'lucide-react';
+import { Droplet, StickyNote, ShoppingBag, ImagePlus, Bookmark } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
@@ -9,10 +9,12 @@ import PostCommentsModal from '../components/PostCommentsModal';
 import LoadError from '../components/LoadError';
 import './Feed.css';
 
+const DAY = 86400000;
+
 function timeAgo(ts) {
   if (!ts) return '';
   const diff = Date.now() - ts;
-  const day = Math.floor(diff / 86400000);
+  const day = Math.floor(diff / DAY);
   if (day >= 1) return `${day}d ago`;
   const hr = Math.floor(diff / 3600000);
   if (hr >= 1) return `${hr}h ago`;
@@ -20,84 +22,115 @@ function timeAgo(ts) {
   return min >= 1 ? `${min}m ago` : 'just now';
 }
 
-function Post({ post, isFollowing, onToggleFollow, liked, onToggleLike, saved, onToggleSave, isSelf, onOpenComments }) {
-  const formatLikes = n => n >= 1000 ? `${(n/1000).toFixed(1)}k` : n;
+const formatCount = n => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : n);
+
+function statusOf(post) {
+  if (post.status === 'for_sale') return { key: 'avail', text: post.price ? `Available · $${post.price}` : 'Available' };
+  if (post.status === 'sold') return { key: 'sold', text: 'Sold' };
+  return { key: 'off', text: 'Not for sale' };
+}
+
+// One column on phones, two staggered columns on larger screens
+function useNarrow(query = '(max-width: 760px)') {
+  const [narrow, setNarrow] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const onChange = () => setNarrow(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, [query]);
+  return narrow;
+}
+
+function Piece({ post, isFollowing, onToggleFollow, liked, onToggleLike, saved, onToggleSave, isSelf, onOpenNotes, noteCount }) {
+  const status = statusOf(post);
+  const profile = `/profile/${post.artistUsername || ''}`;
 
   return (
-    <article className="post-card card">
-      <div className="post-header">
-        <Link to={`/profile/${post.artistUsername || ''}`} className="post-author">
-          <Avatar seed={post.artistAvatarSeed || post.artistName} src={post.artistAvatar} size={38} />
-          <div>
-            <strong>{post.artistName}</strong>
-            <span>{timeAgo(post.createdAt)}</span>
-          </div>
-        </Link>
-        {!isSelf && (
-          <button
-            className={`follow-pill ${isFollowing ? 'following' : ''}`}
-            onClick={() => onToggleFollow(post)}
-          >
-            {isFollowing ? 'Following' : 'Follow'}
-          </button>
-        )}
-      </div>
-
-      <Link to={`/artwork/${post.id}`} className="post-media" style={{ background: post.color || '#C8C8E8' }}>
-        {post.imageUrl && <img src={post.imageUrl} alt={post.title || 'Artwork'} className="post-media-image" loading="lazy" />}
-        {post.status === 'for_sale' && post.price && (
-          <span className="post-price-tag"><Tag size={12} /> ${post.price}</span>
+    <article className="wall-piece">
+      <Link to={`/artwork/${post.id}`} className="wall-mat" aria-label={`Open ${post.title || 'artwork'}`}>
+        {post.imageUrl ? (
+          <img src={post.imageUrl} alt={post.title || 'Artwork'} loading="lazy" />
+        ) : (
+          <div className="wall-mat-empty" style={{ background: post.color || '#C8C8E8' }} />
         )}
       </Link>
 
-      <div className="post-actions">
-        <button className={`post-icon-btn ${liked ? 'liked' : ''}`} onClick={() => onToggleLike(post)}>
-          <Heart size={22} fill={liked ? 'currentColor' : 'none'} />
-        </button>
-        <button
-          type="button"
-          className="post-icon-btn"
-          onClick={() => onOpenComments(post)}
-          title="View comments"
-          aria-label="View comments"
-        >
-          <MessageCircle size={22} />
-        </button>
-        <button
-          className={`post-icon-btn ${saved ? 'saved' : ''}`}
-          onClick={() => onToggleSave(post)}
-          title={saved ? 'Remove from saved artworks' : 'Save artwork'}
-          aria-label={saved ? 'Remove from saved artworks' : 'Save artwork'}
-          aria-pressed={saved}
-        >
-          <Bookmark size={21} fill={saved ? 'currentColor' : 'none'} />
-        </button>
-        {post.status === 'for_sale' && (
-          <Link to={`/artwork/${post.id}`} className="post-icon-btn post-marketplace-btn" title="View in Marketplace">
-            <ShoppingBag size={22} />
-          </Link>
-        )}
-      </div>
+      <div className="wall-label">
+        <div className="wall-label-top">
+          <div className="wall-label-main">
+            <h3 className="wall-title">{post.title}</h3>
+            <p className="wall-by">
+              <Link to={profile} className="wall-artist">
+                <Avatar seed={post.artistAvatarSeed || post.artistName} src={post.artistAvatar} size={22} />
+                {post.artistName}
+              </Link>
+              <span>{post.medium ? ` · ${post.medium}` : ''} · {timeAgo(post.createdAt)}</span>
+            </p>
+          </div>
+          <span className="wall-status"><i className={`wall-dot ${status.key}`} aria-hidden="true" />{status.text}</span>
+        </div>
 
-      <div className="post-meta">
-        <strong>{formatLikes(post.likes)} likes</strong>
-        <p><Link to={`/profile/${post.artistUsername || ''}`} className="post-caption-author">{post.artistName}</Link> {post.title}</p>
-        {post.description && <p className="post-caption">{post.description}</p>}
-        <button
-          type="button"
-          className="post-view-comments"
-          onClick={() => onOpenComments(post)}
-        >
-          View all comments
-        </button>
+        {post.description && <p className="wall-desc">{post.description}</p>}
+
+        <div className="wall-actions">
+          <button
+            type="button"
+            className={`wall-btn ${liked ? 'liked' : ''}`}
+            onClick={() => onToggleLike(post)}
+            aria-pressed={liked}
+            aria-label={liked ? 'Remove your drop' : 'Leave a drop'}
+          >
+            <Droplet size={20} fill={liked ? 'currentColor' : 'none'} />
+            <span>{formatCount(post.likes || 0)}</span>
+          </button>
+          <button type="button" className="wall-btn" onClick={() => onOpenNotes(post)} aria-label="Read notes">
+            <StickyNote size={20} />
+            <span>{typeof noteCount === 'number' ? `${noteCount} ${noteCount === 1 ? 'note' : 'notes'}` : 'Notes'}</span>
+          </button>
+          {!isSelf && (
+            <button
+              type="button"
+              className={`wall-follow ${isFollowing ? 'following' : ''}`}
+              onClick={() => onToggleFollow(post)}
+              aria-pressed={isFollowing}
+            >
+              {isFollowing ? 'Following' : '+ Follow'}
+            </button>
+          )}
+          <span className="wall-actions-end">
+            {post.status === 'for_sale' && (
+              <Link to={`/artwork/${post.id}`} className="wall-btn wall-icon-only" title="View in Marketplace" aria-label="View in Marketplace">
+                <ShoppingBag size={20} />
+              </Link>
+            )}
+            <button
+              type="button"
+              className={`wall-btn wall-icon-only ${saved ? 'saved' : ''}`}
+              onClick={() => onToggleSave(post)}
+              title={saved ? 'Remove from saved artworks' : 'Save artwork'}
+              aria-label={saved ? 'Remove from saved artworks' : 'Save artwork'}
+              aria-pressed={saved}
+            >
+              <Bookmark size={20} fill={saved ? 'currentColor' : 'none'} />
+            </button>
+          </span>
+        </div>
       </div>
     </article>
   );
 }
 
+const FILTERS = [
+  { id: 'all', label: 'All' },
+  { id: 'new', label: 'New today' },
+  { id: 'sale', label: 'Available' },
+];
+
 export default function Feed() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const narrow = useNarrow();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -106,6 +139,8 @@ export default function Feed() {
   const [savedIds, setSavedIds] = useState([]);
   const [showComposer, setShowComposer] = useState(false);
   const [commentsPostId, setCommentsPostId] = useState(null);
+  const [noteCounts, setNoteCounts] = useState({});
+  const [filter, setFilter] = useState('all');
 
   const loadFeed = () => {
     setLoading(true);
@@ -126,6 +161,8 @@ export default function Feed() {
       .finally(() => setLoading(false));
   };
 
+  useEffect(() => { loadFeed(); }, []);
+
   const handleToggleSave = async (post) => {
     if (!user) { navigate('/login'); return; }
     try {
@@ -135,8 +172,6 @@ export default function Feed() {
         : prev.filter(id => id !== post.id));
     } catch {}
   };
-
-  useEffect(() => { loadFeed(); }, []);
 
   const handleToggleFollow = async (post) => {
     if (!user) { navigate('/login'); return; }
@@ -180,52 +215,93 @@ export default function Feed() {
 
   const activePost = posts.find(p => p.id === commentsPostId) || null;
 
+  const visible = posts.filter(p => {
+    if (filter === 'new') return Date.now() - (p.createdAt || 0) < DAY;
+    if (filter === 'sale') return p.status === 'for_sale';
+    return true;
+  });
+  const columns = narrow ? [visible] : [visible.filter((_, i) => i % 2 === 0), visible.filter((_, i) => i % 2 === 1)];
+  const weekday = new Date().toLocaleDateString(undefined, { weekday: 'long' });
+
+  const renderPiece = post => (
+    <Piece
+      key={post.id}
+      post={post}
+      isFollowing={followingIds.includes(post.artistId)}
+      onToggleFollow={handleToggleFollow}
+      liked={likedIds.includes(post.id)}
+      onToggleLike={handleToggleLike}
+      saved={savedIds.includes(post.id)}
+      onToggleSave={handleToggleSave}
+      isSelf={user && post.artistId === user.id}
+      onOpenNotes={p => setCommentsPostId(p.id)}
+      noteCount={noteCounts[post.id]}
+    />
+  );
+
   return (
-    <div className="feed-page page-wrapper">
-      <div className="container feed-container">
-        {user?.accountType !== 'collector' && (
-          <div className="composer-bar card" onClick={() => setShowComposer(true)}>
-            <Avatar seed={user?.avatarSeed || (user?.firstName||'')+(user?.lastName||'')} src={user?.avatar} size={40} />
-            <span>Share what you're working on...</span>
-            <button className="btn-primary composer-btn" onClick={(e) => { e.stopPropagation(); setShowComposer(true); }}>
-              <ImagePlus size={16} /> Post
-            </button>
+    <div className="feed-page wall-page page-wrapper">
+      <div className="container wall-container">
+        <header className="wall-header">
+          <div>
+            <p className="wall-eyebrow">{weekday}</p>
+            <h1>Your wall</h1>
+            <p className="wall-sub">Fresh work from the artists around you</p>
           </div>
-        )}
+          <div className="wall-filters" role="group" aria-label="Filter the wall">
+            {FILTERS.map(f => (
+              <button
+                key={f.id}
+                type="button"
+                className={`wall-chip ${filter === f.id ? 'active' : ''}`}
+                aria-pressed={filter === f.id}
+                onClick={() => setFilter(f.id)}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </header>
 
         {loading ? (
-          <div className="feed-skeletons">
-            {[1,2,3].map(i => (
-              <div key={i} className="post-card card post-skeleton">
-                <div className="skeleton" style={{width:'38px',height:'38px',borderRadius:'50%',margin:'16px'}} />
-                <div className="skeleton" style={{width:'100%',aspectRatio:'1'}} />
+          <div className="wall-columns" aria-hidden="true">
+            {(narrow ? [[1, 2]] : [[1, 2], [3, 4]]).map((col, ci) => (
+              <div key={ci} className={`wall-column ${ci === 1 ? 'offset' : ''}`}>
+                {col.map(i => (
+                  <div key={i} className="wall-piece">
+                    <div className="wall-mat"><div className="skeleton" style={{ width: '100%', aspectRatio: i % 2 ? '4 / 5' : '4 / 3' }} /></div>
+                    <div className="wall-label"><div className="skeleton" style={{ height: 18, width: '60%', marginBottom: 10 }} /><div className="skeleton" style={{ height: 12, width: '40%' }} /></div>
+                  </div>
+                ))}
               </div>
             ))}
           </div>
         ) : loadError ? (
           <LoadError title="Your feed couldn’t load" message={loadError} onRetry={loadFeed} />
-        ) : posts.length > 0 ? (
-          <div className="posts-list">
-            {posts.map(post => (
-              <Post
-                key={post.id}
-                post={post}
-                isFollowing={followingIds.includes(post.artistId)}
-                onToggleFollow={handleToggleFollow}
-                liked={likedIds.includes(post.id)}
-                onToggleLike={handleToggleLike}
-                saved={savedIds.includes(post.id)}
-                onToggleSave={handleToggleSave}
-                isSelf={user && post.artistId === user.id}
-                onOpenComments={(p) => setCommentsPostId(p.id)}
-              />
-            ))}
-          </div>
         ) : (
-          <div className="empty-state">
-            <span>🎨</span>
-            <h3>Your feed is empty</h3>
-            <p>{user?.accountType === 'collector' ? 'Follow artists to see their new work here.' : 'Follow artists or share your own work to get started.'}</p>
+          <div className="wall-columns">
+            {columns.map((col, ci) => (
+              <div key={ci} className={`wall-column ${ci === 1 ? 'offset' : ''}`}>
+                {ci === (narrow ? 0 : 1) && user?.accountType !== 'collector' && (
+                  <button type="button" className="wall-hang" onClick={() => setShowComposer(true)}>
+                    <ImagePlus size={26} aria-hidden="true" />
+                    <strong>Hang something new</strong>
+                    <span>Share what you’re working on</span>
+                  </button>
+                )}
+                {col.map(renderPiece)}
+              </div>
+            ))}
+            {visible.length === 0 && (
+              <div className="wall-empty">
+                <h3>{posts.length === 0 ? 'Your wall is empty' : 'Nothing matches this filter'}</h3>
+                <p>
+                  {posts.length === 0
+                    ? (user?.accountType === 'collector' ? 'Follow artists to see their new work here.' : 'Follow artists or share your own work to get started.')
+                    : 'Try another filter to see more work.'}
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -235,6 +311,7 @@ export default function Feed() {
           post={activePost}
           liked={likedIds.includes(activePost.id)}
           onToggleLike={handleToggleLike}
+          onCountChange={(id, n) => setNoteCounts(prev => (prev[id] === n ? prev : { ...prev, [id]: n }))}
           onClose={() => setCommentsPostId(null)}
         />
       )}
