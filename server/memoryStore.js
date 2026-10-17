@@ -162,6 +162,16 @@ function matchQuery(doc, query = {}) {
         if (!(docVal > val.$gt)) return false;
         continue;
       }
+      if (val.$nin && Array.isArray(val.$nin)) {
+        if (val.$nin.some(target => String(target) === String(docVal))) return false;
+        continue;
+      }
+      if (val.$gte !== undefined || val.$lt !== undefined || val.$lte !== undefined) {
+        if (val.$gte !== undefined && !(docVal >= val.$gte)) return false;
+        if (val.$lt !== undefined && !(docVal < val.$lt)) return false;
+        if (val.$lte !== undefined && !(docVal <= val.$lte)) return false;
+        continue;
+      }
     }
 
     if (key === '_id' || key === 'id') {
@@ -340,6 +350,7 @@ const memoryStore = {
   savedArtworks: new MemoryCollection('savedArtworks'),
   notifications: new MemoryCollection('notifications'),
   reports: new MemoryCollection('reports'),
+  messages: new MemoryCollection('messages'),
 };
 
 let memorySeeded = false;
