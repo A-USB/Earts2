@@ -351,7 +351,7 @@ export default function Profile() {
                     </button>}
                     <button
                       className="btn-outline profile-action-btn"
-                      onClick={() => alert(`Direct messaging with ${profile.firstName} is coming soon!`)}
+                      onClick={() => navigate(me ? `/messages/${profile.username}` : '/login')}
                     >
                       <MessageSquare size={15} /> Message
                     </button>
