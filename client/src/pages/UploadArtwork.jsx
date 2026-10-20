@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Upload, ImagePlus, X, Users, Sparkles, Check,
   AlertCircle, FileImage, ShieldCheck, Eye, Palette, Pipette,
@@ -8,12 +8,9 @@ import {
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
+import { CATEGORIES, buildArtworkPayload, emptyArtworkForm, validateArtwork } from '../utils/artwork';
+import { ACCEPT_ATTR, formatBytes, processArtworkFile } from '../utils/artworkImage';
 import './UploadArtwork.css';
-
-const CATEGORIES = [
-  'Painting', 'Digital', 'Illustration', 'Watercolour',
-  'Abstract', 'Sculpture', 'Mixed Media', 'Photography', 'Printmaking'
-];
 
 const COLLAB_ROLES = [
   'Co-Creator', 'Illustrator', 'Colorist', 'Line Artist',
@@ -85,6 +82,8 @@ export default function UploadArtwork() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const location = useLocation();
+  const draft = location.state?.draft || null; // handed over from the quick "Hang something new" modal
 
   // Collector accounts don't sell art — send them back to the feed
   useEffect(() => {
@@ -94,20 +93,18 @@ export default function UploadArtwork() {
   }, [user, navigate]);
 
   // Form State
-  const [form, setForm] = useState({
-    title: '',
-    description: '',
-    category: 'Digital',
-    price: '',
-    forSale: true,
-    medium: '',
-    year: new Date().getFullYear(),
-    color: '#6025EA',
-  });
+  const [form, setForm] = useState(() => ({ ...emptyArtworkForm(), forSale: true, ...(draft?.form || {}) }));
 
   // Image Upload State
-  const [imageData, setImageData] = useState(null);
-  const [imageMeta, setImageMeta] = useState(null);
+  const [imageData, setImageData] = useState(draft?.image?.dataUrl || null);
+  const [imageMeta, setImageMeta] = useState(() => draft?.image ? {
+    name: draft.image.name,
+    size: formatBytes(draft.image.sizeBytes),
+    width: draft.image.width,
+    height: draft.image.height,
+    aspectRatio: (draft.image.width / draft.image.height).toFixed(2),
+  } : null);
+  const [processing, setProcessing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [previewFit, setPreviewFit] = useState('contain'); // 'contain' | 'cover'
 
@@ -170,39 +167,26 @@ export default function UploadArtwork() {
   const set = (k) => (e) => setForm((p) => ({ ...p, [k]: e.target.value }));
 
   // Handle File Selection (Drag & Drop or Picker)
-  const processFile = (file) => {
+  const processFile = async (file) => {
     if (!file) return;
-
-    if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type)) {
-      setError('Please upload a valid PNG, JPG, WEBP, or GIF image.');
-      return;
-    }
-
-    if (file.size > 3 * 1024 * 1024) {
-      setError('Image size exceeds 3MB. Please upload a smaller file.');
-      return;
-    }
-
     setError('');
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target.result;
-      setImageData(dataUrl);
-
-      // Extract image dimensions
-      const img = new Image();
-      img.onload = () => {
-        setImageMeta({
-          name: file.name,
-          size: (file.size / (1024 * 1024)).toFixed(2) + ' MB',
-          width: img.width,
-          height: img.height,
-          aspectRatio: (img.width / img.height).toFixed(2),
-        });
-      };
-      img.src = dataUrl;
-    };
-    reader.readAsDataURL(file);
+    setProcessing(true);
+    try {
+      const img = await processArtworkFile(file);
+      setImageData(img.dataUrl);
+      setImageMeta({
+        name: img.name,
+        size: formatBytes(img.sizeBytes),
+        width: img.width,
+        height: img.height,
+        aspectRatio: (img.width / img.height).toFixed(2),
+      });
+    } catch (err) {
+      setError(err.message || 'Unable to use this image.');
+    } finally {
+      setProcessing(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const handleDragOver = (e) => {
@@ -267,12 +251,9 @@ export default function UploadArtwork() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.title) {
-      setError('Artwork title is required.');
-      return;
-    }
-    if (form.forSale && (!form.price || Number(form.price) <= 0)) {
-      setError('Please enter a valid price to list your artwork for sale.');
+    const problem = validateArtwork(form, imageData);
+    if (problem) {
+      setError(problem);
       return;
     }
 
@@ -280,19 +261,7 @@ export default function UploadArtwork() {
     setError('');
 
     try {
-      const payload = {
-        title: form.title,
-        description: form.description,
-        category: form.category,
-        medium: form.medium,
-        year: form.year,
-        color: form.color,
-        imageUrl: imageData || null,
-        status: form.forSale ? 'for_sale' : 'not_for_sale',
-        price: form.forSale ? parseFloat(form.price) || null : null,
-        collaborators: collaborators,
-      };
-
+      const payload = buildArtworkPayload(form, imageData, collaborators);
       const artwork = await api.post('/artworks', payload);
       navigate(`/artwork/${artwork.id}`);
     } catch (err) {
@@ -324,7 +293,7 @@ export default function UploadArtwork() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/png, image/jpeg, image/webp, image/gif"
+                accept={ACCEPT_ATTR}
                 style={{ display: 'none' }}
                 onChange={handleFileChange}
               />
@@ -341,8 +310,8 @@ export default function UploadArtwork() {
                     <div className="dropzone-icon-wrap">
                       <ImagePlus size={38} className="dropzone-icon" />
                     </div>
-                    <h3>Drag and drop your artwork</h3>
-                    <p>High-resolution PNG, JPG, WEBP, or SVG (up to 25MB)</p>
+                    <h3>{processing ? 'Preparing your image…' : 'Drag and drop your artwork'}</h3>
+                    <p>High-resolution PNG, JPG, WEBP, or GIF (up to 25MB). Large images are resized for you.</p>
                     <button type="button" className="btn-secondary dropzone-browse-btn">
                       Browse Files
                     </button>

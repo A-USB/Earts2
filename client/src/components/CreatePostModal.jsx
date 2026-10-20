@@ -1,77 +1,72 @@
 import { useState } from 'react';
-import { X, ImagePlus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { X, ImagePlus, SlidersHorizontal } from 'lucide-react';
 import { api } from '../utils/api';
+import { CATEGORIES, buildArtworkPayload, emptyArtworkForm, validateArtwork } from '../utils/artwork';
+import ImageDropzone from './ImageDropzone';
 import './CreatePostModal.css';
 
-const CATEGORIES = ['Painting','Digital','Illustration','Watercolour','Abstract','Sculpture','Mixed Media','Photography','Printmaking'];
-const COLORS = ['#F4D03F','#58D68D','#00BCD4','#9B59B6','#E74C3C','#FF6B9D','#5B4BF5','#F39C12','#1ABC9C','#C0A882','#D4A574','#7D7D7D'];
-
+// "Hang something new": the quick way to put a piece on the wall. It runs on the same
+// image processing, rules and payload as the full Upload page, and can hand its draft over to it.
 export default function CreatePostModal({ onClose, onPosted }) {
-  const [form, setForm] = useState({
-    title: '', description: '', category: 'Digital', color: COLORS[0],
-    forSale: false, price: ''
-  });
+  const navigate = useNavigate();
+  const [form, setForm] = useState(emptyArtworkForm());
+  const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const set = (k) => (e) => setForm(p => ({ ...p, [k]: e.target.value }));
 
+  const handleImage = (next) => {
+    setImage(next);
+    // The backdrop colour now comes from the artwork itself
+    if (next) setForm(p => ({ ...p, color: next.color }));
+    setError('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.title.trim()) { setError('Give your post a title'); return; }
-    if (form.forSale && (!form.price || Number(form.price) <= 0)) { setError('Enter a price to list it for sale'); return; }
-    setLoading(true); setError('');
+    const problem = validateArtwork(form, image?.dataUrl);
+    if (problem) { setError(problem); return; }
+    setLoading(true);
+    setError('');
     try {
-      const artwork = await api.post('/artworks', {
-        title: form.title.trim(),
-        description: form.description.trim(),
-        category: form.category,
-        color: form.color,
-        status: form.forSale ? 'for_sale' : 'not_for_sale',
-        price: form.forSale ? Number(form.price) : null,
-        medium: form.category,
-        year: new Date().getFullYear(),
-      });
+      const artwork = await api.post('/artworks', buildArtworkPayload(form, image.dataUrl));
       onPosted?.(artwork);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Unable to post right now. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Carry everything over so nothing has to be typed twice
+  const openFullEditor = () => {
+    navigate('/upload', { state: { draft: { form, image } } });
+  };
+
   return (
     <div className="post-overlay" onClick={onClose}>
-      <div className="create-modal-card" onClick={e => e.stopPropagation()}>
-        <button className="purchase-close" onClick={onClose}><X size={18} /></button>
-        <h3><ImagePlus size={18} /> Share new artwork</h3>
+      <div className="create-modal-card" role="dialog" aria-modal="true" aria-label="Hang something new" onClick={e => e.stopPropagation()}>
+        <button type="button" className="purchase-close" onClick={onClose} aria-label="Close"><X size={18} /></button>
+        <h3><ImagePlus size={18} aria-hidden="true" /> Hang something new</h3>
 
         <form onSubmit={handleSubmit} className="post-form">
-          {error && <div className="auth-error">{error}</div>}
+          {error && <div className="auth-error" role="alert">{error}</div>}
 
-          <div className="color-picker-row">
-            {COLORS.map(c => (
-              <button
-                type="button"
-                key={c}
-                className={`color-swatch ${form.color === c ? 'active' : ''}`}
-                style={{ background: c }}
-                onClick={() => setForm(p => ({ ...p, color: c }))}
-              />
-            ))}
-          </div>
+          <ImageDropzone image={image} onChange={handleImage} />
 
           <div className="form-group">
-            <label>Title</label>
-            <input placeholder="What did you make?" value={form.title} onChange={set('title')} maxLength={120} required />
+            <label htmlFor="cp-title">Title</label>
+            <input id="cp-title" placeholder="What did you make?" value={form.title} onChange={set('title')} maxLength={120} />
           </div>
           <div className="form-group">
-            <label>Caption</label>
-            <textarea rows={3} placeholder="Tell the story behind it..." value={form.description} onChange={set('description')} maxLength={3000} />
+            <label htmlFor="cp-caption">Caption</label>
+            <textarea id="cp-caption" rows={3} placeholder="Tell the story behind it..." value={form.description} onChange={set('description')} maxLength={3000} />
           </div>
           <div className="form-group">
-            <label>Category</label>
-            <select value={form.category} onChange={set('category')}>
+            <label htmlFor="cp-category">Category</label>
+            <select id="cp-category" value={form.category} onChange={set('category')}>
               {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
@@ -87,14 +82,17 @@ export default function CreatePostModal({ onClose, onPosted }) {
             </label>
             {form.forSale && (
               <div className="form-group">
-                <label>Price ($)</label>
-                <input type="number" min="0.01" max="1000000000" step="0.01" placeholder="e.g. 85" value={form.price} onChange={set('price')} required />
+                <label htmlFor="cp-price">Price ($)</label>
+                <input id="cp-price" type="number" min="0.01" max="1000000000" step="0.01" placeholder="e.g. 85" value={form.price} onChange={set('price')} />
               </div>
             )}
           </div>
 
           <button type="submit" className="btn-primary post-submit" disabled={loading}>
-            {loading ? 'Posting...' : 'Post to Feed'}
+            {loading ? 'Hanging it up…' : 'Hang it on the wall'}
+          </button>
+          <button type="button" className="post-more-btn" onClick={openFullEditor}>
+            <SlidersHorizontal size={15} aria-hidden="true" /> Add more details: medium, year, co-creators, backdrop
           </button>
         </form>
       </div>
