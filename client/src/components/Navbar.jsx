@@ -22,8 +22,20 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
+  const [scrolled, setScrolled] = useState(false);
 
   const onHome = location.pathname === '/';
+
+  // Wrap into an oval once the page is scrolled. Two thresholds stop it flickering near the top.
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(prev => (prev ? y > 8 : y > 40));
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   // Scroll-spy: track which section of the one-page Home is in view
   useEffect(() => {
@@ -66,7 +78,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="navbar">
+    <nav className={`navbar ${scrolled ? 'scrolled' : ''}`} aria-label="Main">
       <div className="navbar-inner">
         <Link to={user ? '/feed' : '/'} className="navbar-logo-wrap" title="Earts">
           <EartsLogo size={32} />
