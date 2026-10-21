@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowRight, Bookmark, ChevronRight, Compass, Palette, Plus, Search, ShoppingBag, Users } from 'lucide-react';
+import { ArrowRight, Bookmark, ChevronRight, Compass, PaintbrushVertical, Palette, Plus, Search, ShoppingBag, Sparkles, Tag, Users } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import ArtworkCard from '../components/ArtworkCard';
@@ -8,13 +8,35 @@ import Avatar from '../components/Avatar';
 import './Home.css';
 
 const STATS = [
-  { key: 'artists', label: 'Artists', color: '#A99BFF', Icon: Users },
-  { key: 'explorers', label: 'Explorers', color: '#FF8DBB', Icon: Compass },
-  { key: 'artworks', label: 'Artworks shared', color: '#69D7E8', Icon: Palette },
+  { key: 'artists', label: 'Artists joined', Icon: Users },
+  { key: 'explorers', label: 'Explorers visited', Icon: Compass },
+  { key: 'artworks', label: 'Artworks published', Icon: PaintbrushVertical, sparkle: true },
+  { key: 'sold', label: 'Artworks sold', Icon: Tag },
 ];
 
 // Keep the landing page populated immediately while live counts load from the API.
-const LANDING_STATS_FALLBACK = { artists: 9, explorers: 1, artworks: 19 };
+const LANDING_STATS_FALLBACK = { artists: 9, explorers: 1, artworks: 19, sold: 0 };
+
+// A stat card with two faces: a gradient icon face that flips to the number on hover, keyboard focus or tap.
+function StatFlipCard({ stat, value }) {
+  const shown = value > 0 ? `${value.toLocaleString()}+` : '0';
+  return (
+    <div className="flip-card" tabIndex={0} role="group" aria-label={`${shown} ${stat.label}`}>
+      <div className="flip-card-inner">
+        <div className="flip-face flip-front" aria-hidden="true">
+          <span className="flip-icon">
+            <stat.Icon strokeWidth={2} />
+            {stat.sparkle && <Sparkles className="flip-sparkle" strokeWidth={2} />}
+          </span>
+        </div>
+        <div className="flip-face flip-back" aria-hidden="true">
+          <span className="flip-num">{shown}</span>
+          <span className="flip-label">{stat.label}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const VALUES = [
   { icon: '🤝', title: 'Community first', desc: 'Artists support artists. Every feature we build strengthens the collective.' },
@@ -32,10 +54,10 @@ const TEAM = [
 
 const TIMELINE = [
   { date: 'JAN 2026', title: 'The Earts idea begins', desc: 'The project starts with a goal: build a creative space where artists can share their work and people can discover it.', color: '#A99BFF' },
-  { date: 'JUN 29, 2026', title: 'The first platform foundation', desc: 'The first recorded Earts codebase brings together a React client and an Express backend for an artist community.', color: '#69D7E8' },
-  { date: 'SEP 19–25, 2026', title: 'Community and marketplace take shape', desc: 'Artist profiles, artwork uploads, a feed, marketplace browsing, collaborations, and notifications turn the foundation into a working community.', color: '#FF8DBB' },
-  { date: 'OCT 4–9, 2026', title: 'Accounts, roles, and trust', desc: 'Authentication, artist and explorer journeys, artwork saving, password recovery, and stronger input validation improve the experience.', color: '#FFB45E' },
-  { date: 'NOW · OCT 2026', title: 'Improving discovery and reliability', desc: 'Current work focuses on artist search, reliable photo uploads, and polishing the experience across the app.', color: '#71D6A5' },
+  { date: 'JUN 29, 2026', title: 'The first platform foundation', desc: 'The first recorded Earts codebase brings together a React client and an Express backend for an artist community.', color: '#A99BFF' },
+  { date: 'SEP 19–25, 2026', title: 'Community and marketplace take shape', desc: 'Artist profiles, artwork uploads, a feed, marketplace browsing, collaborations, and notifications turn the foundation into a working community.', color: '#A99BFF' },
+  { date: 'OCT 4–9, 2026', title: 'Accounts, roles, and trust', desc: 'Authentication, artist and explorer journeys, artwork saving, password recovery, and stronger input validation improve the experience.', color: '#A99BFF' },
+  { date: 'NOW · OCT 2026', title: 'Improving discovery and reliability', desc: 'Current work focuses on artist search, reliable photo uploads, and polishing the experience across the app.', color: '#A99BFF' },
 ];
 
 const FEATURES = [
@@ -146,14 +168,7 @@ export default function Home() {
         <section className="stats-bar">
           <div className="container stats-inner">
             {stats && STATS.map(s => (
-              <div key={s.key} className="stat-item" style={{ '--stat-accent': s.color }}>
-                <s.Icon className="stat-icon" size={19} strokeWidth={2.1} aria-hidden="true" />
-                <div className="stat-value" aria-label={`${stats[s.key].toLocaleString()} ${s.label}`}>
-                  <span className="stat-num">{stats[s.key].toLocaleString()}</span>
-                  <span className="stat-growth" aria-hidden="true"><Plus size={12} strokeWidth={3} /></span>
-                </div>
-                <span className="stat-label">{s.label}</span>
-              </div>
+              <StatFlipCard key={s.key} stat={s} value={stats[s.key] ?? 0} />
             ))}
           </div>
         </section>
