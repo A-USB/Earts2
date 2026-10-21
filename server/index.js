@@ -489,7 +489,7 @@ app.get('/api/users/:username', async (req, res) => {
       $or: [{ artistId: user.id }, { artistUsername: user.username }]
     }).sort({ pinned: -1, createdAt: -1 });
 
-    res.json({ ...user.toJSON(), artworks: artworks.map(a => a.toJSON()) });
+    res.json({ ...user.toJSON(), artworks: artworks.map(a => withImageUrl(req, a.toJSON())) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -616,7 +616,7 @@ app.get('/api/users/me/saved', auth, async (req, res) => {
     const savedRecords = await SavedArtwork.find({ userId: req.userId }).sort({ createdAt: -1 });
     const artworkIds = savedRecords.map(record => record.artworkId);
     const saved = await Artwork.find({ _id: { $in: artworkIds } });
-    res.json(saved.map(a => a.toJSON()));
+    res.json(saved.map(a => withImageUrl(req, a.toJSON())));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -638,7 +638,7 @@ app.get('/api/users/me/orders', auth, async (req, res) => {
       const artwork = await Artwork.findById(o.artworkId);
       return {
         ...o.toJSON(),
-        artwork: artwork ? artwork.toJSON() : null
+        artwork: artwork ? withImageUrl(req, artwork.toJSON()) : null
       };
     }));
     res.json(enriched);
@@ -666,7 +666,7 @@ app.get('/api/artworks', async (req, res) => {
     }
 
     const artworks = await Artwork.find(filter).sort({ pinned: -1, createdAt: -1 });
-    res.json(artworks.map(a => a.toJSON()));
+    res.json(artworks.map(a => withImageUrl(req, a.toJSON())));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -683,7 +683,7 @@ app.get('/api/artworks/:id', async (req, res) => {
     }
 
     res.json({
-      ...artwork.toJSON(),
+      ...withImageUrl(req, artwork.toJSON()),
       artist: artist ? artist.toJSON() : null
     });
   } catch (err) {
@@ -1045,7 +1045,7 @@ app.get('/api/users/:username/collections', async (req, res) => {
       const artworks = await Artwork.find({ _id: { $in: c.artworkIds } });
       return {
         ...c.toJSON(),
-        artworks: artworks.map(a => a.toJSON())
+        artworks: artworks.map(a => withImageUrl(req, a.toJSON()))
       };
     }));
 
@@ -1337,12 +1337,13 @@ app.get('/api/products', async (req, res) => {
 
 app.get('/api/stats', async (req, res) => {
   try {
-    const [artists, explorers, artworks] = await Promise.all([
+    const [artists, explorers, artworks, sold] = await Promise.all([
       User.countDocuments({ accountType: 'artist' }),
       User.countDocuments({ accountType: 'collector' }),
-      Artwork.countDocuments()
+      Artwork.countDocuments(),
+      Artwork.countDocuments({ status: 'sold' })
     ]);
-    res.json({ artists, explorers, artworks });
+    res.json({ artists, explorers, artworks, sold });
   } catch {
     res.status(500).json({ error: 'Unable to load community statistics.' });
   }
