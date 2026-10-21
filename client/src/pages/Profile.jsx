@@ -12,41 +12,28 @@ import LoadError from '../components/LoadError';
 import './Profile.css';
 import '../components/PurchaseModal.css';
 import '../components/CreatePostModal.css';
-
-// Deterministic pseudo-random aspect ratio per artwork, so the grid reads as masonry
-const HEIGHT_VARIANTS = [1, 1.3, 0.8, 1.15, 0.9, 1.4, 1.05];
-function heightRatio(id) {
-  const n = String(id).split('').reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
-  return HEIGHT_VARIANTS[n % HEIGHT_VARIANTS.length];
-}
+import ArtworkCard from '../components/ArtworkCard';
+import CreatePostModal from '../components/CreatePostModal';
 
 function ArtCard({ artwork, isOwn, onTogglePin }) {
   return (
-    <div className="profile-art-card-wrap">
-      <Link to={`/artwork/${artwork.id}`} className="profile-art-card">
-        <div
-          className="profile-art-thumb"
-          style={{ background: artwork.color || '#DDD', aspectRatio: `1 / ${heightRatio(artwork.id)}` }}
-        >
-          {artwork.imageUrl && (
-            <img src={artwork.imageUrl} alt={artwork.title} className="profile-thumb-img" loading="lazy" />
-          )}
-        </div>
-        <div className="profile-art-info">
-          <span>{artwork.title}</span>
-          {artwork.status === 'for_sale' ? <strong>${artwork.price}</strong> : <em>{artwork.status === 'sold' ? 'Sold' : 'Not for sale'}</em>}
-        </div>
-      </Link>
-      {isOwn && onTogglePin && (
+    <ArtworkCard
+      artwork={artwork}
+      showArtist={false}
+      className="profile-art-card-wrap"
+      actions={isOwn && onTogglePin ? (
         <button
+          type="button"
           className={`pin-toggle-btn ${artwork.pinned ? 'active' : ''}`}
           title={artwork.pinned ? 'Unpin from profile' : 'Pin to profile'}
-          onClick={(e) => { e.preventDefault(); onTogglePin(artwork); }}
+          aria-label={artwork.pinned ? 'Unpin from profile' : 'Pin to profile'}
+          aria-pressed={Boolean(artwork.pinned)}
+          onClick={() => onTogglePin(artwork)}
         >
           {artwork.pinned ? <PinOff size={14} /> : <Pin size={14} />}
         </button>
-      )}
-    </div>
+      ) : null}
+    />
   );
 }
 
@@ -112,6 +99,7 @@ export default function Profile() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [artworks, setArtworks] = useState([]);
+  const [showHang, setShowHang] = useState(false);
   const [tab, setTab] = useState('All');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -196,12 +184,24 @@ export default function Profile() {
     } catch {}
   };
 
-  const handleShare = () => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(window.location.href);
+  const handleShare = async () => {
+    const url = `${window.location.origin}/profile/${profile?.username || username}`;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const field = document.createElement('textarea');
+        field.value = url;
+        field.style.position = 'fixed';
+        field.style.opacity = '0';
+        document.body.appendChild(field);
+        field.select();
+        document.execCommand('copy');
+        field.remove();
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2200);
-    }
+    } catch {}
   };
 
   if (loading) return (
@@ -334,7 +334,7 @@ export default function Profile() {
                         <Plus size={15} /> Upload piece
                       </Link>
                     )}
-                    <button className="btn-ghost profile-action-icon" onClick={handleShare} title="Share profile link">
+                    <button className="btn-ghost profile-action-icon" onClick={handleShare} title="Share profile link" aria-label="Copy profile link">
                       {copied ? <Check size={16} color="#27AE60" /> : <Share2 size={16} />}
                       {copied && <span className="copied-tooltip">Copied!</span>}
                     </button>
@@ -355,7 +355,7 @@ export default function Profile() {
                     >
                       <MessageSquare size={15} /> Message
                     </button>
-                    <button className="btn-ghost profile-action-icon" onClick={handleShare} title="Share profile link">
+                    <button className="btn-ghost profile-action-icon" onClick={handleShare} title="Share profile link" aria-label="Copy profile link">
                       {copied ? <Check size={16} color="#27AE60" /> : <Share2 size={16} />}
                       {copied && <span className="copied-tooltip">Copied!</span>}
                     </button>
@@ -581,10 +581,11 @@ export default function Profile() {
                       <ArtCard key={a.id} artwork={a} isOwn={isOwn} onTogglePin={handleTogglePin} />
                     ))}
                     {isOwn && (
-                      <Link to="/upload" className="add-artwork-card">
-                        <Plus size={28} />
-                        <span>Upload new piece</span>
-                      </Link>
+                      <button type="button" className="add-artwork-card" onClick={() => setShowHang(true)}>
+                        <Plus size={28} aria-hidden="true" />
+                        <strong>Hang something new</strong>
+                        <span>Share what you’re working on</span>
+                      </button>
                     )}
                   </div>
                 )}
@@ -594,6 +595,16 @@ export default function Profile() {
         </div>
 
       </div>
+
+      {showHang && (
+        <CreatePostModal
+          onClose={() => setShowHang(false)}
+          onPosted={(newArtwork) => {
+            setShowHang(false);
+            setArtworks(prev => [newArtwork, ...prev]);
+          }}
+        />
+      )}
 
       {showNewCollection && (
         <NewCollectionModal
