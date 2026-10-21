@@ -1,26 +1,4 @@
 /* The Wall: a gallery-wall feed. Tokens switch with the app's dark theme. */
-:root {
-  --wall: #F1ECE4;
-  --mat: #FBF9F5;
-  --label: #FBF9F5;
-  --rule: #cfc6b8;
-  --wall-shadow: 0 18px 30px -18px rgba(60, 40, 20, 0.5), 0 2px 4px rgba(60, 40, 20, 0.12);
-  --label-shadow: 0 10px 18px -12px rgba(60, 40, 20, 0.45);
-  --dot-avail: #2F9E6B;
-  --dot-sold: #C4553A;
-  --dot-off: #7A7690;
-}
-[data-theme="dark"] {
-  --wall: #12101C;
-  --mat: #1D1A30;
-  --label: #1D1A30;
-  --rule: rgba(255, 255, 255, 0.16);
-  --wall-shadow: 0 18px 30px -18px rgba(0, 0, 0, 0.85), 0 2px 4px rgba(0, 0, 0, 0.4);
-  --label-shadow: 0 10px 18px -12px rgba(0, 0, 0, 0.8);
-  --dot-avail: #4FD08F;
-  --dot-sold: #FF8A6B;
-  --dot-off: #9391B2;
-}
 
 .wall-page { background: transparent; min-height: 100vh; padding: 48px 0 80px; }
 .wall-container { max-width: 1080px; }
