@@ -574,19 +574,21 @@
 
 /* Portfolio Masonry Grid */
 .profile-artworks-grid {
-  column-count: 3;
-  column-gap: 14px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px 22px;
+  align-items: start;
 }
 
 @media (max-width: 1080px) {
   .profile-artworks-grid {
-    column-count: 2;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 580px) {
   .profile-artworks-grid {
-    column-count: 1;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -868,3 +870,15 @@
 }
 
 
+
+
+/* Share-profile button: .btn-ghost's side padding was squeezing the icon out of the 38px circle */
+.profile-action-icon { padding: 0; flex: none; }
+
+/* "Hang something new" tile matches the card height and the wall's dashed frame */
+button.add-artwork-card { width: 100%; min-height: 240px; gap: 6px; background: none; text-align: center; color: var(--text-mid); }
+button.add-artwork-card strong { font-family: 'Syne', sans-serif; font-size: 18px; color: var(--text-dark); }
+button.add-artwork-card span { font-size: 13px; }
+
+/* Touch screens can't hover, so keep the owner's pin button visible */
+@media (hover: none) { .pin-toggle-btn { opacity: 1; } }
