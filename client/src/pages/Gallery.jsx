@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import {
-  Search, SlidersHorizontal, X, Sparkles, Users, ArrowRight
-} from 'lucide-react';
+import { Search, SlidersHorizontal, X, Sparkles, Users, ArrowRight, SearchX } from 'lucide-react';
 import { api } from '../utils/api';
 import ArtworkCard from '../components/ArtworkCard';
 import Avatar from '../components/Avatar';
 import LoadError from '../components/LoadError';
 import './Gallery.css';
+import IconTile from '../components/IconTile';
 
 const CATEGORIES = [
   'All', 'Painting', 'Digital', 'Illustration',
@@ -243,7 +242,7 @@ export default function Gallery() {
           </div>
         ) : (
           <div className="empty-explore-state card">
-            <div className="empty-state-icon">🎨</div>
+            <div className="empty-state-icon"><IconTile Icon={SearchX} size="lg" tone="soft" /></div>
             <h3>No artworks found matching your criteria</h3>
             <p>Try resetting your search query or selecting a different category filter.</p>
             <button
