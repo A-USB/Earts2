@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import {
-  Edit2, Share2, Plus, Heart, ShoppingBag, Pin, PinOff, FolderPlus,
-  X, Camera, MapPin, Sparkles, Palette, MessageSquare, Check, Layers
-} from 'lucide-react';
+import { Edit2, Share2, Plus, Heart, ShoppingBag, Pin, PinOff, FolderPlus, X, Camera, MapPin, Sparkles, Palette, MessageSquare, Check, Layers } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
@@ -14,6 +11,8 @@ import '../components/PurchaseModal.css';
 import '../components/CreatePostModal.css';
 import ArtworkCard from '../components/ArtworkCard';
 import CreatePostModal from '../components/CreatePostModal';
+import IconTile from '../components/IconTile';
+import { formatCompact } from '../utils/formatCount';
 
 function ArtCard({ artwork, isOwn, onTogglePin }) {
   return (
@@ -79,7 +78,7 @@ function NewCollectionModal({ artworks, onClose, onCreated }) {
                   style={{ background: a.color }}
                   onClick={() => toggle(a.id)}
                 >
-                  {selected.includes(a.id) && <span className="pick-check">✓</span>}
+                  {selected.includes(a.id) && <span className="pick-check"><Check size={14} strokeWidth={3} aria-hidden="true" /></span>}
                 </button>
               ))}
             </div>
@@ -219,7 +218,7 @@ export default function Profile() {
       <div className="profile-page page-wrapper">
         <div className="container profile-container">
           <div className="empty-collection card" style={{ padding: '60px 24px', margin: '40px auto', maxWidth: '520px', textAlign: 'center' }}>
-            <span style={{ fontSize: '48px', display: 'block', marginBottom: '12px' }}>🎨</span>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '14px' }}><IconTile Icon={Palette} size="lg" tone="soft" /></div>
             <h3 style={{ fontSize: '22px', color: 'var(--navy)', marginBottom: '8px' }}>Artist not found</h3>
             <p style={{ color: 'var(--text-mid)', fontSize: '14px', marginBottom: '24px', lineHeight: '1.6' }}>
               The profile for <strong>@{username || 'unknown'}</strong> could not be found. The server data may have restarted or the username is different.
@@ -249,7 +248,7 @@ export default function Profile() {
     : tab === 'Sold' ? artworks.filter(a => a.status === 'sold')
     : [];
 
-  const formatNum = n => (n >= 1000 ? `${(n/1000).toFixed(1)}k` : n);
+  const formatNum = formatCompact;
 
   const statItems = isCollector
     ? (isOwn
