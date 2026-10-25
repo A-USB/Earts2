@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Heart, Share2, ShoppingCart, ArrowLeft, Tag, MessageCircle, Send, Bookmark } from 'lucide-react';
+import { Heart, Share2, ShoppingCart, ArrowLeft, Tag, MessageCircle, Send, Bookmark, ImageOff } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
@@ -8,6 +8,7 @@ import PurchaseModal from '../components/PurchaseModal';
 import ReportAction from '../components/ReportAction';
 import LoadError from '../components/LoadError';
 import './ArtworkDetail.css';
+import { formatCompact } from '../utils/formatCount';
 
 const STATUS_LABEL = { for_sale: 'Available', not_for_sale: 'Not for sale', sold: 'Sold' };
 
@@ -118,7 +119,7 @@ export default function ArtworkDetail() {
   );
   if (!artwork) return null;
 
-  const formatLikes = n => n >= 1000 ? `${(n/1000).toFixed(1)}k` : n;
+  const formatLikes = formatCompact;
   const isOwnArtwork = user && artwork.artistId === user.id;
 
   return (
@@ -135,7 +136,7 @@ export default function ArtworkDetail() {
                 <img src={artwork.imageUrl} alt={artwork.title} className="detail-canvas-img" />
               ) : (
                 <div className="canvas-overlay">
-                  <span>🖼️</span>
+                  <ImageOff size={44} strokeWidth={1.5} aria-hidden="true" />
                 </div>
               )}
             </div>
