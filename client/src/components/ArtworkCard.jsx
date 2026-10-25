@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import { Bookmark, Droplet, ShoppingCart, Users } from 'lucide-react';
 import './ArtworkCard.css';
+import { formatCompact } from '../utils/formatCount';
 
-const formatCount = n => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : (n || 0));
+const formatCount = formatCompact;
 
 // The wall card in its compact form: a framed piece with a gallery label hanging below it.
 // Used by the Marketplace, Gallery, Home, Dashboard and Profile so artwork looks the same everywhere.
