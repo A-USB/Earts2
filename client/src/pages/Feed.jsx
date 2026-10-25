@@ -8,6 +8,7 @@ import CreatePostModal from '../components/CreatePostModal';
 import PostCommentsModal from '../components/PostCommentsModal';
 import LoadError from '../components/LoadError';
 import './Feed.css';
+import { formatCompact } from '../utils/formatCount';
 
 const DAY = 86400000;
 const PAGE_SIZE = 8;
@@ -23,7 +24,7 @@ function timeAgo(ts) {
   return min >= 1 ? `${min}m ago` : 'just now';
 }
 
-const formatCount = n => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : n);
+const formatCount = formatCompact;
 
 function statusOf(post) {
   if (post.status === 'for_sale') return { key: 'avail', text: post.price ? `Available · $${post.price}` : 'Available' };
