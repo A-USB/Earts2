@@ -6,8 +6,6 @@
 .artist-search-hero {
   padding: 48px 0 38px;
   margin-bottom: 34px;
-  background: linear-gradient(135deg, rgba(96, 37, 234, 0.09), rgba(255, 107, 157, 0.08));
-  border-bottom: 1px solid var(--border);
 }
 
 .artist-search-hero .eyebrow {
