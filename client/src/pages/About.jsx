@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { api } from '../utils/api';
 import Avatar from '../components/Avatar';
 import './About.css';
+import { Handshake, Palette, Award, Globe } from 'lucide-react';
+import IconTile from '../components/IconTile';
 
 const VALUES = [
-  { icon: '🤝', title: 'Community first', desc: 'Artists support artists. Every feature we build strengthens the collective.' },
-  { icon: '🎨', title: 'Creative freedom', desc: 'No gatekeeping. Every style and medium has a home here with the art.' },
-  { icon: '⭐', title: 'Fair recognition', desc: 'Artists own their work and keep the majority of what they earn.' },
-  { icon: '🌍', title: 'Global inclusion', desc: 'Art has no borders. We celebrate creators from every culture.' },
+  { Icon: Handshake, title: 'Community first', desc: 'Artists support artists. Every feature we build strengthens the collective.' },
+  { Icon: Palette, title: 'Creative freedom', desc: 'No gatekeeping. Every style and medium has a home here with the art.' },
+  { Icon: Award, title: 'Fair recognition', desc: 'Artists own their work and keep the majority of what they earn.' },
+  { Icon: Globe, title: 'Global inclusion', desc: 'Art has no borders. We celebrate creators from every culture.' },
 ];
 
 const TEAM = [
@@ -84,7 +86,7 @@ export default function About() {
           <div className="values-grid">
             {VALUES.map(v => (
               <div key={v.title} className="value-card card">
-                <span className="value-icon">{v.icon}</span>
+                <IconTile Icon={v.Icon} className="value-icon" />
                 <h4>{v.title}</h4>
                 <p>{v.desc}</p>
               </div>
