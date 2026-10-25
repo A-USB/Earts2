@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Palette } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import ArtworkCard from '../components/ArtworkCard';
 import './Dashboard.css';
+import IconTile from '../components/IconTile';
 
 const CATEGORIES = ['All', 'Painting', 'Digital', 'Illustration', 'Watercolour', 'Abstract', 'Sculpture', 'Mixed Media', 'Photography'];
 const SORT_OPTIONS = ['Latest', 'Most Liked', 'Price: Low to High', 'Price: High to Low'];
@@ -117,7 +118,7 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="empty-state">
-            <span>🎨</span>
+            <IconTile Icon={Palette} size="lg" tone="soft" />
             <h3>No artworks found</h3>
             <p>Try adjusting your search or filters</p>
             <button className="btn-primary" onClick={() => { setSearch(''); setCategory('All'); }}>
