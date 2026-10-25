@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Heart, MessageCircle, ShoppingBag, UserPlus, Sparkles,
-  CheckCheck, Trash2, Tag, ArrowRight, Bell
-} from 'lucide-react';
+import { Heart, MessageCircle, ShoppingBag, UserPlus, Sparkles, CheckCheck, Trash2, Tag, ArrowRight, Bell, BellOff } from 'lucide-react';
 import { api } from '../utils/api';
 import Avatar from '../components/Avatar';
 import { useAuth } from '../context/AuthContext';
 import { announceNotificationsChanged } from '../hooks/useUnreadNotificationCount';
 import './Notifications.css';
+import IconTile from '../components/IconTile';
 
 const FILTER_TABS = [
   { id: 'all', label: 'All' },
@@ -224,7 +222,7 @@ export default function Notifications() {
             ))
           ) : (
             <div className="notifications-empty">
-              <span className="empty-bell-icon">🔔</span>
+              <span className="empty-bell-icon"><IconTile Icon={BellOff} size="lg" tone="soft" /></span>
               <h3>No notifications in this filter</h3>
               <p>{isExplorer ? 'New work from followed artists and demo order records will appear here.' : 'When people interact with your artwork, the updates will appear here.'}</p>
               {activeTab !== 'all' && (
