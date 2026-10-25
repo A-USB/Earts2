@@ -609,7 +609,7 @@ export default function Signup() {
                   className="btn-primary auth-submit flex-1"
                   disabled={loading}
                 >
-                  {loading ? "Creating account..." : "Complete & Join Earts ✦"}
+                  {loading ? "Creating account..." : "Complete & Join Earts"}
                 </button>
               </div>
 
