@@ -1,0 +1,16 @@
+.icon-tile { display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.icon-tile-sm { width: 36px; height: 36px; border-radius: 11px; }
+.icon-tile-sm svg { width: 18px; height: 18px; }
+.icon-tile-md { width: 48px; height: 48px; border-radius: 15px; }
+.icon-tile-md svg { width: 24px; height: 24px; }
+.icon-tile-lg { width: 72px; height: 72px; border-radius: 22px; }
+.icon-tile-lg svg { width: 34px; height: 34px; }
+.icon-tile-xl { width: 96px; height: 96px; border-radius: 28px; }
+.icon-tile-xl svg { width: 44px; height: 44px; }
+
+.icon-tile-solid {
+  background: var(--brand-gradient);
+  color: #fff;
+  box-shadow: 0 12px 22px -14px rgba(91, 75, 245, 0.7);
+}
+.icon-tile-soft { background: var(--primary-light); color: var(--primary); }
