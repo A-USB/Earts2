@@ -4,8 +4,6 @@
 
 /* Hero */
 .marketplace-hero {
-  background: linear-gradient(135deg, rgba(96, 37, 234, 0.08) 0%, rgba(79, 70, 229, 0.04) 100%);
-  border-bottom: 1px solid var(--border);
   padding: 42px 0 36px;
   margin-bottom: 28px;
 }
