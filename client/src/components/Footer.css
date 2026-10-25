@@ -86,6 +86,6 @@
 
 /* Dark Mode Styles for Footer */
 [data-theme="dark"] .footer {
-  background: #080812;
+  background: #040409;
   border-top: 1px solid var(--border);
 }
