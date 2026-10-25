@@ -63,11 +63,9 @@ body {
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
+/* One flat page background per theme (no glows or gradients), so every section sits on the same colour */
 [data-theme="dark"] body {
-  background: radial-gradient(circle at 15% 15%, rgba(91, 75, 245, 0.12) 0%, transparent 45%),
-              radial-gradient(circle at 85% 85%, rgba(255, 107, 157, 0.08) 0%, transparent 45%),
-              #0B0B16;
-  background-attachment: fixed;
+  background: #0B0B16;
   color: var(--text-dark);
 }
 
@@ -239,3 +237,7 @@ input:focus, select:focus, textarea:focus {
   --dot-sold: #FF8A6B;
   --dot-off: #9391B2;
 }
+
+/* Brand gradient for icon tiles and highlights: light is violet to pink, dark is the system's violet to indigo */
+:root { --brand-gradient: linear-gradient(100deg, #5B4BF5 0%, #8B5CF6 52%, #FF6B9D 100%); }
+[data-theme="dark"] { --brand-gradient: linear-gradient(100deg, #6D5EF7 0%, #4B33C9 55%, #2A1B7A 100%); }
