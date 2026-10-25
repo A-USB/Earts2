@@ -218,6 +218,15 @@ class QueryCursor extends Promise {
     return this;
   }
 
+  // Field projection and lean() only matter for MongoDB; the in-memory store returns whole docs
+  select() {
+    return this;
+  }
+
+  lean() {
+    return this;
+  }
+
   then(onFulfilled, onRejected) {
     let docs = this._getDocs();
     if (this._sortObj) docs = sortDocs(docs, this._sortObj);
