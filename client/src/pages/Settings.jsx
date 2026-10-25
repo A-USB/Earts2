@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Save, User, Palette, Bell, Lock, LogOut, Camera } from 'lucide-react';
+import { Save, User, Palette, Bell, Lock, LogOut, Camera, Check } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
@@ -299,7 +299,7 @@ export default function Settings() {
             )}
 
             <div className="settings-footer">
-              {saved && <span className="saved-msg">✓ Changes saved!</span>}
+              {saved && <span className="saved-msg" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Check size={16} aria-hidden="true" /> Changes saved!</span>}
               <button className="btn-primary" onClick={handleSave} disabled={loading}>
                 <Save size={15}/> {loading ? 'Saving...' : 'Save changes'}
               </button>
