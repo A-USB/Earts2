@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowRight, Bookmark, ChevronRight, Compass, PaintbrushVertical, Palette, Plus, Search, ShoppingBag, Sparkles, Tag, Users } from 'lucide-react';
+import { ArrowRight, Bookmark, ChevronRight, Compass, PaintbrushVertical, Palette, Plus, Search, ShoppingBag, Sparkles, Tag, Users, Handshake, UserRound, ImagePlus, Globe, Star } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import ArtworkCard from '../components/ArtworkCard';
 import Avatar from '../components/Avatar';
+import heroStudio from '../assets/hero-studio.webp';
 import './Home.css';
+import IconTile from '../components/IconTile';
+import { formatCompact } from '../utils/formatCount';
 
 const STATS = [
   { key: 'artists', label: 'Artists joined', Icon: Users },
@@ -39,10 +42,10 @@ function StatFlipCard({ stat, value }) {
 }
 
 const VALUES = [
-  { icon: '🤝', title: 'Community first', desc: 'Artists support artists. Every feature we build strengthens the collective.' },
-  { icon: '🎨', title: 'Creative freedom', desc: 'No gatekeeping. Every style and medium has a home here with the art.' },
-  { icon: '⭐', title: 'Artist-led', desc: 'Artists can present their work, build a portfolio, and connect with explorers.' },
-  { icon: '🌍', title: 'Global inclusion', desc: 'Art has no borders. We celebrate creators from every culture.' },
+  { Icon: Handshake, title: 'Community first', desc: 'Artists support artists. Every feature we build strengthens the collective.' },
+  { Icon: Palette, title: 'Creative freedom', desc: 'No gatekeeping. Every style and medium has a home here with the art.' },
+  { Icon: Star, title: 'Artist-led', desc: 'Artists can present their work, build a portfolio, and connect with explorers.' },
+  { Icon: Globe, title: 'Global inclusion', desc: 'Art has no borders. We celebrate creators from every culture.' },
 ];
 
 const TEAM = [
@@ -54,10 +57,10 @@ const TEAM = [
 
 const TIMELINE = [
   { date: 'JAN 2026', title: 'The Earts idea begins', desc: 'The project starts with a goal: build a creative space where artists can share their work and people can discover it.', color: '#A99BFF' },
-  { date: 'JUN 29, 2026', title: 'The first platform foundation', desc: 'The first recorded Earts codebase brings together a React client and an Express backend for an artist community.', color: '#A99BFF' },
-  { date: 'SEP 19–25, 2026', title: 'Community and marketplace take shape', desc: 'Artist profiles, artwork uploads, a feed, marketplace browsing, collaborations, and notifications turn the foundation into a working community.', color: '#A99BFF' },
-  { date: 'OCT 4–9, 2026', title: 'Accounts, roles, and trust', desc: 'Authentication, artist and explorer journeys, artwork saving, password recovery, and stronger input validation improve the experience.', color: '#A99BFF' },
-  { date: 'NOW · OCT 2026', title: 'Improving discovery and reliability', desc: 'Current work focuses on artist search, reliable photo uploads, and polishing the experience across the app.', color: '#A99BFF' },
+  { date: 'JUN 29, 2026', title: 'The first platform foundation', desc: 'The first recorded Earts codebase brings together a React client and an Express backend for an artist community.', color: '#69D7E8' },
+  { date: 'SEP 19–25, 2026', title: 'Community and marketplace take shape', desc: 'Artist profiles, artwork uploads, a feed, marketplace browsing, collaborations, and notifications turn the foundation into a working community.', color: '#FF8DBB' },
+  { date: 'OCT 4–9, 2026', title: 'Accounts, roles, and trust', desc: 'Authentication, artist and explorer journeys, artwork saving, password recovery, and stronger input validation improve the experience.', color: '#FFB45E' },
+  { date: 'NOW · OCT 2026', title: 'Improving discovery and reliability', desc: 'Current work focuses on artist search, reliable photo uploads, and polishing the experience across the app.', color: '#71D6A5' },
 ];
 
 const FEATURES = [
@@ -146,20 +149,16 @@ export default function Home() {
               </div>
             </div>
             <div className="hero-visual">
-              <div className="hero-main-img">
-                <div className="hero-img-placeholder">
-                  <div className="hero-paint-swirl" />
-                  <span>🎨</span>
-                </div>
-                <div className="hero-accent-card hero-accent-1">
-                  <div className="accent-avatar" style={{background:'linear-gradient(135deg,#FF6B9D,#C44FD8)'}} />
-                </div>
-                <div className="hero-accent-card hero-accent-2">
-                  <div className="accent-avatar" style={{background:'linear-gradient(135deg,#5B4BF5,#00BCD4)'}} />
-                </div>
-              </div>
-              <div className="hero-shape hero-shape-1" />
-              <div className="hero-shape hero-shape-2" />
+              <figure className="hero-photo">
+                <img
+                  src={heroStudio}
+                  width="1248"
+                  height="832"
+                  alt="Oil paint tubes, brushes and smears of paint on a wooden studio table"
+                  fetchPriority="high"
+                  decoding="async"
+                />
+              </figure>
             </div>
           </div>
         </section>
@@ -209,13 +208,13 @@ export default function Home() {
             <div className="artists-grid">
               {featuredArtists.map(artist => (
                 <Link to={`/profile/${artist.username}`} key={artist.id} className="artist-card card">
-                  <Avatar seed={artist.avatarSeed || `${artist.firstName}${artist.lastName}`} src={artist.avatar} size={72} />
+                  <span className="artist-ring">
+                    <Avatar seed={artist.avatarSeed || `${artist.firstName}${artist.lastName}`} src={artist.avatar} size={80} />
+                  </span>
                   <h4>{artist.firstName} {artist.lastName}</h4>
                   <span className="artist-role">{artist.role || 'Artist'}</span>
-                  <span className="artist-works">{artist.followers || 0} followers</span>
-                  <span className="follow-btn btn-outline" style={{ marginTop: '12px', padding: '6px 18px', fontSize: '13px' }}>
-                    View profile
-                  </span>
+                  <span className="artist-followers"><Users size={14} aria-hidden="true" /><strong>{formatCompact(artist.followers)}</strong> followers</span>
+                  <span className="artist-cta">View profile <ArrowRight size={14} aria-hidden="true" /></span>
                 </Link>
               ))}
             </div>
@@ -231,13 +230,13 @@ export default function Home() {
             </div>
             <div className="steps-grid">
               {[
-                { icon: '🎨', title: 'Create your profile', desc: 'Set up your artist identity, add your bio, and showcase your style.' },
-                { icon: '🖼️', title: 'Upload your work', desc: 'Share your artwork in any medium — digital, oil, watercolour, sculpture.' },
-                { icon: '🌍', title: 'Connect through art', desc: 'Discover creators, follow their work, and share what inspires you.' },
-                { icon: '💾', title: 'Save your favourites', desc: 'Keep artworks you like in your collection to revisit later.' },
+                { Icon: UserRound, title: 'Create your profile', desc: 'Set up your artist identity, add your bio, and showcase your style.' },
+                { Icon: ImagePlus, title: 'Upload your work', desc: 'Share your artwork in any medium — digital, oil, watercolour, sculpture.' },
+                { Icon: Users, title: 'Connect through art', desc: 'Discover creators, follow their work, and share what inspires you.' },
+                { Icon: Bookmark, title: 'Save your favourites', desc: 'Keep artworks you like in your collection to revisit later.' },
               ].map((step, i) => (
                 <div key={i} className="step-card card">
-                  <div className="step-icon">{step.icon}</div>
+                  <IconTile Icon={step.Icon} className="step-icon" />
                   <div className="step-num">{String(i+1).padStart(2,'0')}</div>
                   <h4>{step.title}</h4>
                   <p>{step.desc}</p>
@@ -285,7 +284,7 @@ export default function Home() {
             <div className="values-grid">
               {VALUES.map(v => (
                 <div key={v.title} className="value-card card">
-                  <span className="value-icon">{v.icon}</span>
+                  <IconTile Icon={v.Icon} className="value-icon" />
                   <h4>{v.title}</h4>
                   <p>{v.desc}</p>
                 </div>
