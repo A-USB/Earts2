@@ -11,6 +11,7 @@
 }
 
 .navbar-inner {
+  box-sizing: border-box;
   width: min(1200px, 100%);
   margin: 0 auto;
   padding: 0 24px;
@@ -303,4 +304,21 @@
 
 @media (prefers-reduced-motion: reduce) {
   .navbar, .navbar-inner { transition: none; }
+}
+
+/* Very small screens: tighten the bar so the logo, theme toggle, Login, Sign Up and menu all fit */
+@media (max-width: 480px) {
+  .navbar-inner { padding: 0 14px; gap: 10px; }
+  .navbar.scrolled .navbar-inner { padding: 0 10px 0 14px; }
+  .navbar-actions { gap: 6px; }
+  .navbar-actions .btn-outline,
+  .navbar-actions .btn-primary { padding: 8px 12px; font-size: 13px; }
+}
+
+@media (max-width: 380px) {
+  .navbar-inner { padding: 0 10px; gap: 6px; }
+  .navbar-actions { gap: 4px; }
+  .navbar-actions .btn-outline,
+  .navbar-actions .btn-primary { padding: 7px 10px; font-size: 12px; }
+  .navbar-logo-wrap { transform: scale(0.88); transform-origin: left center; margin-right: -12px; }
 }
