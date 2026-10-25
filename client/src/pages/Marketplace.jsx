@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
-import {
-  Search, SlidersHorizontal, X, ShoppingBag,
-  Sparkles, Users, ArrowRight, Eye
-} from 'lucide-react';
+import { Search, SlidersHorizontal, X, ShoppingBag, Sparkles, Users, ArrowRight, Eye, SearchX } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import ArtworkCard from '../components/ArtworkCard';
@@ -11,6 +8,7 @@ import PurchaseModal from '../components/PurchaseModal';
 import Avatar from '../components/Avatar';
 import LoadError from '../components/LoadError';
 import './Marketplace.css';
+import IconTile from '../components/IconTile';
 
 const CATEGORIES = [
   'All', 'Painting', 'Digital', 'Illustration',
@@ -267,7 +265,7 @@ export default function Marketplace() {
           </div>
         ) : (
           <div className="empty-state card">
-            <div className="empty-icon">🎨</div>
+            <div className="empty-icon"><IconTile Icon={SearchX} size="lg" tone="soft" /></div>
             <h3>No artworks found</h3>
             <p>Try adjusting your search query, price filter, or switch to All Artworks mode.</p>
             <button
