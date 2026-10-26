@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-export default function GoogleAuthButton({ accountType = 'artist', role = 'Artist', onError }) {
+export default function GoogleAuthButton({ accountType = 'artist', role = 'Artist', onError, redirectTo }) {
   const { loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const buttonRef = useRef(null);
@@ -19,13 +19,13 @@ export default function GoogleAuthButton({ accountType = 'artist', role = 'Artis
     setLoading(true);
     try {
       const result = await loginWithGoogle({ credential, accountType, role });
-      navigate(result.isNewUser ? '/choose-avatar' : '/feed');
+      navigate(result.isNewUser ? '/choose-avatar' : (redirectTo || '/feed'));
     } catch (error) {
       onError?.(error.message || 'Google sign-in failed. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [accountType, loginWithGoogle, navigate, onError, role]);
+  }, [accountType, loginWithGoogle, navigate, onError, role, redirectTo]);
 
   useEffect(() => {
     if (!googleClientId || !buttonRef.current) return undefined;
