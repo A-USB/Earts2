@@ -9,7 +9,7 @@
 .wc-actions { position: absolute; top: 18px; right: 18px; z-index: 3; }
 
 .wc-label { width: 88%; margin: -8px 0 0 12px; padding: 12px 14px 2px; background: var(--label); box-shadow: var(--label-shadow); }
-.wc-title { margin: 0; font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; line-height: 1.25; }
+.wc-title { margin: 0; font-family: 'Inter', sans-serif; font-size: 18.4px; font-weight: 800; line-height: 1.25; }
 .wc-title a { display: block; color: var(--text-dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* The title link stretches over the whole card so it all opens the artwork */
 .wc-title a::after { content: ''; position: absolute; inset: 0; z-index: 1; }
