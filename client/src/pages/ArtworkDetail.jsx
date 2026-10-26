@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Heart, Share2, ShoppingCart, ArrowLeft, Tag, MessageCircle, Send, Bookmark, ImageOff } from 'lucide-react';
+import { Heart, Share2, ShoppingCart, ArrowLeft, Tag, Bookmark, ImageOff } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
@@ -23,22 +23,17 @@ export default function ArtworkDetail() {
   const [loadError, setLoadError] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
   const [showPurchase, setShowPurchase] = useState(false);
-  const [comments, setComments] = useState([]);
-  const [commentText, setCommentText] = useState('');
-  const [postingComment, setPostingComment] = useState(false);
 
   useEffect(() => {
     setLoading(true);
     setLoadError('');
     Promise.all([
       api.get(`/artworks/${id}`),
-      api.get(`/artworks/${id}/comments`).catch(() => []),
       user?.id ? api.get('/users/me/likes').catch(() => []) : Promise.resolve([]),
       user?.id ? api.get('/users/me/saved/ids').catch(() => []) : Promise.resolve([]),
     ])
-      .then(([art, cmts, myLikes, mySaved]) => {
+      .then(([art, myLikes, mySaved]) => {
         setArtwork(art);
-        setComments(cmts);
         setLiked(myLikes.includes(art.id));
         setSaved(mySaved.includes(art.id));
       })
@@ -75,35 +70,6 @@ export default function ArtworkDetail() {
       const result = await api.post(`/artworks/${id}/save`);
       setSaved(result.saved);
     } catch {}
-  };
-
-  const handleComment = async (e) => {
-    e.preventDefault();
-    if (!user) { navigate('/login'); return; }
-    const value = commentText.trim();
-    if (!value || postingComment) return;
-
-    // Optimistic: append immediately, swap in the server copy after
-    const tempId = `temp_${Date.now()}`;
-    setComments(prev => [...prev, {
-      id: tempId,
-      userName: user.firstName ? `${user.firstName} ${user.lastName}` : (user.username || 'You'),
-      text: value,
-      createdAt: Date.now(),
-    }]);
-    setCommentText('');
-    setPostingComment(true);
-
-    try {
-      const c = await api.post(`/artworks/${id}/comments`, { text: value });
-      setComments(prev => prev.map(x => x.id === tempId ? c : x));
-    } catch {
-      // Roll back: remove the optimistic comment and restore the draft
-      setComments(prev => prev.filter(x => x.id !== tempId));
-      setCommentText(prev => prev || value);
-    } finally {
-      setPostingComment(false);
-    }
   };
 
   if (loading) return (
@@ -153,34 +119,6 @@ export default function ArtworkDetail() {
                 <Share2 size={16} /> Share
               </button>
               {!isOwnArtwork && <ReportAction targetType="artwork" targetId={artwork.id} />}
-            </div>
-
-            <div className="comments-section card">
-              <h4><MessageCircle size={16} /> Comments ({comments.length})</h4>
-              <div className="comments-list">
-                {comments.length === 0 && <p className="no-comments">No comments yet — be the first to say something.</p>}
-                {comments.map(c => (
-                  <div key={c.id} className="comment-item">
-                    <Avatar seed={c.userName} size={32} />
-                    <div>
-                      <strong>{c.userName}</strong>
-                      <p>{c.text}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <form className="comment-form" onSubmit={handleComment}>
-                <input
-                  placeholder={user ? 'Add a comment...' : 'Sign in to comment'}
-                  value={commentText}
-                  onChange={e => setCommentText(e.target.value)}
-                  disabled={!user}
-                  maxLength={600}
-                />
-                <button type="submit" className="icon-btn" disabled={postingComment || !user}>
-                  <Send size={16} />
-                </button>
-              </form>
             </div>
           </div>
 
