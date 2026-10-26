@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, CheckCircle } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, CheckCircle, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { EartsLogo } from '../components/EartsLogo';
 import ThemeToggle from '../components/ThemeToggle';
@@ -14,13 +14,18 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Where the visitor was heading (set by the landing page cards). Internal paths only.
+  const rawFrom = location.state?.from;
+  const returnTo = typeof rawFrom === 'string' && rawFrom.startsWith('/') && !rawFrom.startsWith('//') ? rawFrom : null;
+  const notice = returnTo ? location.state?.notice : null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true); setError('');
     try {
       await login(form.email, form.password);
-      navigate('/feed');
+      navigate(returnTo || '/feed', { replace: true });
     } catch (err) { setError(err.message); }
     finally { setLoading(false); }
   };
@@ -62,10 +67,11 @@ export default function Login() {
           <h2>Welcome Back</h2>
           <p className="auth-subtitle">Sign in to your Earts account</p>
 
-          <GoogleAuthButton onError={setError} />
+          <GoogleAuthButton onError={setError} redirectTo={returnTo} />
 
           <div className="auth-divider"><span>or sign in with email</span></div>
 
+          {notice && !error && <div className="auth-notice" role="status"><Lock size={16} aria-hidden="true" /><span>{notice}</span></div>}
           {error && <div className="auth-error">{error}</div>}
 
           <form onSubmit={handleSubmit} className="auth-form">
