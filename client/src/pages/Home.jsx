@@ -183,7 +183,17 @@ export default function Home() {
               <Link to={exploreLink} className="view-all">View all <ChevronRight size={16} /></Link>
             </div>
             <div className="artworks-grid">
-              {trending.map(a => <ArtworkCard key={a.id} artwork={a} />)}
+              {trending.map(a => (
+                <ArtworkCard
+                  key={a.id}
+                  artwork={a}
+                  {...(user ? {} : {
+                    to: '/login',
+                    linkState: { from: `/artwork/${a.id}`, notice: `Log in to view “${a.title}”` },
+                    gateHint: 'Log in to view',
+                  })}
+                />
+              ))}
               {trending.length === 0 && [1,2,3,4].map(i => (
                 <div key={i} className="artwork-card-skeleton">
                   <div className="skeleton" style={{width:'100%',aspectRatio:'1',borderRadius:'12px'}} />
@@ -207,14 +217,22 @@ export default function Home() {
             </div>
             <div className="artists-grid">
               {featuredArtists.map(artist => (
-                <Link to={`/profile/${artist.username}`} key={artist.id} className="artist-card card">
+                <Link
+                  to={user ? `/profile/${artist.username}` : '/login'}
+                  state={user ? undefined : { from: `/profile/${artist.username}`, notice: `Log in to view ${artist.firstName}’s profile` }}
+                  key={artist.id}
+                  className="artist-card card"
+                >
                   <span className="artist-ring">
                     <Avatar seed={artist.avatarSeed || `${artist.firstName}${artist.lastName}`} src={artist.avatar} size={80} />
                   </span>
                   <h4>{artist.firstName} {artist.lastName}</h4>
                   <span className="artist-role">{artist.role || 'Artist'}</span>
                   <span className="artist-followers"><Users size={14} aria-hidden="true" /><strong>{formatCompact(artist.followers)}</strong> followers</span>
-                  <span className="artist-cta">View profile <ArrowRight size={14} aria-hidden="true" /></span>
+                  <span className="artist-cta">
+                    View profile <ArrowRight size={14} aria-hidden="true" />
+                    {!user && <span className="wc-sr"> (log in required)</span>}
+                  </span>
                 </Link>
               ))}
             </div>
