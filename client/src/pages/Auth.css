@@ -1215,3 +1215,19 @@
     padding: 36px clamp(24px, 7vw, 64px);
   }
 }
+
+/* "Log in to view ..." message shown when a visitor arrives from a landing page card */
+.auth-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.auth-notice svg { flex: none; }
