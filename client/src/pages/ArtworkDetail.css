@@ -18,7 +18,7 @@
 
 .artwork-detail-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 48px;
   align-items: start;
 }
@@ -152,7 +152,7 @@
 .artwork-desc h4 { font-size: 14px; font-family: 'Inter', sans-serif; font-weight: 700; color: var(--text-dark); margin-bottom: 8px; }
 .artwork-desc p { font-size: 14px; color: var(--text-mid); line-height: 1.8; }
 
-.artwork-meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.artwork-meta-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .meta-item {
   background: var(--bg);
   border-radius: var(--radius-sm);
@@ -181,3 +181,23 @@
   background: #121224;
 }
 
+
+.artwork-display, .artwork-info-panel { min-width: 0; }
+.artwork-header h1 { overflow-wrap: anywhere; }
+.artwork-actions-bar { flex-wrap: wrap; gap: 10px; }
+.meta-item strong { overflow-wrap: anywhere; }
+
+@media (max-width: 900px) {
+  .artwork-detail-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+}
+@media (max-width: 560px) {
+  .artwork-detail-page { padding: 20px 0 56px; }
+  .back-btn { margin-bottom: 18px; }
+  .artwork-header h1 { font-size: 27px; }
+  .artwork-canvas { border-radius: var(--radius-lg); }
+  .big-price { font-size: 32px; }
+  .buy-btn { padding: 14px; font-size: 15px; }
+}
+@media (max-width: 360px) {
+  .artwork-meta-grid { grid-template-columns: minmax(0, 1fr); }
+}
