@@ -108,3 +108,10 @@
   background: rgba(0, 0, 0, 0.7);
 }
 
+
+/* ---- Responsive refinements ---- */
+@supports (height: 100dvh) { .purchase-card { max-height: 90dvh; } }
+@media (max-width: 480px) {
+  .purchase-overlay { padding: 12px; }
+  .purchase-card { padding: 24px 18px 20px; }
+}
