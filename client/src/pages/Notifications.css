@@ -296,3 +296,14 @@
   max-width: 360px;
   margin-bottom: 8px;
 }
+
+/* ---- Responsive refinements ---- */
+.notif-text { overflow-wrap: anywhere; }
+.notif-meta-row { flex-wrap: wrap; gap: 4px 12px; }
+@media (max-width: 560px) {
+  .notifications-page { padding-bottom: 56px; }
+  .notif-title-row h1 { font-size: 24px; }
+  .notif-item { gap: 10px; padding: 14px 14px 14px 18px; }
+  .notif-thumb-link { width: 38px; height: 38px; }
+  .notif-tab { padding: 7px 14px; font-size: 13px; }
+}
