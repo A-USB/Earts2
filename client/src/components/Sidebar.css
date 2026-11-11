@@ -6,6 +6,7 @@
   position: sticky;
   top: 0;
   height: 100vh;
+  height: 100dvh;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(16px);
   border-right: 1px solid var(--border);
@@ -13,7 +14,10 @@
   flex-direction: column;
   padding: 16px 12px;
   transition: width 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
-  overflow: hidden;
+  /* On short laptop screens the rail scrolls instead of clipping Sign Out / the account button */
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
   z-index: 100;
   box-shadow: 1px 0 10px rgba(91, 75, 245, 0.03);
 }
@@ -378,4 +382,85 @@
 [data-theme="dark"] .sidebar-logout-btn:hover {
   background: rgba(239, 68, 68, 0.18);
   color: #F87171;
+}
+
+.sidebar::-webkit-scrollbar { display: none; }
+.sidebar-dropdown { max-width: calc(100vw - 16px); }
+.sidebar-dropdown .sidebar-dropdown-theme { display: none; }
+
+/* =====================================================================
+   Phones and landscape phones: the rail becomes a bottom tab bar.
+   (Keep this media query in sync with the one in App.css.)
+   ===================================================================== */
+@media (max-width: 767px), (max-height: 500px) and (max-width: 1023px) {
+  .sidebar,
+  .sidebar.expanded {
+    position: fixed;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: calc(60px + env(safe-area-inset-bottom, 0px));
+    padding: 0 max(6px, env(safe-area-inset-left, 0px)) env(safe-area-inset-bottom, 0px) max(6px, env(safe-area-inset-right, 0px));
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0;
+    overflow: visible;
+    border-right: 0;
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -6px 20px rgba(30, 20, 80, 0.08);
+    z-index: 120;
+  }
+
+  /* Logo and pin button belong to the desktop rail */
+  .sidebar-top,
+  .sidebar-divider { display: none; }
+
+  .sidebar-nav,
+  .sidebar-utility,
+  .sidebar-bottom {
+    flex-direction: row;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+  }
+  .sidebar-nav { flex: 5 1 0; min-width: 0; }
+  .sidebar-utility { flex: 1 1 0; min-width: 0; }
+  .sidebar-bottom { flex: 1 1 0; min-width: 0; }
+
+  /* Profile, Settings, theme and Sign Out live in the account menu on phones */
+  .sidebar-nav a[href^="/profile/"],
+  .sidebar-nav a[href="/settings"],
+  .sidebar-nav a[href="/login"],
+  .sidebar-utility > :not(a[href="/search"]) { display: none; }
+
+  .sidebar-link {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 48px;
+    padding: 0;
+    justify-content: center;
+    border-radius: var(--radius-md);
+  }
+  .sidebar-label,
+  .sidebar.expanded .sidebar-label { display: none; }
+
+  .sidebar-user {
+    width: 100%;
+    height: 48px;
+    padding: 0;
+    justify-content: center;
+  }
+  .sidebar-user-info { display: none; }
+
+  .sidebar-notif-dot { border-color: var(--bg-card); }
+
+  .sidebar-dropdown .sidebar-dropdown-theme { display: flex; }
+}
+
+[data-theme="dark"] .sidebar-notif-dot { border-color: #111124; }
+@media (max-width: 767px), (max-height: 500px) and (max-width: 1023px) {
+  [data-theme="dark"] .sidebar { box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.5); }
 }
