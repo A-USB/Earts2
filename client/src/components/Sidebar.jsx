@@ -1,10 +1,11 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import {
   Rss, ShoppingBag, ImagePlus, User, Search, Bell, MessageSquare,
-  PanelLeftClose, PanelLeftOpen, Settings as SettingsIcon, LogOut
+  PanelLeftClose, PanelLeftOpen, Settings as SettingsIcon, LogOut, Sun, Moon
 } from 'lucide-react';
 import Avatar from './Avatar';
 import { EartsIcon } from './EartsLogo';
@@ -19,12 +20,24 @@ export default function Sidebar() {
   const unreadMessages = useUnreadMessageCount(user?.id);
   const location = useLocation();
   const navigate = useNavigate();
+  const { isDark, toggleTheme } = useTheme();
   const [pinned, setPinned] = useState(false);
   const [hovering, setHovering] = useState(false);
   const expanded = pinned || hovering;
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState(null);
   const userButtonRef = useRef(null);
+
+  // Close the account menu when navigating or tapping anywhere outside it
+  useEffect(() => { setDropdownOpen(false); }, [location.pathname]);
+  useEffect(() => {
+    if (!dropdownOpen) return undefined;
+    const closeOnOutside = (event) => {
+      if (!event.target.closest?.('.sidebar-dropdown, .sidebar-user')) setDropdownOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutside);
+    return () => document.removeEventListener('pointerdown', closeOnOutside);
+  }, [dropdownOpen]);
 
   const isProfileActive = user?.username ? location.pathname.startsWith(`/profile/${user.username}`) : false;
 
@@ -113,8 +126,10 @@ export default function Sidebar() {
               return;
             }
             const bounds = userButtonRef.current.getBoundingClientRect();
+            // Keep the 210px menu fully on screen, whichever edge the button sits near
+            const left = Math.max(8, Math.min(bounds.left, window.innerWidth - 210 - 8));
             setDropdownPosition({
-              left: bounds.left,
+              left,
               bottom: window.innerHeight - bounds.top + 8,
             });
             setDropdownOpen(true);
@@ -142,6 +157,9 @@ export default function Sidebar() {
             <Link to="/settings" onClick={() => setDropdownOpen(false)}>
               <SettingsIcon size={15} /> Settings
             </Link>
+            <button className="sidebar-dropdown-theme" onClick={toggleTheme}>
+              {isDark ? <Sun size={15} /> : <Moon size={15} />} {isDark ? 'Light Mode' : 'Dark Mode'}
+            </button>
             <button onClick={() => { logout(); setDropdownOpen(false); navigate('/login'); }}>
               <LogOut size={15} /> Sign Out
             </button>
