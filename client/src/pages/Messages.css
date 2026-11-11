@@ -90,3 +90,25 @@
 
 .container.msg-shell { padding: 0; }
 .msg-row > :first-child, .msg-person > :first-child { flex: none; }
+
+@supports (height: 100dvh) {
+  .msg-shell { height: calc(100dvh - 96px); }
+}
+/* Fixed bottom tab bar is showing: fill exactly the space above it (keep in sync with Sidebar.css) */
+@media (max-width: 767px), (max-height: 500px) and (max-width: 1023px) {
+  .msg-shell {
+    height: calc(100vh - 60px - env(safe-area-inset-bottom, 0px));
+    height: calc(100dvh - 60px - env(safe-area-inset-bottom, 0px));
+    min-height: 0;
+  }
+  .msg-composer { padding-bottom: 12px; }
+}
+@media (max-width: 760px) {
+  .msg-list-head { padding: 18px 16px 10px; }
+  .msg-list-head h1 { font-size: 24px; }
+  .msg-row { padding: 12px 16px; }
+  .msg-thread-head { padding: 8px 12px; }
+}
+@media (max-width: 1000px) and (min-width: 761px) {
+  .msg-shell { grid-template-columns: 280px minmax(0, 1fr); }
+}
