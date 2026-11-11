@@ -236,3 +236,16 @@
 .pcm-post-btn { margin-left: auto; }
 
 .pcm-note > :first-child, .pcm-reply > :not(.pcm-note-body):not(.pcm-reply-link) { flex: none; }
+
+/* ---- Responsive refinements ---- */
+.pcm-panel { width: clamp(320px, 36vw, 420px); }
+@media (max-width: 820px) {
+  .pcm-panel { width: 100%; }
+  .pcm-overlay { padding-bottom: env(safe-area-inset-bottom, 0px); }
+}
+@media (max-width: 480px) {
+  .pcm-head { padding: 0 16px 12px; }
+  .pcm-head h2 { font-size: 22px; }
+  .pcm-note { padding: 14px 16px; }
+  .pcm-composer { padding: 14px 16px 6px; }
+}
