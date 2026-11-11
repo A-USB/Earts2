@@ -1,5 +1,8 @@
 .auth-page {
   min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  overflow-x: clip;
   background:
     linear-gradient(135deg, rgba(240, 241, 246, 0.8), rgba(228, 225, 225, 0.48)),
     url('/auth-background-light.png') center / cover fixed no-repeat;
@@ -40,7 +43,7 @@
   box-shadow: var(--shadow-lg);
   overflow: hidden;
   display: grid;
-  grid-template-columns: 520px 520px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   max-width: 1040px;
   width: 100%;
   min-height: 650px;
@@ -1070,6 +1073,7 @@
 /* Full-viewport layout for signup credentials only. Login and profile setup retain the auth card layout. */
 .signup-fullscreen.auth-page {
   min-height: 100vh;
+  min-height: 100dvh;
   justify-content: flex-start;
   padding: 0;
 }
@@ -1231,3 +1235,83 @@
   line-height: 1.4;
 }
 .auth-notice svg { flex: none; }
+
+/* =====================================================================
+   Responsive refinements for sign in / sign up / recovery
+   ===================================================================== */
+
+/* Medium screens: the split card is narrower than 1040px, so tighten the side panel's padding */
+@media (max-width: 1100px) and (min-width: 901px) {
+  .auth-left { padding: 56px 36px 44px; }
+  .auth-left h2 { font-size: 29px; margin-bottom: 36px; }
+  .auth-left .eyebrow { margin-bottom: 32px; }
+  .auth-left p { margin-bottom: 32px; }
+  .auth-right { padding: 34px 32px; }
+}
+
+/* Touch devices ignore fixed backgrounds (iOS repaints and zooms them), so let them scroll */
+@media (max-width: 900px), (hover: none) {
+  .auth-page,
+  [data-theme="dark"] .auth-page { background-attachment: scroll; }
+}
+
+@media (max-width: 900px) {
+  .auth-page { padding: 16px 16px 24px; }
+  .auth-card { margin: 0 auto; }
+  .auth-right { padding: 32px 28px; }
+  .auth-topbar { margin-bottom: 14px; }
+}
+
+@media (max-width: 480px) {
+  .auth-page { padding: 12px 12px 20px; }
+  .auth-right { padding: 26px 20px; }
+  .auth-right h2 { font-size: 23px; }
+  .auth-card { border-radius: var(--radius-lg); }
+  .auth-form { gap: 12px; }
+  .account-type-cards { gap: 10px; }
+  .account-type-card { padding: 12px 10px; }
+  .auth-switch { margin-top: 16px; }
+  .auth-stepper { padding: 8px 10px; }
+  .step-divider { margin: 0 8px; }
+  .step-label { font-size: 11.5px; }
+  .signup-profile-card .auth-stepper-actions { flex-wrap: wrap; }
+  .signup-profile-card .auth-stepper-actions .auth-submit { flex: 1 1 140px; }
+}
+
+/* Tiny phones (320px): keep steppers and chips from forcing the card wider */
+@media (max-width: 360px) {
+  .step-item { gap: 5px; }
+  .step-label { display: none; }
+  .step-item.active .step-label { display: inline; }
+  .google-demo-header { padding: 18px 16px 14px; gap: 12px; }
+  .google-demo-footer { flex-direction: column; align-items: flex-start; }
+}
+
+/* Short landscape phones: don't vertically centre a card that is taller than the screen */
+@media (max-height: 560px) {
+  .auth-page { justify-content: flex-start; }
+  .signup-fullscreen .auth-left { min-height: 0; }
+}
+
+.auth-card, .auth-right, .auth-form, .form-group, .input-wrap { min-width: 0; }
+.google-auth-container { max-width: 100%; overflow: hidden; }
+.google-gsi-button > div, .google-gsi-button iframe { max-width: 100%; }
+
+/* Sign up on tablets and phones: the form must be reachable without scrolling past a full-screen
+   marketing panel, so the panel shrinks to a compact banner (logo + headline) above the form. */
+@media (max-width: 900px) {
+  .signup-fullscreen .auth-left {
+    min-height: 0;
+    padding: 88px clamp(24px, 7vw, 64px) 30px;
+    gap: 0;
+  }
+  .signup-fullscreen .auth-left .eyebrow { margin-bottom: 12px; font-size: 11.5px; }
+  .signup-fullscreen .auth-left h2 { font-size: clamp(24px, 6vw, 32px); margin-bottom: 0; }
+  .signup-fullscreen .auth-left-content > p,
+  .signup-fullscreen .auth-perks,
+  .signup-fullscreen .auth-left-footer { display: none; }
+  .signup-fullscreen .signup-card-topbar { height: 80px; }
+  .signup-fullscreen .auth-right { padding-top: 28px; padding-bottom: 36px; }
+  .signup-fullscreen .signup-stepper-row,
+  .signup-fullscreen .auth-right > .auth-form { width: min(100%, 520px); }
+}
