@@ -16,8 +16,9 @@ const FILTER_TABS = [
 ];
 
 function formatTimeAgo(timestamp) {
-  const elapsed = Date.now() - Number(timestamp || 0);
-  if (!timestamp || elapsed < 0) return '';
+  const time = typeof timestamp === 'number' ? timestamp : new Date(timestamp).getTime();
+  const elapsed = Date.now() - time;
+  if (!timestamp || Number.isNaN(elapsed) || elapsed < 0) return '';
   if (elapsed < 60000) return 'just now';
   if (elapsed < 3600000) return `${Math.floor(elapsed / 60000)}m ago`;
   if (elapsed < 86400000) return `${Math.floor(elapsed / 3600000)}h ago`;
