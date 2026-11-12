@@ -76,39 +76,30 @@
 .msg-send:disabled { opacity: 0.4; cursor: not-allowed; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-/* Phones: one pane at a time */
-@media (max-width: 760px) {
+/* Phones: one pane at a time. The list sits between the top and tab bars; an open chat takes the whole screen. */
+@media (max-width: 767px) {
   .msg-page { padding: 0; }
-  .msg-shell { grid-template-columns: minmax(0, 1fr); height: calc(100dvh - 64px); border-radius: 0; border-width: 0; }
+  .container.msg-shell {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    min-height: calc(100dvh - 56px - 64px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    border: 0;
+    border-radius: 0;
+  }
   .msg-shell.thread-open .msg-list { display: none; }
   .msg-shell:not(.thread-open) .msg-thread { display: none; }
   .msg-list { border-right: 0; }
   .msg-thread-head .msg-back { display: inline-flex; }
-  .msg-scroll { padding: 14px 14px; }
-  .msg-bubble { max-width: 86%; }
-}
-
-.container.msg-shell { padding: 0; }
-.msg-row > :first-child, .msg-person > :first-child { flex: none; }
-
-@supports (height: 100dvh) {
-  .msg-shell { height: calc(100dvh - 96px); }
-}
-/* Fixed bottom tab bar is showing: fill exactly the space above it (keep in sync with Sidebar.css) */
-@media (max-width: 767px), (max-height: 500px) and (max-width: 1023px) {
-  .msg-shell {
-    height: calc(100vh - 60px - env(safe-area-inset-bottom, 0px));
-    height: calc(100dvh - 60px - env(safe-area-inset-bottom, 0px));
+  .msg-shell.thread-open {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    height: 100dvh;
     min-height: 0;
+    background: var(--bg-card);
   }
-  .msg-composer { padding-bottom: 12px; }
-}
-@media (max-width: 760px) {
-  .msg-list-head { padding: 18px 16px 10px; }
-  .msg-list-head h1 { font-size: 24px; }
-  .msg-row { padding: 12px 16px; }
-  .msg-thread-head { padding: 8px 12px; }
-}
-@media (max-width: 1000px) and (min-width: 761px) {
-  .msg-shell { grid-template-columns: 280px minmax(0, 1fr); }
+  .msg-thread-head { padding-top: calc(env(safe-area-inset-top, 0px) + 8px); }
+  .msg-composer { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); }
+  .msg-scroll { padding: 14px; }
+  .msg-bubble { max-width: 86%; }
 }
