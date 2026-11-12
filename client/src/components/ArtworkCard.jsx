@@ -16,6 +16,9 @@ export default function ArtworkCard({
   actions = null,      // extra controls shown on the frame (e.g. the owner's pin button)
   showArtist = true,
   className = '',
+  to,            // send the card somewhere else (e.g. the login page for visitors)
+  linkState,     // router state for that destination
+  gateHint,      // spoken to screen readers only, e.g. "Log in to view" (nothing is drawn on the card)
 }) {
   const collabs = artwork.collaborators?.length
     ? artwork.collaborators.map(c => c.name || c.username).join(', ')
@@ -40,7 +43,10 @@ export default function ArtworkCard({
 
       <div className="wc-label">
         <h3 className="wc-title">
-          <Link to={`/artwork/${artwork.id}`} onClick={onClick} title={artwork.title}>{artwork.title}</Link>
+          <Link to={to || `/artwork/${artwork.id}`} state={linkState} onClick={onClick} title={artwork.title}>
+            {artwork.title}
+            {gateHint && <span className="wc-sr"> ({gateHint})</span>}
+          </Link>
         </h3>
 
         {(showArtist || collabs) && (
