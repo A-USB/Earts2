@@ -2,14 +2,14 @@
 .wc { position: relative; min-width: 0; transition: transform 0.25s ease; }
 .wc:hover { transform: translateY(-4px); }
 
-.wc-mat { background: var(--mat); padding: 10px; box-shadow: var(--wall-shadow); }
+.wc-mat { position: relative; background: var(--mat); padding: 10px; box-shadow: var(--wall-shadow); }
 .wc-frame { aspect-ratio: 1; overflow: hidden; background: var(--mat); }
 .wc-frame img { display: block; width: 100%; height: 100%; object-fit: contain; }
 
 .wc-actions { position: absolute; top: 18px; right: 18px; z-index: 3; }
 
 .wc-label { width: 88%; margin: -8px 0 0 12px; padding: 12px 14px 2px; background: var(--label); box-shadow: var(--label-shadow); }
-.wc-title { margin: 0; font-family: 'Inter', sans-serif; font-size: 18.4px; font-weight: 800; line-height: 1.25; }
+.wc-title { margin: 0; font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 700; line-height: 1.3; letter-spacing: -0.01em; }
 .wc-title a { display: block; color: var(--text-dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* The title link stretches over the whole card so it all opens the artwork */
 .wc-title a::after { content: ''; position: absolute; inset: 0; z-index: 1; }
@@ -40,3 +40,5 @@
 @media (max-width: 520px) {
   .wc-label { width: 92%; margin-left: 8px; }
 }
+
+.wc-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
