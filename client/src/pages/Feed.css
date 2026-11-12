@@ -98,21 +98,3 @@
 .wall-more .wall-chip:disabled { opacity: 0.6; cursor: wait; }
 
 .wall-artist > :first-child { flex: none; }
-
-/* ---- Responsive refinements ---- */
-.wall-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-@media (max-width: 1000px) and (min-width: 761px) {
-  .wall-columns { gap: 32px; }
-}
-@media (max-width: 760px) {
-  .wall-columns { grid-template-columns: minmax(0, 1fr); }
-  .wall-header { margin-bottom: 28px; }
-}
-@media (max-width: 420px) {
-  .wall-header h1 { font-size: 32px; }
-  .wall-mat { padding: 10px; }
-  .wall-label { padding: 14px 14px 4px; }
-  .wall-title { font-size: 19px; }
-  .wall-label-top { flex-wrap: wrap; }
-  .wall-chip { padding: 0 14px; }
-}
