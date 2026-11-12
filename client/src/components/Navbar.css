@@ -211,12 +211,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 0;
 }
 .navbar-search-form input {
   width: 240px;
-  max-width: calc(100vw - 150px);
-  min-width: 0;
   padding: 8px 14px;
   font-size: 14px;
 }
@@ -255,8 +252,6 @@
     max-width: 100%;
   }
   .navbar-links.open { display: flex; }
-  /* Landscape phones: a long menu scrolls instead of running off the bottom */
-  .navbar-links { max-height: calc(100vh - 72px); max-height: calc(100dvh - 72px); overflow-y: auto; }
   .navbar-links .nav-link { width: 100%; justify-content: center; }
   .navbar-inner { gap: 16px; }
 }
@@ -321,22 +316,8 @@
 }
 
 @media (max-width: 380px) {
-  .navbar-inner { padding: 0 10px; gap: 6px; }
+  .navbar-inner { padding: 0 8px; gap: 4px; }
   .navbar-actions { gap: 4px; }
   .navbar-actions .btn-outline,
   .navbar-actions .btn-primary { padding: 7px 10px; font-size: 12px; }
-  .navbar-logo-wrap { transform: scale(0.88); transform-origin: left center; margin-right: -12px; }
-}
-
-/* 360px and below: logo shrinks to its brush icon so Login, Sign Up, theme and menu all fit */
-@media (max-width: 360px) {
-  .navbar-logo-wrap { transform: none; margin-right: 0; }
-  .navbar-logo-wrap .earts-full-logo > :not(svg) { display: none; }
-  .navbar-logo-wrap .earts-full-logo { gap: 0 !important; }
-}
-
-/* Short landscape screens: slimmer bar so content isn't squeezed */
-@media (max-height: 500px) and (max-width: 1023px) {
-  .navbar { height: 60px; }
-  .navbar-links { top: 60px; max-height: calc(100vh - 60px); max-height: calc(100dvh - 60px); }
 }
