@@ -118,7 +118,7 @@
 
 .creators-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 12px;
 }
 
@@ -290,7 +290,7 @@
 /* Grid */
 .marketplace-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 36px 24px;
 }
 
@@ -303,23 +303,4 @@
 .empty-icon {
   font-size: 44px;
   margin-bottom: 12px;
-}
-
-/* ---- Responsive hardening ---- */
-.marketplace-page, .marketplace-hero, .marketplace-controls-bar { min-width: 0; }
-.mode-toggle-group { flex-wrap: wrap; }
-.marketplace-right-actions { flex-wrap: wrap; justify-content: flex-end; }
-.marketplace-search-box { max-width: 100%; }
-.marketplace-search-box input { min-width: 0; }
-.filters-panel { overflow-x: auto; }
-
-@media (max-width: 640px) {
-  .marketplace-hero { padding: 24px 0 20px; margin-bottom: 16px; }
-  .marketplace-hero h1 { font-size: 27px; }
-  .marketplace-hero p { font-size: 14px; }
-  .marketplace-grid { gap: 28px 16px; }
-  .marketplace-right-actions { align-self: stretch; justify-content: space-between; }
-}
-@media (max-width: 480px) {
-  .marketplace-page { padding-bottom: 56px; }
 }
