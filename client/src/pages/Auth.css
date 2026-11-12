@@ -1144,7 +1144,7 @@
 .signup-fullscreen .account-type-card { min-height: 90px; }
 .signup-fullscreen .auth-switch { margin-top: 12px; }
 
-.signup-page:not(.signup-fullscreen) .auth-topbar {
+.signup-page.signup-profile-step .auth-topbar {
   max-width: 600px;
 }
 
@@ -1290,28 +1290,128 @@
 /* Short landscape phones: don't vertically centre a card that is taller than the screen */
 @media (max-height: 560px) {
   .auth-page { justify-content: flex-start; }
-  .signup-fullscreen .auth-left { min-height: 0; }
 }
 
 .auth-card, .auth-right, .auth-form, .form-group, .input-wrap { min-width: 0; }
 .google-auth-container { max-width: 100%; overflow: hidden; }
 .google-gsi-button > div, .google-gsi-button iframe { max-width: 100%; }
 
-/* Sign up on tablets and phones: the form must be reachable without scrolling past a full-screen
-   marketing panel, so the panel shrinks to a compact banner (logo + headline) above the form. */
-@media (max-width: 900px) {
-  .signup-fullscreen .auth-left {
-    min-height: 0;
-    padding: 88px clamp(24px, 7vw, 64px) 30px;
-    gap: 0;
-  }
-  .signup-fullscreen .auth-left .eyebrow { margin-bottom: 12px; font-size: 11.5px; }
-  .signup-fullscreen .auth-left h2 { font-size: clamp(24px, 6vw, 32px); margin-bottom: 0; }
-  .signup-fullscreen .auth-left-content > p,
-  .signup-fullscreen .auth-perks,
-  .signup-fullscreen .auth-left-footer { display: none; }
-  .signup-fullscreen .signup-card-topbar { height: 80px; }
-  .signup-fullscreen .auth-right { padding-top: 28px; padding-bottom: 36px; }
-  .signup-fullscreen .signup-stepper-row,
-  .signup-fullscreen .auth-right > .auth-form { width: min(100%, 520px); }
+
+/* =====================================================================
+   Boxed auth pages (Login + Sign up): fixed-width, centred card + a capped form column
+   Tweak the two variables below to resize everything at once.
+   ===================================================================== */
+.auth-page--boxed {
+  --login-card-width: 520px;   /* = the form panel of the full-size layout (520px wide) */
+  --login-form-width: 432px;   /* = that panel's content width (520px minus 44px padding each side) */
 }
+
+/* Form column: every block inside the form panel shares one centred, capped width */
+.auth-page--boxed .auth-right > * {
+  width: 100%;
+  max-width: var(--login-form-width);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Below the split layout the card stops stretching with the window: it keeps one fixed width and
+   stays centred, and the logo / theme toggle line up with its edges. */
+@media (max-width: 1079px) {
+  /* 1040px card + 2 x 20px page padding = 1080px. Anything narrower can't hold both panels at full
+     size, so the purple panel goes away instead of letting both panels shrink. */
+  .auth-page--boxed .auth-left { display: none; }
+  .auth-page--boxed .auth-topbar,
+  .auth-page--boxed .auth-card {
+    width: min(100%, var(--login-card-width));
+    max-width: var(--login-card-width);
+  }
+  /* Same proportions as the form panel in the full-size layout: 650px tall, 34px / 44px padding */
+  .auth-page--boxed .auth-card { grid-template-columns: minmax(0, 1fr); min-height: 650px; }
+  .auth-page--boxed .auth-right { padding: 34px 44px; }
+}
+
+/* Phones: the card fills the screen width (minus page margins) */
+@media (max-width: 560px) {
+  .auth-page--boxed .auth-card { min-height: 0; }
+  .auth-page--boxed .auth-right { padding: 30px 22px 28px; }
+}
+@media (max-width: 360px) {
+  .auth-page--boxed .auth-right { padding: 26px 16px 24px; }
+}
+
+/* =====================================================================
+   Sign up: role choice screen + credentials form inside the boxed card
+   ===================================================================== */
+.role-choice { display: flex; flex-direction: column; gap: 18px; }
+.role-choice .auth-header-block { margin-bottom: 2px; }
+.role-choice-list { display: flex; flex-direction: column; gap: 14px; }
+
+.role-choice-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 18px 18px;
+  text-align: left;
+  font-family: 'Inter', sans-serif;
+  color: var(--text-mid);
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+.role-choice-card:hover,
+.role-choice-card:focus-visible {
+  border-color: var(--primary);
+  box-shadow: 0 6px 18px rgba(91, 75, 245, 0.16);
+  transform: translateY(-1px);
+  outline: none;
+}
+.role-choice-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  color: var(--primary);
+  background: var(--primary-light, rgba(91, 75, 245, 0.1));
+}
+.role-choice-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.role-choice-text strong { color: var(--text-dark); font-size: 16px; }
+.role-choice-text span { font-size: 13px; line-height: 1.4; }
+.role-choice-arrow { flex: none; color: var(--primary); transition: transform 0.2s ease; }
+.role-choice-card:hover .role-choice-arrow,
+.role-choice-card:focus-visible .role-choice-arrow { transform: translateX(3px); }
+
+[data-theme="dark"] .role-choice-card { background: #151529; border-color: rgba(255, 255, 255, 0.1); }
+[data-theme="dark"] .role-choice-text strong { color: #FFFFFF; }
+[data-theme="dark"] .role-choice-text span { color: #A5A3C7; }
+
+/* "Signing up as an Artist · Change" */
+.signup-role-line { margin-top: 6px; font-size: 13.5px; color: var(--text-mid); }
+.signup-role-line strong { color: var(--text-dark); }
+.signup-role-change {
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--primary);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.signup-role-change:hover { text-decoration: underline; }
+[data-theme="dark"] .signup-role-line strong { color: #FFFFFF; }
+
+/* Credentials form inside the card: first / last name stay side by side, tighter spacing */
+.auth-page--boxed .signup-stepper-row { margin-bottom: 14px; }
+.auth-page--boxed .auth-form { gap: 14px; }
+.auth-page--boxed .form-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 420px) {
+  .auth-page--boxed .form-row { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Password fields: keep text (and long placeholders) clear of the show/hide eye on narrow screens */
+.auth-form .input-wrap input { padding-right: 48px; text-overflow: ellipsis; }
+.auth-form .input-wrap input::placeholder { text-overflow: ellipsis; }
