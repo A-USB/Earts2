@@ -1,0 +1,147 @@
+/* Phone navigation (below 768px): slim top bar + bottom tab bar + account sheet */
+.mnav-top {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+  padding: calc(env(safe-area-inset-top, 0px) + 6px) 8px 6px 16px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+.mnav-logo { display: inline-flex; align-items: center; min-height: 44px; }
+.mnav-top-actions { display: flex; align-items: center; gap: 2px; }
+
+.mnav-icon-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: none;
+  border-radius: 50%;
+  color: var(--text-dark);
+  -webkit-tap-highlight-color: transparent;
+}
+.mnav-icon-btn:active { background: var(--border-subtle); }
+.mnav-account { overflow: visible; }
+
+.mnav-badge {
+  position: absolute;
+  top: 3px;
+  right: 1px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 2px solid var(--bg);
+  border-radius: 99px;
+  background: var(--secondary);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.mnav-tabs {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 90;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  padding: 6px 4px calc(env(safe-area-inset-bottom, 0px) + 6px);
+  background: color-mix(in srgb, var(--bg-card) 92%, transparent);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border);
+}
+.mnav-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 52px;
+  color: var(--text-mid);
+  font-size: 11px;
+  font-weight: 600;
+  -webkit-tap-highlight-color: transparent;
+}
+.mnav-tab-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 30px;
+  border-radius: 99px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.mnav-tab.active { color: var(--primary); }
+.mnav-tab.active .mnav-tab-icon { background: var(--primary-light); }
+.mnav-tab-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Account sheet */
+.mnav-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(15, 15, 30, 0.55);
+  animation: mnavFade 0.18s ease;
+}
+.mnav-sheet {
+  position: relative;
+  width: 100%;
+  padding: 18px 16px calc(env(safe-area-inset-bottom, 0px) + 16px);
+  background: var(--bg-card);
+  border-radius: 22px 22px 0 0;
+  box-shadow: 0 -20px 50px -20px rgba(0, 0, 0, 0.5);
+  animation: mnavRise 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.mnav-sheet-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border-radius: 50%;
+  color: var(--text-mid);
+}
+.mnav-sheet-head { display: flex; align-items: center; gap: 14px; padding: 4px 48px 16px 4px; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
+.mnav-sheet-head div { display: flex; flex-direction: column; min-width: 0; }
+.mnav-sheet-head strong { font-size: 16px; color: var(--text-dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mnav-sheet-head span { font-size: 13px; color: var(--text-mid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mnav-sheet-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 8px;
+  background: none;
+  border-radius: 12px;
+  color: var(--text-dark);
+  font-size: 16px;
+  font-weight: 500;
+  text-align: left;
+}
+.mnav-sheet-item:active { background: var(--border-subtle); }
+.mnav-sheet-item.danger { color: #D92D20; }
+
+@keyframes mnavFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mnavRise { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .mnav-sheet, .mnav-sheet-overlay { animation: none; } }
