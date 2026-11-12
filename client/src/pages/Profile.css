@@ -882,38 +882,3 @@ button.add-artwork-card span { font-size: 13px; }
 
 /* Touch screens can't hover, so keep the owner's pin button visible */
 @media (hover: none) { .pin-toggle-btn { opacity: 1; } }
-
-/* =====================================================================
-   Responsive refinements
-   ===================================================================== */
-.profile-main-grid { grid-template-columns: minmax(0, 310px) minmax(0, 1fr); }
-.profile-sidebar-col, .profile-content-col, .profile-identity { min-width: 0; }
-.profile-fullname { overflow-wrap: anywhere; }
-.profile-headline-row { flex-wrap: wrap; gap: 4px 12px; }
-.profile-handle, .profile-location { overflow-wrap: anywhere; }
-.profile-headline-bio { overflow-wrap: anywhere; }
-.pinned-info { gap: 12px; }
-.pinned-info > * { min-width: 0; }
-.pinned-info h4 { overflow-wrap: anywhere; }
-.pinned-price { flex: none; }
-
-@media (max-width: 960px) {
-  .profile-main-grid { grid-template-columns: minmax(0, 1fr); }
-}
-@media (max-width: 640px) {
-  .profile-page { padding-bottom: 56px; }
-  .profile-fullname { font-size: 22px; }
-  .profile-stats-strip { gap: 10px 20px; }
-  .pinned-thumb { height: 200px; }
-  .artwork-section-header h3 { font-size: 19px; }
-  .profile-header-actions .profile-action-btn { padding: 9px 16px; }
-  .profile-info-card { padding: 16px; }
-}
-@media (max-width: 480px) {
-  .collection-picker { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .profile-cover { height: 130px; }
-  .profile-avatar-wrapper { margin-top: -42px; width: 84px; height: 84px; }
-  .profile-avatar-img { width: 84px !important; height: 84px !important; }
-  .avatar-edit-badge { width: 30px; height: 30px; }
-  .profile-name-row { gap: 8px; }
-}
