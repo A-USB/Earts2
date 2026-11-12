@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Eye,
   EyeOff,
@@ -19,7 +19,6 @@ import {
   Compass,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { useTheme } from "../context/ThemeContext";
 import { EartsLogo } from "../components/EartsLogo";
 import ThemeToggle from "../components/ThemeToggle";
 import GoogleAuthButton from "../components/GoogleAuthButton";
@@ -52,7 +51,17 @@ const EXPLORER_INTERESTS = [
 
 export default function Signup() {
   const [step, setStep] = useState(1);
-  const [accountType, setAccountType] = useState("artist"); // 'artist' | 'collector'
+  // The chosen role lives in the URL (?type=artist | ?type=explorer) so the browser Back button works
+  // and other pages can link straight to either form. Without a role the role-choice screen shows.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const typeParam = searchParams.get("type");
+  const accountType =
+    typeParam === "artist"
+      ? "artist"
+      : typeParam === "explorer" || typeParam === "collector"
+        ? "collector" // 'collector' is the name the rest of the app and the API use for Explorers
+        : null;
+  const view = !accountType ? "role" : step === 1 ? "credentials" : "profile";
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -71,7 +80,6 @@ export default function Signup() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
-  const { isDark } = useTheme();
   const navigate = useNavigate();
 
   const set = (k) => (e) => {
@@ -130,6 +138,18 @@ export default function Signup() {
     setStep(2);
   };
 
+  const chooseType = (type) => {
+    setError("");
+    setStep(1);
+    setSearchParams({ type });
+  };
+
+  const changeType = () => {
+    setError("");
+    setStep(1);
+    setSearchParams({});
+  };
+
   const handlePrevStep = () => {
     setError("");
     setStep(1);
@@ -172,38 +192,31 @@ export default function Signup() {
   };
 
   return (
-    <div className={`auth-page signup-page ${step === 1 ? "signup-fullscreen" : ""}`}>
-      {step !== 1 && (
-        <div className="auth-topbar">
-          <Link to="/" className="auth-logo-link" title="Earts Home">
-            <EartsLogo size={32} />
-          </Link>
-          <ThemeToggle />
-        </div>
-      )}
+    <div className={`auth-page signup-page ${view === "profile" ? "signup-profile-step" : "auth-page--boxed"}`}>
+      <div className="auth-topbar">
+        <Link to="/" className="auth-logo-link" title="Earts Home">
+          <EartsLogo size={32} />
+        </Link>
+        <ThemeToggle />
+      </div>
 
-      <div className={`auth-card ${step === 2 ? "signup-profile-card" : ""}`}>
-        {step === 1 && (
-          <div className="auth-topbar signup-card-topbar">
-            <Link to="/" className="auth-logo-link" title="Earts Home">
-              <EartsLogo size={32} textColor={isDark ? undefined : "#FFFFFF"} />
-            </Link>
-          </div>
-        )}
-        {/* Left Informational Sidebar */}
-        {step === 1 && (
+      <div className={`auth-card ${view === "profile" ? "signup-profile-card" : ""}`}>
+        {/* Left Informational Sidebar (role + credentials views) */}
+        {view !== "profile" && (
           <div className="auth-left">
             <div className="auth-left-content">
               <span className="eyebrow">Join today — it's free</span>
               <h2>
-                {accountType === "artist"
-                  ? "Your creative journey starts here"
-                  : "Discover art on your terms"}
+                {accountType === "collector"
+                  ? "Discover art on your terms"
+                  : "Your creative journey starts here"}
               </h2>
               <p>
                 {accountType === "artist"
                   ? "Create your profile, share your artwork, and connect with a global community of creators."
-                  : "Explore original artwork, follow artists, and save the pieces that inspire you."}
+                  : accountType === "collector"
+                    ? "Explore original artwork, follow artists, and save the pieces that inspire you."
+                    : "Whether you create art or collect it, Earts is where artists and art lovers meet."}
               </p>
               <div className="auth-perks">
                 {(accountType === "artist"
@@ -224,7 +237,25 @@ export default function Signup() {
                         desc: "Turn your art into income through our marketplace",
                       },
                     ]
-                  : [
+                  : accountType === null
+                    ? [
+                        {
+                          icon: <Grid2x2 size={18} />,
+                          title: "Share or discover",
+                          desc: "Show your own work or explore original pieces",
+                        },
+                        {
+                          icon: <Users size={18} />,
+                          title: "Meet the community",
+                          desc: "Connect with artists and art lovers worldwide",
+                        },
+                        {
+                          icon: <Sparkles size={18} />,
+                          title: "Buy and sell original art",
+                          desc: "A marketplace built for independent creators",
+                        },
+                      ]
+                    : [
                       {
                         icon: <Grid2x2 size={18} />,
                         title: "Explore the marketplace",
@@ -274,7 +305,54 @@ export default function Signup() {
 
         {/* Right Form Card */}
         <div className="auth-right">
+          {/* Role choice (shown first, before any form) */}
+          {view === "role" && (
+            <div className="role-choice step-fade-in">
+              <div className="auth-header-block">
+                <h2>Join Earts</h2>
+                <p className="auth-subtitle">How will you use Earts?</p>
+              </div>
+
+              <div className="role-choice-list">
+                <button
+                  type="button"
+                  className="role-choice-card"
+                  onClick={() => chooseType("artist")}
+                >
+                  <span className="role-choice-icon">
+                    <Palette size={22} />
+                  </span>
+                  <span className="role-choice-text">
+                    <strong>I'm an Artist</strong>
+                    <span>Share and sell your artwork</span>
+                  </span>
+                  <ArrowRight size={18} className="role-choice-arrow" />
+                </button>
+                <button
+                  type="button"
+                  className="role-choice-card"
+                  onClick={() => chooseType("explorer")}
+                >
+                  <span className="role-choice-icon">
+                    <Compass size={22} />
+                  </span>
+                  <span className="role-choice-text">
+                    <strong>I'm an Explorer</strong>
+                    <span>Discover art and follow artists</span>
+                  </span>
+                  <ArrowRight size={18} className="role-choice-arrow" />
+                </button>
+              </div>
+
+              <p className="auth-switch">
+                Already have an account?{" "}
+                <Link to="/login">Sign in to Earts.</Link>
+              </p>
+            </div>
+          )}
+
           {/* Stepper Header */}
+          {view !== "role" && (
           <div className="signup-stepper-row">
             <div className="auth-stepper">
               <div className={`step-item ${step === 1 ? "active" : "completed"}`}>
@@ -293,13 +371,13 @@ export default function Signup() {
                 </span>
               </div>
             </div>
-            {step === 1 && <ThemeToggle className="signup-stepper-theme-toggle" />}
           </div>
+          )}
 
           {error && <div className="auth-error">{error}</div>}
 
           {/* PHASE 1: CREDENTIALS */}
-          {step === 1 && (
+          {view === "credentials" && (
             <form
               onSubmit={handleNextStep}
               className="auth-form step-fade-in"
@@ -307,32 +385,14 @@ export default function Signup() {
             >
               <div className="auth-header-block">
                 <h2>Create account</h2>
-              </div>
-
-              <div className="form-group">
-                <label>I am an...</label>
-                <div className="account-type-cards">
-                  <button
-                    type="button"
-                    className={`account-type-card ${accountType === "artist" ? "active" : ""}`}
-                    aria-pressed={accountType === "artist"}
-                    onClick={() => setAccountType("artist")}
-                  >
-                    <Palette size={21} />
-                    <strong>Artist</strong>
-                    <span>Share and sell your artwork</span>
+                <p className="signup-role-line">
+                  Signing up as{" "}
+                  <strong>{accountType === "artist" ? "an Artist" : "an Explorer"}</strong>
+                  <span aria-hidden="true"> · </span>
+                  <button type="button" className="signup-role-change" onClick={changeType}>
+                    Change
                   </button>
-                  <button
-                    type="button"
-                    className={`account-type-card ${accountType === "collector" ? "active" : ""}`}
-                    aria-pressed={accountType === "collector"}
-                    onClick={() => setAccountType("collector")}
-                  >
-                    <Compass size={21} />
-                    <strong>Explorer</strong>
-                    <span>Discover art and follow artists</span>
-                  </button>
-                </div>
+                </p>
               </div>
 
               <GoogleAuthButton
@@ -455,7 +515,11 @@ export default function Signup() {
               </div>
 
               <button type="submit" className="btn-primary auth-submit">
-                <span>Continue to Creative Profile</span>
+                <span>
+                  {accountType === "artist"
+                    ? "Continue to Creative Profile"
+                    : "Continue to Explorer Profile"}
+                </span>
                 <ArrowRight size={16} />
               </button>
 
@@ -467,7 +531,7 @@ export default function Signup() {
           )}
 
           {/* PHASE 2: ARTISTIC / CREATIVE PROFILE */}
-          {step === 2 && (
+          {view === "profile" && (
             <form onSubmit={handleSubmit} className="auth-form step-fade-in">
               <div className="auth-header-block">
                 <h2>
