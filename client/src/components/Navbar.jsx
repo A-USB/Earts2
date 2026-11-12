@@ -5,6 +5,7 @@ import { Search, Menu, X, ChevronDown } from 'lucide-react';
 import Avatar from './Avatar';
 import { EartsLogo } from './EartsLogo';
 import ThemeToggle from './ThemeToggle';
+import useMediaQuery from '../hooks/useMediaQuery';
 import './Navbar.css';
 
 const HOME_SECTIONS = [
@@ -23,6 +24,7 @@ export default function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
   const [scrolled, setScrolled] = useState(false);
+  const tiny = useMediaQuery('(max-width: 359px)'); // very small phones: the logo drops its wordmark to make room
 
   const onHome = location.pathname === '/';
 
@@ -81,7 +83,7 @@ export default function Navbar() {
     <nav className={`navbar ${scrolled ? 'scrolled' : ''}`} aria-label="Main">
       <div className="navbar-inner">
         <Link to={user ? '/feed' : '/'} className="navbar-logo-wrap" title="Earts">
-          <EartsLogo size={32} />
+          <EartsLogo size={32} variant={tiny ? 'icon' : 'full'} />
         </Link>
 
         <div className={`navbar-links ${menuOpen ? 'open' : ''}`}>
