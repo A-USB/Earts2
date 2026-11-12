@@ -25,16 +25,15 @@
 /* 2-Column Grid Layout */
 .upload-grid {
   display: grid;
-  grid-template-columns: minmax(0, clamp(340px, 40%, 460px)) minmax(0, 1fr);
+  grid-template-columns: 460px 1fr;
   gap: 32px;
   align-items: start;
 }
 
 @media (max-width: 992px) {
   .upload-grid {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: 1fr;
   }
-  .upload-media-card { position: static; }
 }
 
 /* Left: Media Card */
@@ -1101,21 +1100,18 @@
   color: #F4F3FF !important;
 }
 
-/* ---- Responsive hardening ---- */
-.upload-media-column, .upload-form-column { min-width: 0; }
-.upload-header h1 { overflow-wrap: anywhere; }
-.dropzone-box { min-height: clamp(260px, 60vw, 380px); }
-.preview-viewport { height: clamp(260px, 70vw, 380px); }
-
-@media (max-width: 640px) {
-  .form-row-2 { grid-template-columns: minmax(0, 1fr); }
-  .upload-header { margin-bottom: 22px; }
+/* Responsive refinements */
+.upload-grid { grid-template-columns: minmax(0, 460px) minmax(0, 1fr); }
+.upload-grid > * { min-width: 0; }
+@media (max-width: 992px) {
+  .upload-grid { grid-template-columns: minmax(0, 1fr); }
+  .upload-media-card { position: static; }
+}
+@media (max-width: 600px) {
+  .upload-header { margin-bottom: 20px; }
   .upload-header h1 { font-size: 26px; }
   .upload-media-card { padding: 16px; }
-  .dropzone-box { padding: 32px 16px; }
-  .collab-section { padding: 16px; }
-}
-@media (max-width: 480px) {
-  .collab-inputs-row { grid-template-columns: minmax(0, 1fr); }
-  .hex-input-box { width: 100%; }
+  .color-swatches-grid { grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 8px; max-height: 176px; }
+  .swatch-btn { height: 40px; }
+  .color-status-pill { min-height: 40px; }
 }
