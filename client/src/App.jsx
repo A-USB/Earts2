@@ -25,6 +25,8 @@ import NotFound from './pages/NotFound'
 import Moderation from './pages/Moderation'
 import ChooseAvatar from './pages/ChooseAvatar'
 import FeedTransition from './components/FeedTransition'
+import MobileNav from './components/MobileNav'
+import useMediaQuery from './hooks/useMediaQuery'
 import './App.css'
 
 // These routes always keep the classic top navbar, logged in or not
@@ -51,6 +53,7 @@ function HomeRoute() {
 function Layout() {
   const location = useLocation();
   const { user } = useAuth();
+  const isMobile = useMediaQuery('(max-width: 767px)');
   const hideChrome = CHROMELESS_ROUTES.includes(location.pathname);
   const useSidebar = !!user && !TOP_NAV_ROUTES.includes(location.pathname) && location.pathname !== '/choose-avatar';
 
@@ -82,8 +85,8 @@ function Layout() {
 
   if (useSidebar) {
     return (
-      <div className="app-shell app-shell-sidebar">
-        <Sidebar />
+      <div className={`app-shell app-shell-sidebar ${isMobile ? 'app-shell-mobile' : ''}`}>
+        {isMobile ? <MobileNav /> : <Sidebar />}
         <div className="app-main-col">
           <main>{routes}</main>
           <Footer />
