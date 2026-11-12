@@ -241,37 +241,3 @@ input:focus, select:focus, textarea:focus {
 /* Brand gradient for icon tiles and highlights: light is violet to pink, dark is the system's violet to indigo */
 :root { --brand-gradient: linear-gradient(100deg, #5B4BF5 0%, #8B5CF6 52%, #FF6B9D 100%); }
 [data-theme="dark"] { --brand-gradient: linear-gradient(100deg, #6D5EF7 0%, #4B33C9 55%, #2A1B7A 100%); }
-
-/* =====================================================================
-   Responsive foundations
-   ===================================================================== */
-html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
-
-/* Safety net: nothing should ever make the whole page scroll sideways.
-   `clip` (unlike `hidden`) does not create a scroll container, so sticky headers keep working. */
-html, body { max-width: 100%; overflow-x: clip; }
-
-img, video, canvas { max-width: 100%; }
-
-/* Long words, emails and URLs wrap instead of pushing layouts wider */
-h1, h2, h3, h4, p, li, label, td, th { overflow-wrap: break-word; }
-
-/* The global text-field rule (width:100%, big padding) must not squash checkboxes and radios */
-input[type="checkbox"], input[type="radio"] { width: auto; padding: 0; flex: none; }
-
-/* iOS Safari zooms the whole page when a focused field has text smaller than 16px.
-   Touch devices therefore get 16px fields, so the layout never jumps or zooms on focus. */
-@media (pointer: coarse) {
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
-  select,
-  textarea { font-size: 16px !important; }
-}
-
-/* Taller-than-wide-enough screens: use the *dynamic* viewport so mobile browser bars don't cut content off */
-@supports (height: 100dvh) {
-  .page-wrapper { min-height: 100dvh; }
-}
-
-@media (max-width: 480px) {
-  .container { padding: 0 14px; }
-}
