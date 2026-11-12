@@ -31,7 +31,7 @@ export default function Login() {
   };
 
   return (
-    <div className="auth-page">
+    <div className="auth-page auth-page--boxed">
       <div className="auth-topbar">
         <Link to="/" className="auth-logo-link" title="Earts Home">
           <EartsLogo size={32} />
