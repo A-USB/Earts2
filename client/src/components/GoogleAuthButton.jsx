@@ -30,26 +30,23 @@ export default function GoogleAuthButton({ accountType = 'artist', role = 'Artis
   useEffect(() => {
     if (!googleClientId || !buttonRef.current) return undefined;
     let initialized = false;
-    let drawnWidth = 0;
-    let resizeObserver;
+    let renderedWidth = 0;
+    let resizeTimer = null;
+    let observer = null;
 
-    // Google draws a fixed-width iframe (200 to 400px). Fit it to the space the card actually has,
-    // and redraw whenever that space changes (rotation, window resize, keyboard, breakpoints).
+    // Google's button is a fixed-width iframe (200 to 400px), so redraw it to fit its container
     const drawButton = () => {
-      const host = buttonRef.current;
-      if (!host || !window.google?.accounts?.id) return;
-      const available = Math.floor(host.parentElement?.clientWidth || host.clientWidth || 400);
-      const width = Math.max(200, Math.min(available, 400));
-      if (width === drawnWidth) return;
-      drawnWidth = width;
-      host.innerHTML = '';
-      window.google.accounts.id.renderButton(host, {
+      const el = buttonRef.current;
+      if (!el || !window.google?.accounts?.id) return;
+      const available = el.clientWidth || 400;
+      renderedWidth = available;
+      window.google.accounts.id.renderButton(el, {
         type: 'standard',
         theme: 'outline',
         size: 'large',
         text: 'continue_with',
         shape: 'rect',
-        width,
+        width: Math.max(200, Math.min(available, 400)),
         logo_alignment: 'center',
       });
     };
@@ -65,13 +62,15 @@ export default function GoogleAuthButton({ accountType = 'artist', role = 'Artis
       });
       drawButton();
       setReady(true);
-      if (typeof ResizeObserver !== 'undefined' && buttonRef.current.parentElement) {
-        let frame = 0;
-        resizeObserver = new ResizeObserver(() => {
-          window.cancelAnimationFrame(frame);
-          frame = window.requestAnimationFrame(drawButton);
+
+      if (typeof ResizeObserver !== 'undefined' && buttonRef.current) {
+        observer = new ResizeObserver(() => {
+          const el = buttonRef.current;
+          if (!el || Math.abs((el.clientWidth || 0) - renderedWidth) < 8) return;
+          window.clearTimeout(resizeTimer);
+          resizeTimer = window.setTimeout(drawButton, 150);
         });
-        resizeObserver.observe(buttonRef.current.parentElement);
+        observer.observe(buttonRef.current);
       }
     };
 
@@ -84,7 +83,8 @@ export default function GoogleAuthButton({ accountType = 'artist', role = 'Artis
     return () => {
       window.clearInterval(interval);
       window.clearTimeout(timeout);
-      resizeObserver?.disconnect();
+      window.clearTimeout(resizeTimer);
+      observer?.disconnect();
     };
   }, [googleClientId, handleGoogleCredentialResponse]);
 
