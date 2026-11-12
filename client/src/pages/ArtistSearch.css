@@ -81,7 +81,9 @@
 .artist-result-count {
   color: var(--text-muted);
   font-size: 13px;
+  white-space: nowrap;
 }
+.artist-search-heading { flex-wrap: wrap; gap: 6px 16px; }
 
 .artist-search-grid {
   display: grid;
