@@ -17,8 +17,11 @@ import {
   Check,
   X,
   Compass,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import { EartsLogo } from "../components/EartsLogo";
 import ThemeToggle from "../components/ThemeToggle";
 import GoogleAuthButton from "../components/GoogleAuthButton";
@@ -80,6 +83,7 @@ export default function Signup() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const set = (k) => (e) => {
@@ -192,17 +196,27 @@ export default function Signup() {
   };
 
   return (
-    <div className={`auth-page signup-page ${view === "profile" ? "signup-profile-step" : "auth-page--boxed"}`}>
+    <div
+      className={`auth-page signup-page ${
+        view === "profile"
+          ? "signup-profile-step"
+          : view === "role"
+            ? "auth-page--role"
+            : "auth-page--boxed"
+      }`}
+    >
       <div className="auth-topbar">
         <Link to="/" className="auth-logo-link" title="Earts Home">
           <EartsLogo size={32} />
         </Link>
-        <ThemeToggle />
+        {view !== "role" && <ThemeToggle />}
       </div>
 
-      <div className={`auth-card ${view === "profile" ? "signup-profile-card" : ""}`}>
+      <div
+        className={`auth-card ${view === "profile" ? "signup-profile-card" : ""} ${view === "role" ? "role-card" : ""}`}
+      >
         {/* Left Informational Sidebar (role + credentials views) */}
-        {view !== "profile" && (
+        {view === "credentials" && (
           <div className="auth-left">
             <div className="auth-left-content">
               <span className="eyebrow">Join today — it's free</span>
@@ -308,46 +322,57 @@ export default function Signup() {
           {/* Role choice (shown first, before any form) */}
           {view === "role" && (
             <div className="role-choice step-fade-in">
-              <div className="auth-header-block">
-                <h2>Join Earts</h2>
-                <p className="auth-subtitle">How will you use Earts?</p>
-              </div>
-
-              <div className="role-choice-list">
+              <div className="role-choice-bar">
                 <button
                   type="button"
-                  className="role-choice-card"
-                  onClick={() => chooseType("artist")}
+                  className="role-theme-pill"
+                  onClick={toggleTheme}
+                  aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
                 >
-                  <span className="role-choice-icon">
-                    <Palette size={22} />
-                  </span>
-                  <span className="role-choice-text">
+                  {isDark ? <Sun size={16} /> : <Moon size={16} />}
+                  <span>{isDark ? "Light mode" : "Dark mode"}</span>
+                </button>
+                <Link to="/" className="role-back-link">
+                  &larr; Back
+                </Link>
+              </div>
+
+              <div className="role-choice-body">
+                <div className="auth-header-block role-choice-header">
+                  <h2>Join Earts</h2>
+                  <p className="auth-subtitle">How will you use Earts? Choose your role to continue.</p>
+                </div>
+
+                <div className="role-choice-list">
+                  <button
+                    type="button"
+                    className="role-choice-card"
+                    onClick={() => chooseType("artist")}
+                  >
+                    <span className="role-choice-icon">
+                      <Palette size={22} />
+                    </span>
                     <strong>I'm an Artist</strong>
-                    <span>Share and sell your artwork</span>
-                  </span>
-                  <ArrowRight size={18} className="role-choice-arrow" />
-                </button>
-                <button
-                  type="button"
-                  className="role-choice-card"
-                  onClick={() => chooseType("explorer")}
-                >
-                  <span className="role-choice-icon">
-                    <Compass size={22} />
-                  </span>
-                  <span className="role-choice-text">
+                    <span className="role-choice-desc">Share and sell your artwork</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="role-choice-card"
+                    onClick={() => chooseType("explorer")}
+                  >
+                    <span className="role-choice-icon">
+                      <Compass size={22} />
+                    </span>
                     <strong>I'm an Explorer</strong>
-                    <span>Discover art and follow artists</span>
-                  </span>
-                  <ArrowRight size={18} className="role-choice-arrow" />
-                </button>
-              </div>
+                    <span className="role-choice-desc">Discover art and follow artists</span>
+                  </button>
+                </div>
 
-              <p className="auth-switch">
-                Already have an account?{" "}
-                <Link to="/login">Sign in to Earts.</Link>
-              </p>
+                <p className="auth-switch">
+                  Already have an account?{" "}
+                  <Link to="/login">Sign in to Earts.</Link>
+                </p>
+              </div>
             </div>
           )}
 
@@ -386,11 +411,11 @@ export default function Signup() {
               <div className="auth-header-block">
                 <h2>Create account</h2>
                 <p className="signup-role-line">
-                  Signing up as{" "}
-                  <strong>{accountType === "artist" ? "an Artist" : "an Explorer"}</strong>
-                  <span aria-hidden="true"> · </span>
+                  Signing up as an{" "}
+                  <strong>{accountType === "artist" ? "Artist" : "Explorer"}</strong>
+                  <span aria-hidden="true">  · </span>
                   <button type="button" className="signup-role-change" onClick={changeType}>
-                    Change
+                    Return to the selection page
                   </button>
                 </p>
               </div>
