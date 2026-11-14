@@ -3,9 +3,17 @@
   min-height: 100dvh;
   width: 100%;
   overflow-x: clip;
-  background:
-    linear-gradient(135deg, rgba(240, 241, 246, 0.8), rgba(228, 225, 225, 0.48)),
-    url('/auth-background-light.png') center / cover fixed no-repeat;
+  /* LIGHT MODE BACKGROUND: the pink watercolour with no whitish overlay on top of it.
+     --auth-pink is multiplied into the image to deepen it (darker/more saturated = deeper pink;
+     #ffffff = the image exactly as it is) */
+  --auth-pink: #fde2ee;
+  background-color: var(--auth-pink);
+  background-image: url('/auth-background-light.png');
+  background-position: center;
+  background-size: cover;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-blend-mode: multiply;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -223,9 +231,10 @@
 
 /* Right Content - Balanced vertical spacing + Framing */
 .auth-right {
-  background: rgba(255, 255, 255, 0.62);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  /* frosted glass: lower the alpha (0.5) to see more of the background, raise it for a more solid panel */
+  background: rgba(255, 255, 255, 0.5);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
   padding: 34px 44px;
   display: flex;
   flex-direction: column;
@@ -750,9 +759,10 @@
 
 /* Dark Mode Styles for Auth */
 [data-theme="dark"] .auth-page {
-  background:
-    linear-gradient(135deg, rgba(19, 19, 80, 0.9), rgba(4, 4, 55, 0.9)),
-    url('/auth-background-dark.png') center / cover fixed no-repeat;
+  /* DARK MODE BACKGROUND: the new dark image on its own (the dark-blue overlay is gone) */
+  background: url('/auth-background-dark.png') center / cover fixed no-repeat;
+  background-color: #0b0a3a;
+  background-blend-mode: normal;
 }
 
 [data-theme="dark"] .auth-card {
@@ -762,9 +772,9 @@
 }
 
 [data-theme="dark"] .auth-right {
-  background: rgba(20, 20, 39, 0.64);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  background: rgba(16, 14, 48, 0.5);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
+  backdrop-filter: blur(18px) saturate(130%);
 }
 
 [data-theme="dark"] .auth-left {
