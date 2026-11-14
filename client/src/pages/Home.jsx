@@ -78,6 +78,10 @@ const FAQ = [
 
 // Element-by-element reveal: every heading, card and timeline milestone eases in on its own as it scrolls
 // into view (so the animation is actually seen), and items entering together appear one after another.
+// ===== SCROLL FADE-IN TIMING (the fade/move durations live in Home.css under "SCROLL FADE-IN SPEED") =====
+const REVEAL_STAGGER_MS = 220;   // pause between items that appear together (bigger = more one-by-one)
+const REVEAL_CLEANUP_MS = 2600;  // must be longer than the fade/move durations in Home.css
+
 const REVEAL_SELECTORS = [
   '.section-header > *', '.section-center > *', '.faq-section > h2',
   '.artworks-grid > *', '.artists-grid > *', '.steps-grid > *', '.values-grid > *',
@@ -97,7 +101,7 @@ function useScrollReveal(deps = []) {
           .map(e => e.target)
           .sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
         entering.forEach((el, i) => {
-          const delay = Math.min(i, 5) * 140;
+          const delay = Math.min(i, 5) * REVEAL_STAGGER_MS;
           el.style.setProperty('--rv-delay', `${delay}ms`);
           el.classList.add('rv-in');
           obs.unobserve(el);
@@ -105,7 +109,7 @@ function useScrollReveal(deps = []) {
           setTimeout(() => {
             el.classList.remove('rv', 'rv-in');
             el.style.removeProperty('--rv-delay');
-          }, delay + 1400);
+          }, delay + REVEAL_CLEANUP_MS);
         });
       },
       { threshold: 0.15, rootMargin: '0px 0px -8% 0px' }
