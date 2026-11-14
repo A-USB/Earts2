@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ArrowRight, Bookmark, ChevronRight, Compass, PaintbrushVertical, Palette, Plus, Search, ShoppingBag, Sparkles, Tag, Users, Handshake, UserRound, ImagePlus, Globe, Star } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import ArtworkCard from '../components/ArtworkCard';
 import Avatar from '../components/Avatar';
-import heroStudio from '../assets/hero-studio.webp';
 import './Home.css';
 import IconTile from '../components/IconTile';
 import { formatCompact } from '../utils/formatCount';
@@ -77,24 +76,61 @@ const FAQ = [
   { q: 'How can I share artwork?', a: 'Create an artist account, complete your profile, and use Upload to add artwork to your portfolio.' },
 ];
 
-// Fade/slide-in reveal as sections scroll into view
-function useScrollReveal() {
-  useEffect(() => {
-    const els = document.querySelectorAll('.reveal');
+// Element-by-element reveal: every heading, card and timeline milestone eases in on its own as it scrolls
+// into view (so the animation is actually seen), and items entering together appear one after another.
+const REVEAL_SELECTORS = [
+  '.section-header > *', '.section-center > *', '.faq-section > h2',
+  '.artworks-grid > *', '.artists-grid > *', '.steps-grid > *', '.values-grid > *',
+  '.team-grid > *', '.features-grid > *', '.faq-grid > *', '.mission-grid > *',
+  '.timeline-item', '.cta-banner',
+].join(',');
+
+function useScrollReveal(deps = []) {
+  const obsRef = useRef(null);
+
+  const getObserver = () => {
+    if (obsRef.current) return obsRef.current;
     const obs = new IntersectionObserver(
       entries => {
-        entries.forEach(e => {
-          if (e.isIntersecting) {
-            e.target.classList.add('in-view');
-            obs.unobserve(e.target);
-          }
+        const entering = entries
+          .filter(e => e.isIntersecting)
+          .map(e => e.target)
+          .sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
+        entering.forEach((el, i) => {
+          const delay = Math.min(i, 5) * 140;
+          el.style.setProperty('--rv-delay', `${delay}ms`);
+          el.classList.add('rv-in');
+          obs.unobserve(el);
+          // once it has finished, drop the helper classes so normal hover effects take over
+          setTimeout(() => {
+            el.classList.remove('rv', 'rv-in');
+            el.style.removeProperty('--rv-delay');
+          }, delay + 1400);
         });
       },
-      { threshold: 0.15, rootMargin: '0px 0px -18% 0px' }
+      { threshold: 0.15, rootMargin: '0px 0px -8% 0px' }
     );
-    els.forEach(el => obs.observe(el));
-    return () => obs.disconnect();
-  }, []);
+    obsRef.current = obs;
+    return obs;
+  };
+
+  // Tag (and start watching) any element that is not tagged yet; re-runs when data-driven cards arrive.
+  // Runs before paint so items never flash visible and then hide.
+  useLayoutEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const obs = getObserver();
+    document.querySelectorAll(`.home :is(${REVEAL_SELECTORS})`).forEach(el => {
+      if (!el.dataset.rv) {
+        el.dataset.rv = '1';
+        el.classList.add('rv');
+      }
+      // (re)watch anything still waiting to be revealed (also covers React StrictMode's effect re-run)
+      if (el.classList.contains('rv') && !el.classList.contains('rv-in')) obs.observe(el);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+
+  useEffect(() => () => { obsRef.current?.disconnect(); obsRef.current = null; }, []);
 }
 
 export default function Home() {
@@ -122,56 +158,75 @@ export default function Home() {
     return () => clearTimeout(t);
   }, [location.hash]);
 
-  useScrollReveal();
+  useScrollReveal([trending.length, featuredArtists.length]);
+
+  // Pin the hero (curtain effect) only when its content fits on one screen; otherwise it scrolls normally
+  useLayoutEffect(() => {
+    const stage = document.querySelector('.home .hero-stage');
+    if (!stage) return undefined;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const px = v => parseFloat(v) || 0;
+    const check = () => {
+      const hero = stage.querySelector('.hero');
+      const heroIn = stage.querySelector('.hero-inner');
+      const bar = stage.querySelector('.stats-bar');
+      const barIn = stage.querySelector('.stats-inner');
+      if (!hero || !heroIn || !bar || !barIn) return;
+      const hs = getComputedStyle(hero);
+      const bs = getComputedStyle(bar);
+      const need = px(getComputedStyle(stage).paddingTop)
+        + px(hs.paddingTop) + px(hs.paddingBottom) + heroIn.offsetHeight
+        + px(bs.paddingTop) + px(bs.paddingBottom) + barIn.offsetHeight;
+      stage.classList.toggle('is-pinned', !reduce.matches && need <= window.innerHeight + 1);
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    ['.hero-inner', '.stats-inner'].forEach(sel => { const el = stage.querySelector(sel); if (el) ro.observe(el); });
+    window.addEventListener('resize', check);
+    if (document.fonts?.ready) document.fonts.ready.then(check);
+    return () => { ro.disconnect(); window.removeEventListener('resize', check); };
+  }, []);
 
   return (
     <div className="home">
       {/* ============ HOME TAB ============ */}
       <section id="home" className="home-section">
-        {/* Hero */}
-        <section className="hero">
-          <div className="container hero-inner">
-            <div className="hero-left fade-in-up">
-              <span className="eyebrow">Artist Community</span>
-              <h1>
-                Where artists<br />
-                <span className="hero-gradient">grow, share &</span><br />
-                <span className="hero-gradient">thrive</span> together
-              </h1>
-              <p>Earts is a space for creators to showcase their work, connect with fellow artists, and turn passion into livelihood.</p>
-              <div className="hero-ctas">
-                <Link to={exploreLink} className="btn-primary">
-                  Explore the community <ArrowRight size={16} />
-                </Link>
-                <button type="button" className="btn-outline" onClick={() => document.getElementById('trending')?.scrollIntoView({behavior:'smooth'})}>
-                  See artwork
-                </button>
+        {/* Hero + stat cards share one watercolour backdrop (this section only) */}
+        <div className="hero-stage">
+          <section className="hero">
+            <div className="container hero-inner">
+              <div className="hero-left fade-in-up">
+                <span className="eyebrow">Artist Community</span>
+                <h1>
+                  Where artists<br />
+                  <span className="hero-gradient">grow, share &</span><br />
+                  <span className="hero-gradient">thrive</span> together
+                </h1>
+                <p>Earts is a space for creators to showcase their work, connect with fellow artists, and turn passion into livelihood.</p>
+                <div className="hero-ctas">
+                  <Link to={exploreLink} className="btn-primary">
+                    Explore the community <ArrowRight size={16} />
+                  </Link>
+                  <button type="button" className="btn-outline" onClick={() => document.getElementById('trending')?.scrollIntoView({behavior:'smooth'})}>
+                    See artwork
+                  </button>
+                </div>
               </div>
             </div>
-            <div className="hero-visual">
-              <figure className="hero-photo">
-                <img
-                  src={heroStudio}
-                  width="1248"
-                  height="832"
-                  alt="Oil paint tubes, brushes and smears of paint on a wooden studio table"
-                  fetchPriority="high"
-                  decoding="async"
-                />
-              </figure>
+          </section>
+
+          {/* Stats */}
+          <section className="stats-bar">
+            <div className="container stats-inner">
+              {stats && STATS.map(s => (
+                <StatFlipCard key={s.key} stat={s} value={stats[s.key] ?? 0} />
+              ))}
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
 
-        {/* Stats */}
-        <section className="stats-bar">
-          <div className="container stats-inner">
-            {stats && STATS.map(s => (
-              <StatFlipCard key={s.key} stat={s} value={stats[s.key] ?? 0} />
-            ))}
-          </div>
-        </section>
-
+        {/* The "sheet": everything below the hero slides up over the pinned hero like a curtain */}
+        <div className="home-sheet">
         {/* Trending */}
         <section id="trending" className="trending-section reveal">
           <div className="container">
@@ -263,6 +318,7 @@ export default function Home() {
             </div>
           </div>
         </section>
+        </div>
       </section>
 
       {/* ============ ABOUT TAB ============ */}
