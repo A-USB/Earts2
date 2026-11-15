@@ -1679,10 +1679,11 @@
 }
 .auth-page--boxed:not(.signup-page) .auth-right > .auth-subtitle { margin-bottom: 18px; }
 
-/* Sign up (credentials step): the same lift and the same gap */
+/* Sign up (credentials step): sits clear of the step indicator above it, with a roomy gap before the Google button.
+   top = how far the heading is pushed down (raise it to move "Create account" further from the step indicator) */
 .signup-page.auth-page--boxed .auth-header-block {
   position: relative;
-  top: -10px;
+  top: 6px;
   margin-bottom: 28px;
 }
 
