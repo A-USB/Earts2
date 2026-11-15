@@ -297,23 +297,6 @@ export default function Signup() {
                 ))}
               </div>
             </div>
-            <div className="auth-left-footer">
-              <div className="auth-avatars">
-                {["AM", "MC", "BJ", "US"].map((a, i) => (
-                  <div
-                    key={i}
-                    className="mini-avatar"
-                    style={{
-                      background: `hsl(${i * 60 + 200}, 70%, 55%)`,
-                      marginLeft: i > 0 ? "-10px" : 0,
-                    }}
-                  >
-                    {a}
-                  </div>
-                ))}
-                <span>+12,000 creators joined</span>
-              </div>
-            </div>
           </div>
         )}
 
@@ -421,6 +404,7 @@ export default function Signup() {
               </div>
 
               <GoogleAuthButton
+                mode="signup"
                 accountType={accountType}
                 role={form.role}
                 onError={setError}
