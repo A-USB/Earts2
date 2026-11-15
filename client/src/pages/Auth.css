@@ -1649,7 +1649,7 @@
    ===================================================================== */
 /* One place to change the outline of every field, the Google button and the step indicator */
 .auth-page {
-  --field-border-width: 2px;
+  --field-border-width: 1.3px;
   --field-border-color: rgba(71, 85, 105, 0.4);
 }
 [data-theme="dark"] .auth-page { --field-border-color: rgba(255, 255, 255, 0.24); }
@@ -1691,7 +1691,18 @@
   background: transparent !important;
   border: var(--field-border-width, 2px) solid var(--field-border-color) !important;
 }
-.auth-page .auth-stepper .step-circle { background: transparent; }
+/* only the waiting step is see-through; the active (purple) and completed (green) circles keep their fill */
+.auth-page .auth-stepper .step-item:not(.active):not(.completed) .step-circle { background: transparent; }
+.auth-page .auth-stepper .step-item.active .step-circle {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.auth-page .auth-stepper .step-item.completed .step-circle {
+  background: #10B981;
+  border-color: #10B981;
+  color: #fff;
+}
 
 /* Role-choice card (dark mode): the same frosted glass as the sign-up form panel */
 [data-theme="dark"] .auth-page--role .role-card {
