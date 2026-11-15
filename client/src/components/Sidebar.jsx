@@ -29,7 +29,7 @@ export default function Sidebar() {
   const isProfileActive = user?.username ? location.pathname.startsWith(`/profile/${user.username}`) : false;
 
   const navItems = [
-    { to: '/feed', label: 'Feed', icon: Rss, show: true },
+    { to: '/feed', label: 'The Wall', icon: Rss, show: true },
     { to: '/marketplace', label: 'Marketplace', icon: ShoppingBag, show: true },
     { to: '/upload', label: 'Upload', icon: ImagePlus, show: user?.accountType !== 'collector' },
     { to: '/notifications', label: 'Notifications', icon: Bell, show: true },
