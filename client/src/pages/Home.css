@@ -168,9 +168,6 @@
 
 /* Section shared */
 .trending-section, .artists-section, .how-section { padding: 80px 0; }
-.trending-section{
-  padding-top: 170px;
-}
 .cta-section {
   position: relative;
   margin-top: 12px;
@@ -198,10 +195,11 @@
 .view-all:hover { gap: 8px; }
 
 /* Artwork grid */
+/* Same grid as the Marketplace, so the wall cards (framed image + hanging label) sit exactly the same here */
 .artworks-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 36px 24px;
 }
 
 /* CTA Banner */
@@ -548,30 +546,6 @@ html { scroll-behavior: smooth; }
   color: rgba(124, 110, 250, 0.2);
 }
 
-/* Trending cards on the landing page: the framed image and the label read as ONE card.
-   One surface, one soft outline; no separate mat shadow, label shadow, overlap or divider line. */
-.trending-section .wc {
-  background: var(--mat);
-  box-shadow: 0 1px 3px rgba(60, 40, 20, 0.08);
-  border: 1px solid var(--border-subtle);
-  padding-bottom: 8px;
-}
-.trending-section .wc-mat {
-  background: transparent;
-  box-shadow: none;
-}
-.trending-section .wc-label {
-  width: auto;
-  margin: 0;
-  padding: 2px 10px 0;
-  background: transparent;
-  box-shadow: none;
-}
-.trending-section .wc-row {
-  border-top: 0;
-  margin-top: 4px;
-}
-
 /* ================= Cohesion: one visual language down the whole page ================= */
 
 /* ===== Curtain / sheet effect =====
@@ -718,6 +692,7 @@ html { scroll-behavior: smooth; }
   .section-header { gap: 12px; }
   .steps-grid, .values-grid, .team-grid { grid-template-columns: 1fr; gap: 16px; }
   .artworks-grid, .artists-grid { gap: 16px; }
+  .artworks-grid { gap: 32px 16px; }
   .mission-card, .vision-card { padding: 26px 22px; }
   .feature-card { min-height: 0; padding: 22px; }
   .features-grid, .faq-grid { gap: 14px; }
