@@ -2,7 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-export default function GoogleAuthButton({ accountType = 'artist', role = 'Artist', onError, redirectTo }) {
+// mode picks the wording: 'signin' -> "Sign in with Google", 'signup' -> "Sign up with Google", otherwise "Continue with Google"
+const GOOGLE_TEXT = { signin: 'signin_with', signup: 'signup_with', continue: 'continue_with' };
+const GOOGLE_LABEL = { signin: 'Sign in with Google', signup: 'Sign up with Google', continue: 'Continue with Google' };
+
+export default function GoogleAuthButton({ accountType = 'artist', role = 'Artist', onError, redirectTo, mode = 'continue' }) {
   const { loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const buttonRef = useRef(null);
@@ -44,7 +48,7 @@ export default function GoogleAuthButton({ accountType = 'artist', role = 'Artis
         type: 'standard',
         theme: 'outline',
         size: 'large',
-        text: 'continue_with',
+        text: GOOGLE_TEXT[mode] || 'continue_with',
         shape: 'rect',
         width: Math.max(200, Math.min(available, 400)),
         logo_alignment: 'center',
@@ -86,14 +90,14 @@ export default function GoogleAuthButton({ accountType = 'artist', role = 'Artis
       window.clearTimeout(resizeTimer);
       observer?.disconnect();
     };
-  }, [googleClientId, handleGoogleCredentialResponse]);
+  }, [googleClientId, handleGoogleCredentialResponse, mode]);
 
   return (
-    <div className="google-auth-container">
+    <div className="google-auth-container" data-mode={mode}>
       <div
         ref={buttonRef}
         className={`google-gsi-button${ready ? '' : ' is-loading'}${loading ? ' is-signing-in' : ''}`}
-        aria-label="Continue with Google"
+        aria-label={GOOGLE_LABEL[mode] || GOOGLE_LABEL.continue}
         aria-hidden={loading}
       />
       {!googleClientId && <p className="google-auth-help">Google sign-in isn’t configured yet.</p>}
