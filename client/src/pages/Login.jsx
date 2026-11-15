@@ -51,23 +51,12 @@ export default function Login() {
               ))}
             </ul>
           </div>
-          <div className="auth-left-footer">
-            <div className="auth-avatars">
-              {['AM', 'MC', 'BJ', 'US'].map((a, i) => (
-                <div key={i} className="mini-avatar" style={{
-                  background: `hsl(${i * 60 + 200}, 70%, 55%)`,
-                  marginLeft: i > 0 ? '-10px' : 0
-                }}>{a}</div>
-              ))}
-              <span>+12,000 creators joined</span>
-            </div>
-          </div>
         </div>
         <div className="auth-right">
           <h2>Welcome Back</h2>
           <p className="auth-subtitle">Sign in to your Earts account</p>
 
-          <GoogleAuthButton onError={setError} redirectTo={returnTo} />
+          <GoogleAuthButton onError={setError} redirectTo={returnTo} mode="signin" />
 
           <div className="auth-divider"><span>or sign in with email</span></div>
 
