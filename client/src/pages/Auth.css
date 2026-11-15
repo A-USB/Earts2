@@ -602,7 +602,7 @@
 .auth-form input,
 .auth-form select {
   width: 100%;
-  border: 1.5px solid var(--border);
+  border: 5.5px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 12px 16px;
   font-size: 14.5px;
@@ -1517,3 +1517,129 @@
 /* Password fields: keep text (and long placeholders) clear of the show/hide eye on narrow screens */
 .auth-form .input-wrap input { padding-right: 48px; text-overflow: ellipsis; }
 .auth-form .input-wrap input::placeholder { text-overflow: ellipsis; }
+
+/* =====================================================================
+   GOOGLE BUTTON, SPACING AND PANEL CLEAN-UP
+   ===================================================================== */
+
+/* Google draws its own button inside an iframe, and CSS cannot restyle (or make transparent) what is inside it.
+   So the box you see is now OUR button, built on the container: transparent, themed, centred, with Google's logo.
+   Google's real button is kept on top of it, fully see-through, and stretched to cover it, so a click anywhere
+   on our button still opens the genuine Google sign-in. (Needs :has(); browsers without it simply keep Google's own button.) */
+.google-auth-container:has(.google-gsi-button > div) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 46px;
+  min-height: 46px;
+  margin: 0 0 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm, 10px);
+  background: transparent;
+  color: var(--text-dark);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+.google-auth-container:has(.google-gsi-button > div)::before {
+  content: '';
+  flex: none;
+  width: 18px;
+  height: 18px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='%23EA4335' d='M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z'/%3E%3Cpath fill='%234285F4' d='M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z'/%3E%3Cpath fill='%23FBBC05' d='M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z'/%3E%3Cpath fill='%2334A853' d='M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.google-auth-container:has(.google-gsi-button > div)::after { content: 'Continue with Google'; }
+.google-auth-container[data-mode="signin"]:has(.google-gsi-button > div)::after { content: 'Sign in with Google'; }
+.google-auth-container[data-mode="signup"]:has(.google-gsi-button > div)::after { content: 'Sign up with Google'; }
+
+/* reserve the button's height from the start so the form doesn't jump when Google's script finishes loading */
+.google-auth-container { min-height: 46px; }
+.google-auth-container:has(.google-gsi-button > div):hover {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+.google-auth-container:has(.google-gsi-button > div):focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(91, 75, 245, 0.18);
+}
+[data-theme="dark"] .google-auth-container:has(.google-gsi-button > div) {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+[data-theme="dark"] .google-auth-container:has(.google-gsi-button > div):hover {
+  border-color: var(--primary);
+  background: rgba(124, 110, 250, 0.14);
+}
+
+/* Google's real button: invisible, blown up so it covers our whole button, clipped by the container */
+.google-auth-container:has(.google-gsi-button > div) .google-gsi-button {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  opacity: 0.01;
+  cursor: pointer;
+}
+.google-auth-container:has(.google-gsi-button > div) .google-gsi-button > div {
+  flex: none;
+  transform: scale(3);
+  transform-origin: center;
+}
+.google-auth-loading { z-index: 3; }
+
+/* Even, consistent spacing: heading, subtitle, Google button, divider, form */
+.auth-header-block { margin-bottom: 18px; }
+.auth-divider { margin-bottom: 14px; }
+
+/* Dark mode: remove the pink glow in the top corner of the artwork panel */
+[data-theme="dark"] .auth-left::before { display: none; }
+
+/* Removed: the "+12,000 creators joined" avatars row (delete this markup from Login/Signup to remove it fully) */
+.auth-avatars { display: none; }
+.auth-left { justify-content: center; }
+
+/* =====================================================================
+   TRANSPARENT FORM FIELDS (light and dark, empty and filled)
+   ===================================================================== */
+.auth-form input,
+.auth-form select,
+.auth-form textarea,
+[data-theme="dark"] .auth-form input,
+[data-theme="dark"] .auth-form select,
+[data-theme="dark"] .auth-form textarea {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* The panel is now glass, so give the fields a slightly clearer outline to stay easy to find */
+.auth-form input,
+.auth-form select,
+.auth-form textarea { border-color: rgba(71, 85, 105, 0.35); }
+[data-theme="dark"] .auth-form input,
+[data-theme="dark"] .auth-form select,
+[data-theme="dark"] .auth-form textarea { border-color: rgba(255, 255, 255, 0.22) !important; }
+
+/* Browser autofill: no filled box. (The long delay keeps the field transparent, and only the text colour is set.) */
+.auth-form input:-webkit-autofill,
+.auth-form input:-webkit-autofill:hover,
+.auth-form input:-webkit-autofill:focus,
+.auth-form select:-webkit-autofill,
+.auth-form textarea:-webkit-autofill,
+[data-theme="dark"] .auth-form input:-webkit-autofill,
+[data-theme="dark"] .auth-form input:-webkit-autofill:hover,
+[data-theme="dark"] .auth-form input:-webkit-autofill:focus,
+[data-theme="dark"] .auth-form select:-webkit-autofill,
+[data-theme="dark"] .auth-form textarea:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+  box-shadow: 0 0 0 1000px transparent inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+.auth-form input:-webkit-autofill,
+.auth-form select:-webkit-autofill { -webkit-text-fill-color: #0F172A !important; caret-color: #0F172A; }
+[data-theme="dark"] .auth-form input:-webkit-autofill,
+[data-theme="dark"] .auth-form select:-webkit-autofill { -webkit-text-fill-color: #F4F3FF !important; caret-color: #F4F3FF; }
