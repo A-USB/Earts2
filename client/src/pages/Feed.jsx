@@ -32,8 +32,8 @@ function statusOf(post) {
   return { key: 'off', text: 'Not for sale' };
 }
 
-// One column on phones, two staggered columns on larger screens
-function useNarrow(query = '(max-width: 760px)') {
+// One column on phones and tablets, two staggered columns on larger screens
+function useNarrow(query = '(max-width: 900px)') {
   const [narrow, setNarrow] = useState(() => window.matchMedia(query).matches);
   useEffect(() => {
     const mq = window.matchMedia(query);
@@ -67,7 +67,7 @@ function Piece({ post, isFollowing, onToggleFollow, liked, onToggleLike, saved, 
                 <Avatar seed={post.artistAvatarSeed || post.artistName} src={post.artistAvatar} size={22} />
                 {post.artistName}
               </Link>
-              <span>{post.medium ? ` · ${post.medium}` : ''} · {timeAgo(post.createdAt)}</span>
+              <span className="wall-meta">{[post.medium, timeAgo(post.createdAt)].filter(Boolean).join(' · ')}</span>
             </p>
           </div>
           <span className="wall-status"><i className={`wall-dot ${status.key}`} aria-hidden="true" />{status.text}</span>
