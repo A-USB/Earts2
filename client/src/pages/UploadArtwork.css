@@ -1115,3 +1115,32 @@
   .swatch-btn { height: 40px; }
   .color-status-pill { min-height: 40px; }
 }
+
+/* ===== Responsive pass ===== */
+@media (max-width: 600px) {
+  .upload-page { padding-bottom: 56px; }
+  .upload-media-card { padding: 14px; }
+  .upload-details-form { padding: 20px 16px; }
+  .dropzone-box { padding: 32px 16px; }
+
+  /* colour studio: less padding so the controls have room */
+  .color-picker-section { padding: 14px 12px; gap: 14px; }
+  .color-picker-header { flex-wrap: wrap; }
+  .color-picker-title-wrap { flex: 1 1 100%; }
+  .color-tab-btn { flex-direction: column; gap: 3px; padding: 7px 2px; font-size: 11px; line-height: 1.2; }
+  .color-tab-btn > span:first-child { overflow-wrap: normal; word-break: normal; }
+  .custom-color-studio { flex-wrap: wrap; }
+  .custom-actions-left { flex: 0 0 auto; }
+  .hex-input-studio { flex: 1 1 130px; min-width: 0; }
+  .hex-input-box { width: 100%; }
+
+  /* form fields stack, and the actions sit full width */
+  .form-row-2 { grid-template-columns: 1fr; gap: 18px; margin-bottom: 18px; }
+  .collab-inputs-row { grid-template-columns: minmax(0, 1fr); }
+  /* quick presets: the label sits above the chips, which flow in rows */
+  .quick-accents-strip { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .quick-accents-list { flex: none; width: 100%; }
+  .collab-section { padding: 16px 14px; }
+  .upload-actions-bar { flex-direction: column-reverse; align-items: stretch; }
+  .upload-actions-bar > * { width: 100%; justify-content: center; text-align: center; }
+}
