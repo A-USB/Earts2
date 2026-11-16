@@ -210,3 +210,6 @@
   .artist-result-card { gap: 11px; padding: 14px; }
   .artist-result-cta { display: none; }
 }
+
+/* ===== Responsive pass ===== */
+.artist-search-input-wrap input { min-width: 0; text-overflow: ellipsis; }
