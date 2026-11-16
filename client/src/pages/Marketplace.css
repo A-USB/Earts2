@@ -304,3 +304,40 @@
   font-size: 44px;
   margin-bottom: 12px;
 }
+
+/* ===== Responsive pass ===== */
+.marketplace-search-box input { min-width: 0; text-overflow: ellipsis; }
+.mode-toggle-btn svg { flex: none; }
+
+@media (max-width: 640px) {
+  .marketplace-page { padding-bottom: 56px; }
+  .marketplace-hero { padding: 26px 0 22px; margin-bottom: 18px; }
+  .marketplace-hero h1 { font-size: 28px; }
+  .marketplace-hero p { font-size: 14px; margin-bottom: 16px; }
+  .marketplace-search-box { padding: 9px 14px; max-width: none; }
+
+  /* Featured creators: one swipeable row instead of a tall stack, so the artwork is reached sooner */
+  .featured-creators-strip { margin-bottom: 22px; }
+  .creators-grid {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    margin: 0 -16px;
+    padding: 2px 16px 10px;
+    scrollbar-width: none;
+  }
+  .creators-grid::-webkit-scrollbar { display: none; }
+  .creator-card { flex: 0 0 min(78%, 270px); scroll-snap-align: start; }
+
+  .marketplace-controls-bar { gap: 14px; margin-bottom: 20px; }
+  .mode-toggle-group { gap: 8px; }
+  .mode-toggle-btn { flex: 1 1 0; justify-content: center; text-align: center; padding: 9px 10px; font-size: 12.5px; line-height: 1.25; }
+
+  /* category pills: swipe edge to edge */
+  .category-tabs { margin: 0 -16px; padding: 0 16px 6px; }
+
+  .marketplace-right-actions { align-self: stretch; justify-content: space-between; }
+  .sort-select { flex: 1 1 auto; min-width: 0; }
+  .marketplace-grid { gap: 30px 16px; }
+}
