@@ -98,3 +98,39 @@
 .wall-more .wall-chip:disabled { opacity: 0.6; cursor: wait; }
 
 .wall-artist > :first-child { flex: none; }
+
+/* ===== Responsive pass ===== */
+/* The separator dot belongs to the meta text, so it never dangles at the start of a wrapped line */
+.wall-meta { min-width: 0; }
+.wall-meta::before { content: '·'; margin: 0 6px 0 4px; }
+.wall-by .wall-meta:first-child::before { display: none; }
+
+/* Tablets and below: a single, comfortably wide column (Feed.jsx switches to one column at the same width) */
+@media (max-width: 900px) {
+  .wall-page { padding: 32px 0 72px; }
+  .wall-container { padding: 0 20px; }
+  .wall-header { margin-bottom: 32px; }
+  .wall-columns { grid-template-columns: minmax(0, 1fr); max-width: 640px; margin: 0 auto; }
+  .wall-column.offset { margin-top: 0; }
+}
+
+@media (max-width: 520px) {
+  .wall-header h1 { font-size: 34px; }
+  .wall-header { gap: 16px; margin-bottom: 26px; }
+  /* the date/medium line sits on its own row instead of wrapping awkwardly next to the artist */
+  .wall-meta { flex-basis: 100%; }
+  .wall-meta::before { display: none; }
+  .wall-label { padding: 14px 14px 6px; }
+  /* title and artist get the full width; the availability tag moves under them */
+  .wall-label-top { flex-direction: column; gap: 8px; }
+  .wall-status { padding-top: 0; }
+  .wall-dot { margin-top: 1px; }
+  .wall-title { font-size: 19px; }
+  .wall-actions { gap: 0 2px; }
+  .wall-btn { padding: 0 4px; }
+  .wall-follow { padding: 0 8px; }
+  /* chips scroll sideways instead of wrapping into a second row */
+  .wall-filters { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; padding-bottom: 4px; scrollbar-width: none; }
+  .wall-filters::-webkit-scrollbar { display: none; }
+  .wall-chip { flex: none; }
+}
