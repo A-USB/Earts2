@@ -882,3 +882,9 @@ button.add-artwork-card span { font-size: 13px; }
 
 /* Touch screens can't hover, so keep the owner's pin button visible */
 @media (hover: none) { .pin-toggle-btn { opacity: 1; } }
+
+/* ===== Responsive pass ===== */
+@media (max-width: 520px) {
+  /* the main buttons share a row evenly; the small icon buttons follow */
+  .profile-header-actions > .profile-action-btn { flex: 1 1 calc(50% - 5px); justify-content: center; }
+}
