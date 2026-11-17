@@ -401,3 +401,17 @@
   .navbar-actions .btn-outline,
   .navbar-actions .btn-primary { font-size: 12px; padding: 5px 9px !important; }
 }
+/* ===== Phones: smaller logo gap, theme button and menu button so the whole bar fits (incl. the floating oval) ===== */
+@media (max-width: 480px) {
+  /* the logo's gap is set inline by the component, hence !important */
+  .navbar-logo-wrap .earts-full-logo { gap: 8px !important; }
+  .navbar-actions .theme-toggle-btn { width: 34px; height: 34px; }
+  .navbar-actions .theme-toggle-btn svg { width: 17px; height: 17px; }
+  .mobile-menu-btn { padding: 4px; }
+  .mobile-menu-btn svg { width: 20px; height: 20px; }
+  .navbar-inner { gap: 8px; }
+}
+@media (max-width: 380px) {
+  .navbar-actions .theme-toggle-btn { width: 32px; height: 32px; }
+  .navbar-inner { gap: 6px; }
+}
