@@ -25,6 +25,8 @@ export default function Navbar() {
   const [activeSection, setActiveSection] = useState('home');
   const [scrolled, setScrolled] = useState(false);
   const tiny = useMediaQuery('(max-width: 359px)'); // very small phones: the logo drops its wordmark to make room
+  const small = useMediaQuery('(max-width: 480px)'); // phones: a smaller logo so everything fits in the bar
+  const logoSize = tiny ? 26 : small ? 24 : 32;
 
   const onHome = location.pathname === '/';
 
@@ -83,7 +85,7 @@ export default function Navbar() {
     <nav className={`navbar ${scrolled ? 'scrolled' : ''}`} aria-label="Main">
       <div className="navbar-inner">
         <Link to={user ? '/feed' : '/'} className="navbar-logo-wrap" title="Earts">
-          <EartsLogo size={32} variant={tiny ? 'icon' : 'full'} />
+          <EartsLogo size={logoSize} variant={tiny ? 'icon' : 'full'} />
         </Link>
 
         <div className={`navbar-links ${menuOpen ? 'open' : ''}`}>
