@@ -17,6 +17,7 @@
   --border: #c5d2e1;
   --border-subtle: #F1F5F9;
   --gradient-hero: linear-gradient(135deg, #5B4BF5 0%, #8B5CF6 50%, #FF6B9D 100%);
+  --gradient-text: linear-gradient(135deg, #5B4BF5 0%, #8B5CF6 50%, #FF6B9D 100%); /* for gradient-coloured TEXT */
   --gradient-card: linear-gradient(135deg, #5B4BF5 0%, #3B82F6 100%);
   --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
@@ -30,6 +31,8 @@
 /* Deep Cosmic Midnight Dark Mode Tokens */
 [data-theme="dark"] {
   --gradient-hero: linear-gradient(135deg, #6D5EF7 0%, #4B33C9 50%, #2A1B7A 100%);
+  /* the dark hero gradient ends in a very dark indigo, so gradient TEXT uses lighter stops to stay readable */
+  --gradient-text: linear-gradient(135deg, #A99DFF 0%, #C28BFF 50%, #FF8FB8 100%);
   --gradient-card: linear-gradient(135deg, #6D5EF7 0%, #4B33C9 50%, #2A1B7A 100%);
   --primary: #7C6EFA;
   --primary-dark: #6352E8;
@@ -41,7 +44,7 @@
   --navy-light: #DDD9FC;
   --text-dark: #F4F3FF;
   --text-mid: #A5A3C7;
-  --text-light: #737199;
+  --text-light: #908EB8;
   --bg: #0B0B16;
   --bg-card: #16162C;
   --border: rgba(255, 255, 255, 0.09);
