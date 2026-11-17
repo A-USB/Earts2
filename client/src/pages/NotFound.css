@@ -15,7 +15,7 @@
   font-size: 96px;
   font-family: 'Syne', sans-serif;
   font-weight: 800;
-  background: var(--gradient-hero);
+  background: var(--gradient-text, var(--gradient-hero));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   line-height: 1;
