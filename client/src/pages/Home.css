@@ -62,7 +62,7 @@
 .hero-left .eyebrow { margin-bottom: clamp(8px, 1.6vh, 16px); display: block; }
 .hero-left h1 { font-size: clamp(34px, min(6vw, 7.4vh), 66px); color: var(--text-dark); margin-bottom: clamp(14px, 2.4vh, 24px); }
 .hero-gradient {
-  background: var(--gradient-hero);
+  background: var(--gradient-text, var(--gradient-hero));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
