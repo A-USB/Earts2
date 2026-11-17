@@ -341,3 +341,6 @@
   .sort-select { flex: 1 1 auto; min-width: 0; }
   .marketplace-grid { gap: 30px 16px; }
 }
+
+/* Dark mode: deeper violet behind white text for readable contrast */
+[data-theme="dark"] .mode-toggle-btn.active { background: var(--primary-dark); border-color: var(--primary-dark); }
