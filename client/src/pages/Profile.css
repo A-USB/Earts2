@@ -886,5 +886,8 @@ button.add-artwork-card span { font-size: 13px; }
 /* ===== Responsive pass ===== */
 @media (max-width: 520px) {
   /* the main buttons share a row evenly; the small icon buttons follow */
-  .profile-header-actions > .profile-action-btn { flex: 1 1 calc(50% - 5px); justify-content: center; }
+  .profile-header-actions > .profile-action-btn { flex: 1 1 calc(50% - 5px); justify-content: center; padding: 9px 10px; font-size: 13px; white-space: nowrap; }
 }
+
+/* Dark mode: deeper violet behind white text for readable contrast */
+[data-theme="dark"] .art-tab.active { background: var(--primary-dark); border-color: var(--primary-dark); }
