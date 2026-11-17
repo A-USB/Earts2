@@ -108,8 +108,17 @@
   margin-top: 8px;
   padding: 8px 18px;
   font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  /* themed: it was an unstyled browser button, which showed up bright white in dark mode */
+  background: var(--primary-light);
+  color: var(--primary);
+  border: 1.5px solid transparent;
+  border-radius: 99px;
+  transition: background-color 0.2s ease, color 0.2s ease;
   pointer-events: none;
 }
+.dropzone-box:hover .dropzone-browse-btn { background: var(--primary); color: #fff; }
 
 /* Preview Viewport */
 .preview-container {
@@ -1143,4 +1152,24 @@
   .collab-section { padding: 16px 14px; }
   .upload-actions-bar { flex-direction: column-reverse; align-items: stretch; }
   .upload-actions-bar > * { width: 100%; justify-content: center; text-align: center; }
+}
+
+/* Dark mode: white text on the lighter violet was under 4:1, so active tabs use the deeper violet */
+[data-theme="dark"] .color-tab-btn.active { background: var(--primary-dark); border-color: var(--primary-dark); }
+[data-theme="dark"] .color-tab-btn.active .color-tab-count { background: rgba(0, 0, 0, 0.25); }
+
+/* Browse Files: locked to the theme colours (the button is a plain <button>, so without this it can fall back to
+   the browser's white default in dark mode). The extra selector and !important make sure nothing can override it. */
+.dropzone-box .dropzone-content button.dropzone-browse-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--primary-light) !important;
+  color: var(--primary) !important;
+  border: 1.5px solid transparent !important;
+  border-radius: 99px;
+}
+.dropzone-box:hover .dropzone-content button.dropzone-browse-btn,
+.dropzone-box.dragging .dropzone-content button.dropzone-browse-btn {
+  background: var(--primary) !important;
+  color: #fff !important;
 }
