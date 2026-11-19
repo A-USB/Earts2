@@ -10,6 +10,7 @@ import './Profile.css';
 import '../components/PurchaseModal.css';
 import '../components/CreatePostModal.css';
 import ArtworkCard from '../components/ArtworkCard';
+import SalesPanel from '../components/SalesPanel';
 import CreatePostModal from '../components/CreatePostModal';
 import IconTile from '../components/IconTile';
 import { formatCompact } from '../utils/formatCount';
@@ -530,7 +531,7 @@ export default function Profile() {
                 <div className="artwork-section-header">
                   <h3>Portfolio</h3>
                   <div className="artwork-tabs">
-                    {['All', 'For Sale', 'Sold', 'Collections'].map(t => (
+                    {['All', 'For Sale', 'Sold', 'Collections', ...(isOwn ? ['Orders'] : [])].map(t => (
                       <button
                         key={t}
                         className={`art-tab ${tab === t ? 'active' : ''}`}
@@ -542,7 +543,9 @@ export default function Profile() {
                   </div>
                 </div>
 
-                {tab === 'Collections' ? (
+                {tab === 'Orders' && isOwn ? (
+                  <SalesPanel />
+                ) : tab === 'Collections' ? (
                   <>
                     {isOwn && (
                       <button className="btn-outline new-collection-btn" onClick={() => setShowNewCollection(true)}>
