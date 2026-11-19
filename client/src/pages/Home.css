@@ -19,24 +19,37 @@
   min-height: 100svh;
   background-color: var(--bg);
 }
-.hero-stage::before {
+.hero-stage { transition: background-color 0.4s ease; }
+
+/* Two stacked art layers that CROSSFADE when the theme changes (a background-image swap can't be animated,
+   so both images are always present and only their opacity changes). Change 0.4s to make the switch slower/faster. */
+.hero-stage::before,
+.hero-stage::after {
   content: '';
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: url('../assets/hero-watercolor.webp') center / cover no-repeat;
-  mix-blend-mode: multiply;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
   pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+/* light art */
+.hero-stage::before {
+  background-image: url('../assets/hero-watercolor.webp');
+  mix-blend-mode: multiply;
   /* lighter, lower-contrast wash (lower opacity = paler colours; the bottom edge is no longer faded out) */
   opacity: 0.65;
   filter: contrast(0.85) saturate(0.9);
 }
-/* Dark theme: same art, inverted to deep tints and blended with "lighten" so only the colour clouds glow on the dark page */
-[data-theme="dark"] .hero-stage::before {
-  filter: invert(1) hue-rotate(180deg) brightness(1.5);
-  mix-blend-mode: lighten;
-  opacity: 0.6;
+/* dark art */
+.hero-stage::after {
+  background-image: url('../assets/hero-watercolor-dark.webp');
+  opacity: 0;
 }
+[data-theme="dark"] .hero-stage::before { opacity: 0; }
+[data-theme="dark"] .hero-stage::after  { opacity: 1; }
 
 .hero-stage > .hero {
   flex: 1;
@@ -62,8 +75,11 @@
 .hero-left .eyebrow { margin-bottom: clamp(8px, 1.6vh, 16px); display: block; }
 .hero-left h1 { font-size: clamp(34px, min(6vw, 7.4vh), 66px); color: var(--text-dark); margin-bottom: clamp(14px, 2.4vh, 24px); }
 .hero-gradient {
-  background: var(--gradient-text, var(--gradient-hero));
+  /* each theme uses its own default gradient: light = violet to pink, dark = the dark theme's indigo gradient
+     (both are defined as --gradient-hero in index.css) */
+  background: var(--gradient-hero);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .hero-left p { font-size: clamp(15px, 1.5vw, 17px); color: var(--text-mid); line-height: 1.7; margin: 0 auto clamp(18px, 3.4vh, 34px); max-width: 540px; }
@@ -261,12 +277,11 @@
 .artist-card:hover { transform: translateY(-4px); border-color: var(--primary); box-shadow: var(--shadow-md); }
 .artist-ring {
   display: inline-flex;
-  padding: 3px;
+  padding: 6px;          /* keeps the card the same height now that the gradient ring is gone */
   margin-bottom: 8px;
   border-radius: 50%;
-  background: var(--brand-gradient);
 }
-.artist-ring > * { border: 3px solid var(--bg-card); border-radius: 50%; box-sizing: content-box; }
+.artist-ring > * { border: 0; border-radius: 50%; }
 .artist-card h4 { font-size: 17px; color: var(--text-dark); font-family: 'Inter', sans-serif; font-weight: 700; }
 .artist-role {
   padding: 3px 12px;
