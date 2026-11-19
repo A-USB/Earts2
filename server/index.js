@@ -647,25 +647,179 @@ app.get('/api/users/me/orders', auth, async (req, res) => {
   }
 });
 
-// ================= ARTWORKS ROUTES =================
-app.get('/api/artworks', async (req, res) => {
-  try {
-    const { category, trending, featured, artistId, search } = req.query;
-    const filter = {};
+const ORDER_TRANSITIONS = {
+  demo: ['confirmed', 'cancelled'],
+  confirmed: ['shipped', 'cancelled'],
+  shipped: ['delivered'],
+  delivered: [],
+  cancelled: []
+};
 
-    if (category && category !== 'All') filter.category = category;
-    if (trending === 'true') filter.trending = true;
-    if (featured === 'true') filter.featured = true;
-    if (artistId) filter.artistId = artistId;
-    if (search) {
-      filter.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { artistName: { $regex: search, $options: 'i' } },
-        { medium: { $regex: search, $options: 'i' } }
-      ];
+const ORDER_STATUS_TEXT = {
+  confirmed: 'confirmed your order for',
+  shipped: 'marked your order as shipped:',
+  delivered: 'marked your order as delivered:',
+  cancelled: 'cancelled your order for'
+};
+
+// Orders received by the signed-in artist
+app.get('/api/users/me/sales', auth, async (req, res) => {
+  try {
+    const mine = await Artwork.find({ artistId: req.userId });
+    const artworkIds = mine.map(a => String(a.id));
+    const filter = artworkIds.length
+      ? { $or: [{ sellerId: req.userId }, { artworkId: { $in: artworkIds } }] }
+      : { sellerId: req.userId };
+    const orders = await Order.find(filter).sort({ createdAt: -1 });
+
+    const items = await Promise.all(orders.map(async (o) => {
+      const [artwork, buyer] = await Promise.all([Artwork.findById(o.artworkId), User.findById(o.buyerId)]);
+      const json = o.toJSON();
+      return {
+        ...json,
+        allowedStatuses: ORDER_TRANSITIONS[json.status] || [],
+        artwork: artwork ? (({ id, title, color, imageUrl, price }) => ({ id, title, color, imageUrl, price }))(withImageUrl(req, artwork.toJSON())) : null,
+        buyer: buyer
+          ? { id: buyer.id, username: buyer.username, firstName: buyer.firstName, lastName: buyer.lastName, avatar: buyer.avatar || null, avatarSeed: buyer.avatarSeed || null }
+          : null
+      };
+    }));
+
+    const counted = items.filter(o => o.status !== 'cancelled');
+    res.json({
+      items,
+      summary: {
+        total: items.length,
+        open: items.filter(o => ['demo', 'confirmed', 'shipped'].includes(o.status)).length,
+        delivered: items.filter(o => o.status === 'delivered').length,
+        revenue: counted.reduce((sum, o) => sum + (Number(o.price) || 0), 0)
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Seller moves an order along: demo -> confirmed -> shipped -> delivered (or cancelled)
+app.patch('/api/orders/:id/status', auth, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    const artwork = await Artwork.findById(order.artworkId);
+    const isSeller = order.sellerId === req.userId || artwork?.artistId === req.userId;
+    if (!isSeller) return res.status(403).json({ error: 'Only the seller can update this order.' });
+
+    const next = req.body?.status;
+    if (!(ORDER_TRANSITIONS[order.status] || []).includes(next)) {
+      return res.status(400).json({ error: `An order that is ${order.status} cannot be changed to ${next}.` });
     }
 
-    const artworks = await Artwork.find(filter).sort({ pinned: -1, createdAt: -1 });
+    let trackingNote = order.trackingNote || '';
+    if (req.body?.trackingNote !== undefined) {
+      if (typeof req.body.trackingNote !== 'string' || req.body.trackingNote.length > 200) {
+        return res.status(400).json({ error: 'Delivery note must be 200 characters or fewer.' });
+      }
+      trackingNote = req.body.trackingNote.trim();
+    }
+
+    order.status = next;
+    order.trackingNote = trackingNote;
+    order.sellerId = order.sellerId || req.userId;
+    order.updatedAt = Date.now();
+    await order.save();
+
+    const seller = await User.findById(req.userId);
+    await Notification.create({
+      userId: order.buyerId,
+      type: 'purchase',
+      actorName: seller ? (`${seller.firstName || ''} ${seller.lastName || ''}`.trim() || seller.username) : 'The artist',
+      actorUsername: seller?.username,
+      text: ORDER_STATUS_TEXT[next],
+      targetTitle: artwork?.title || 'your artwork',
+      targetId: order.artworkId,
+      targetPrice: order.price,
+      targetColor: artwork?.color
+    });
+
+    res.json({ success: true, order: { ...order.toJSON(), allowedStatuses: ORDER_TRANSITIONS[next] || [] } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ================= ARTWORKS ROUTES =================
+const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const ARTWORK_SORTS = {
+  latest: { createdAt: -1 },
+  oldest: { createdAt: 1 },
+  liked: { likes: -1, createdAt: -1 }
+};
+
+// Query: category, status, search (every word must match title/artist/medium/description/category),
+// minPrice, maxPrice, sort (latest | oldest | liked | price_asc | price_desc), trending, featured, artistId
+app.get('/api/artworks', async (req, res) => {
+  try {
+    const { category, trending, featured, artistId, status, sort } = req.query;
+    const search = String(req.query.search || '').trim().slice(0, 100);
+    const filter = {};
+
+    if (category && category !== 'All') filter.category = String(category);
+    if (trending === 'true') filter.trending = true;
+    if (featured === 'true') filter.featured = true;
+    if (artistId) filter.artistId = String(artistId);
+    if (['for_sale', 'not_for_sale', 'sold'].includes(status)) filter.status = status;
+
+    const minPrice = req.query.minPrice !== undefined && req.query.minPrice !== '' ? Number(req.query.minPrice) : null;
+    const maxPrice = req.query.maxPrice !== undefined && req.query.maxPrice !== '' ? Number(req.query.maxPrice) : null;
+    if ((minPrice !== null && (!Number.isFinite(minPrice) || minPrice < 0)) || (maxPrice !== null && (!Number.isFinite(maxPrice) || maxPrice < 0))) {
+      return res.status(400).json({ error: 'Price filters must be positive numbers.' });
+    }
+    if (minPrice !== null && maxPrice !== null && minPrice > maxPrice) {
+      return res.status(400).json({ error: 'The minimum price cannot be higher than the maximum price.' });
+    }
+    if (minPrice !== null || maxPrice !== null) {
+      filter.price = {};
+      if (minPrice !== null) filter.price.$gte = minPrice;
+      if (maxPrice !== null) filter.price.$lte = maxPrice;
+    }
+
+    if (search) {
+      const words = [...new Set(search.toLowerCase().split(/\s+/).filter(Boolean))].slice(0, 6);
+      filter.$and = words.map(word => {
+        const match = { $regex: escapeRegex(word), $options: 'i' };
+        return {
+          $or: [
+            { title: match },
+            { artistName: match },
+            { artistUsername: match },
+            { medium: match },
+            { category: match },
+            { description: match }
+          ]
+        };
+      });
+    }
+
+    const sortKey = String(sort || '');
+    const dbSort = ARTWORK_SORTS[sortKey] || (sortKey.startsWith('price_') ? { createdAt: -1 } : { pinned: -1, createdAt: -1 });
+    let artworks = await Artwork.find(filter).sort(dbSort);
+
+    const hasPrice = (a) => typeof a.price === 'number' && Number.isFinite(a.price);
+    // A price filter only matches pieces that actually have a price (the offline store treats null as 0)
+    if (minPrice !== null || maxPrice !== null) artworks = artworks.filter(hasPrice);
+
+    if (sortKey === 'price_asc' || sortKey === 'price_desc') {
+      const dir = sortKey === 'price_asc' ? 1 : -1;
+      // Pieces without a price always go last, whichever direction is chosen
+      artworks = [...artworks].sort((a, b) => {
+        if (hasPrice(a) !== hasPrice(b)) return hasPrice(a) ? -1 : 1;
+        if (!hasPrice(a)) return 0;
+        return (a.price - b.price) * dir;
+      });
+    }
+
     res.json(artworks.map(a => withImageUrl(req, a.toJSON())));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1163,9 +1317,23 @@ app.post('/api/artworks/:id/purchase', auth, async (req, res) => {
     const order = await Order.create({
       buyerId: req.userId,
       artworkId: artwork.id,
+      sellerId: artwork.artistId,
       price: artwork.price || 0,
       status: 'demo',
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    });
+
+    await Notification.create({
+      userId: artwork.artistId,
+      type: 'sale',
+      actorName: `${buyer.firstName || ''} ${buyer.lastName || ''}`.trim() || buyer.username,
+      actorUsername: buyer.username,
+      text: 'placed an order for',
+      targetTitle: artwork.title,
+      targetId: artwork.id,
+      targetPrice: artwork.price,
+      targetColor: artwork.color
     });
 
     await Notification.create({
@@ -1192,7 +1360,7 @@ app.get('/api/notifications', auth, async (req, res) => {
     if (!user) return res.status(404).json({ error: 'User not found' });
     const types = user.accountType === 'collector'
       ? ['purchase', 'new_artwork', 'reply']
-      : ['like', 'comment', 'reply', 'sale', 'follow', 'feature', 'new_artwork'];
+      : ['like', 'comment', 'reply', 'sale', 'follow', 'feature', 'new_artwork', 'purchase'];
     const list = await Notification.find({ userId: req.userId, type: { $in: types } }).sort({ createdAt: -1 }).limit(50);
     res.json(list.map(n => n.toJSON()));
   } catch (err) {
