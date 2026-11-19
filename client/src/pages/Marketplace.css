@@ -344,3 +344,75 @@
 
 /* Dark mode: deeper violet behind white text for readable contrast */
 [data-theme="dark"] .mode-toggle-btn.active { background: var(--primary-dark); border-color: var(--primary-dark); }
+
+/* ---------- Search & filters (step 2) ---------- */
+.filter-btn { position: relative; }
+.filter-badge {
+  display: inline-grid; place-items: center;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: 999px;
+  background: var(--primary); color: #fff;
+  font-size: 11px; font-weight: 700;
+}
+
+.filters-panel-grid { display: flex; flex-wrap: wrap; gap: 24px 40px; }
+.filters-panel .filter-group { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.filters-panel .filter-group > label { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+
+.price-inputs { display: flex; align-items: center; gap: 10px; }
+.price-dash { color: var(--text-muted); }
+.price-field { position: relative; width: 130px; }
+.price-field span {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  font-weight: 700; font-size: 13px; color: var(--text-muted); pointer-events: none;
+}
+.price-field input { padding: 9px 10px 9px 26px; font-size: 13px; }
+
+.price-presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.preset-chip {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--input-bg);
+  color: var(--text-secondary);
+  font-size: 12.5px; font-weight: 600;
+  transition: all var(--transition-fast);
+}
+.preset-chip:hover { border-color: var(--primary); color: var(--primary); }
+.preset-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.preset-chip:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 40%, transparent); outline-offset: 2px; }
+
+.filter-error { margin: 0; font-size: 12.5px; color: #C0392B; }
+[data-theme="dark"] .filter-error { color: #FF8A6B; }
+.filter-hint { margin: 14px 0 0; font-size: 12px; color: var(--text-muted); }
+
+.results-line {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  margin: -4px 0 20px;
+  font-size: 13px; color: var(--text-secondary);
+}
+.results-line strong { color: var(--text-primary); }
+.active-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--primary);
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 12px; font-weight: 700;
+  cursor: pointer;
+}
+.active-chip:hover { background: var(--primary); color: #fff; }
+[data-theme="dark"] .active-chip { color: #D8D3FF; }
+.clear-all-link {
+  background: none; padding: 4px 6px;
+  color: var(--text-secondary); font-size: 12.5px; font-weight: 600;
+  text-decoration: underline; cursor: pointer;
+}
+.clear-all-link:hover { color: var(--primary); }
+
+@media (max-width: 560px) {
+  .price-field { flex: 1; width: auto; }
+  .price-inputs { width: 100%; }
+}
+
