@@ -40,13 +40,6 @@ export default function Footer() {
               <EartsLogo size={32} />
             </Link>
             <p>A platform built by artists, for artists. Putting creators first since 2022.</p>
-            <div className="footer-social">
-              {Object.entries(SocialIcons).map(([name, icon]) => (
-                <a key={name} href="#" aria-label={name} className="social-btn" title={name}>
-                  {icon}
-                </a>
-              ))}
-            </div>
           </div>
           <div className="footer-cols">
             <div className="footer-col">
@@ -76,11 +69,18 @@ export default function Footer() {
           </div>
         </div>
         <div className="footer-bottom">
-          <span>2026 Earts, Inc. All right reserved</span>
           <div className="footer-legal">
             <a href="#">Privacy Policy</a>
             <a href="#">Terms of Service</a>
             <a href="#">Cookie Settings</a>
+          </div>
+          <span className="footer-copy">2026 Earts, Inc. All right reserved</span>
+          <div className="footer-social">
+            {Object.entries(SocialIcons).map(([name, icon]) => (
+              <a key={name} href="#" aria-label={name} className="social-btn" title={name}>
+                {icon}
+              </a>
+            ))}
           </div>
         </div>
       </div>
