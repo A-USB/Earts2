@@ -26,6 +26,16 @@
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 24px;
+  /* Aliases used by the upload, gallery, marketplace and search pages (were undefined => transparent/fallback colours) */
+  --surface: var(--bg-card);
+  --surface-secondary: #F3F5FA;
+  --input-bg: #FFFFFF;
+  --text-primary: var(--text-dark);
+  --text-secondary: var(--text-mid);
+  --text-muted: var(--text-light);
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+  color-scheme: light;
 }
 
 /* Deep Cosmic Midnight Dark Mode Tokens */
@@ -52,6 +62,13 @@
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.25);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.65), 0 4px 12px rgba(0, 0, 0, 0.45);
+  --surface: var(--bg-card);
+  --surface-secondary: #12122A;
+  --input-bg: #121224;
+  --text-primary: var(--text-dark);
+  --text-secondary: var(--text-mid);
+  --text-muted: var(--text-light);
+  color-scheme: dark; /* native number spinners, scrollbars and date pickers follow the theme */
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -111,6 +128,33 @@ input:focus, select:focus, textarea:focus {
 [data-theme="dark"] textarea:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(124, 110, 250, 0.2);
+}
+
+/* Dropdowns: one themed chevron with proper breathing room from the right edge.
+   (The native arrow sits almost on the border; Auth selects keep their own chevron element.) */
+select:not([multiple]):not([size]):not(.auth-form select) {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: var(--select-pad, 40px);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--select-x, 9px) center;
+  background-size: 16px 16px;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+[data-theme="dark"] select:not([multiple]):not([size]):not(.auth-form select) {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23B9B7DA' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+select:not([multiple]):not([size]):not(.auth-form select):disabled { cursor: not-allowed; opacity: 0.6; }
+
+/* Compact selects (sort/filter bars) */
+.sort-select, .gallery-sort-select, .collab-role-select,
+.moderation-filter select, .moderation-report select {
+  --select-x: 12px;
+  --select-pad: 34px;
 }
 
 .btn-primary {
