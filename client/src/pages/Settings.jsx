@@ -6,7 +6,8 @@ import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
 import AvatarPicker from '../components/AvatarPicker';
 import { AVATAR_PRESETS } from '../utils/avatarPresets';
-import { prepareAvatarImage } from '../utils/prepareAvatarImage';
+import AvatarCropModal from '../components/AvatarCropModal';
+import { validateAvatarFile } from '../utils/cropAvatarImage';
 import './Settings.css';
 
 const TABS = [
@@ -41,6 +42,7 @@ export default function Settings() {
   const [loading, setLoading] = useState(false);
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [avatarError, setAvatarError] = useState('');
+  const [cropFile, setCropFile] = useState(null);   // photo waiting in the crop card
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -92,24 +94,28 @@ export default function Settings() {
     }
   };
 
-  const handleAvatarUpload = async (event) => {
+  // Picking a photo opens the crop card; nothing is saved until "Save photo"
+  const handleAvatarUpload = (event) => {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
-    setAvatarBusy(true);
     setAvatarError('');
     try {
-      const avatar = await prepareAvatarImage(file);
-      const updated = await api.patch('/users/me', {
-        avatar,
-        avatarSeed: user.avatarSeed || AVATAR_PRESETS[0].id
-      });
-      updateUser(updated);
+      validateAvatarFile(file);
+      setCropFile(file);
     } catch (err) {
-      setAvatarError(err.message || 'Unable to upload this photo.');
-    } finally {
-      setAvatarBusy(false);
+      setAvatarError(err.message || 'Unable to use this photo.');
     }
+  };
+
+  // Called by the crop card with the framed, compressed image. Errors are shown inside the card.
+  const handleAvatarCropped = async (avatar) => {
+    const updated = await api.patch('/users/me', {
+      avatar,
+      avatarSeed: user.avatarSeed || AVATAR_PRESETS[0].id
+    });
+    updateUser(updated);
+    setCropFile(null);
   };
 
   if (!user) return null;
@@ -307,6 +313,9 @@ export default function Settings() {
           </div>
         </div>
       </div>
+      {cropFile && (
+        <AvatarCropModal file={cropFile} onCancel={() => setCropFile(null)} onSave={handleAvatarCropped} />
+      )}
     </div>
   );
 }
