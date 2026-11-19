@@ -213,3 +213,30 @@
 
 /* ===== Responsive pass ===== */
 .artist-search-input-wrap input { min-width: 0; text-overflow: ellipsis; }
+
+/* ---------- Artwork + artist tabs ---------- */
+.search-tabs { display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+.search-tab {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 16px;
+  margin-bottom: -1px;
+  background: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  font-size: 14px; font-weight: 700;
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+.search-tab:hover { color: var(--primary); }
+.search-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+.search-tab:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 40%, transparent); outline-offset: -3px; border-radius: 6px; }
+
+.search-artworks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 36px 24px;
+}
+.search-more { margin-top: 24px; text-align: center; font-size: 13px; color: var(--text-secondary); }
+.search-more a, .artist-search-empty a { color: var(--primary); font-weight: 700; text-decoration: underline; }
+.search-switch { background: none; padding: 0; color: var(--primary); font-weight: 700; text-decoration: underline; cursor: pointer; }
+
