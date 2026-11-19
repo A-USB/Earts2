@@ -140,6 +140,10 @@ function matchQuery(doc, query = {}) {
       if (!anyMatch) return false;
       continue;
     }
+    if (key === '$and' && Array.isArray(val)) {
+      if (!val.every(subQ => matchQuery(doc, subQ))) return false;
+      continue;
+    }
 
     const docVal = (key === '_id' || key === 'id') ? (doc.id || doc._id) : doc[key];
 
