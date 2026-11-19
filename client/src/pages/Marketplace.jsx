@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { Search, SlidersHorizontal, X, ShoppingBag, Sparkles, Users, ArrowRight, Eye, SearchX } from 'lucide-react';
 import { api } from '../utils/api';
@@ -15,9 +15,28 @@ const CATEGORIES = [
   'Watercolour', 'Abstract', 'Sculpture', 'Mixed Media', 'Photography'
 ];
 
-const SORT_OPTIONS = [
-  'Latest', 'Most Liked', 'Price: Low to High', 'Price: High to Low'
+const SORTS = [
+  { id: 'latest', label: 'Latest' },
+  { id: 'liked', label: 'Most Liked' },
+  { id: 'price_asc', label: 'Price: Low to High' },
+  { id: 'price_desc', label: 'Price: High to Low' },
 ];
+
+const STATUS_OPTIONS = [
+  { id: '', label: 'Any' },
+  { id: 'for_sale', label: 'For sale' },
+  { id: 'not_for_sale', label: 'Exhibition only' },
+  { id: 'sold', label: 'Sold' },
+];
+
+const PRICE_PRESETS = [
+  { label: 'Under $100', min: '', max: '100' },
+  { label: '$100 – $500', min: '100', max: '500' },
+  { label: '$500 – $1,000', min: '500', max: '1000' },
+  { label: 'Over $1,000', min: '1000', max: '' },
+];
+
+const money = (value) => `$${Number(value).toLocaleString()}`;
 
 export default function Marketplace() {
   const { user } = useAuth();
@@ -30,14 +49,42 @@ export default function Marketplace() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Filter Modes: 'for_sale' (Marketplace shop) | 'all' (Full Exhibition & Discovery)
-  const [viewMode, setViewMode] = useState(searchParams.get('mode') || 'for_sale');
-  const [category, setCategory] = useState(searchParams.get('category') || 'All');
-  const [search, setSearch] = useState(searchParams.get('search') || '');
-  const [sort, setSort] = useState('Latest');
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [priceRange, setPriceRange] = useState([0, 1000]);
+  // Everything below is mirrored in the URL, so a search can be shared or reopened with the back button.
+  const [viewMode, setViewMode] = useState(searchParams.get('mode') === 'all' ? 'all' : 'for_sale');
+  const [category, setCategory] = useState(CATEGORIES.includes(searchParams.get('category')) ? searchParams.get('category') : 'All');
+  const [search, setSearch] = useState((searchParams.get('search') || '').slice(0, 100));
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  const [sort, setSort] = useState(SORTS.some(s => s.id === searchParams.get('sort')) ? searchParams.get('sort') : 'latest');
+  const [status, setStatus] = useState(STATUS_OPTIONS.some(s => s.id && s.id === searchParams.get('status')) ? searchParams.get('status') : '');
+  const [minPrice, setMinPrice] = useState(searchParams.get('min') || '');
+  const [maxPrice, setMaxPrice] = useState(searchParams.get('max') || '');
+  const [filtersOpen, setFiltersOpen] = useState(Boolean(searchParams.get('min') || searchParams.get('max') || searchParams.get('status')));
   const [buyTarget, setBuyTarget] = useState(null);
   const [savedIds, setSavedIds] = useState([]);
+
+  const priceError = minPrice !== '' && maxPrice !== '' && Number(minPrice) > Number(maxPrice)
+    ? 'The minimum price can’t be higher than the maximum.'
+    : '';
+
+  // Wait for a pause in typing before asking the server
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearch(search), 300);
+    return () => window.clearTimeout(timer);
+  }, [search]);
+
+  // Keep the address bar in step with the filters
+  useEffect(() => {
+    const next = new URLSearchParams();
+    if (debouncedSearch.trim()) next.set('search', debouncedSearch.trim());
+    if (category !== 'All') next.set('category', category);
+    if (viewMode !== 'for_sale') next.set('mode', viewMode);
+    if (sort !== 'latest') next.set('sort', sort);
+    if (status && viewMode === 'all') next.set('status', status);
+    if (minPrice) next.set('min', minPrice);
+    if (maxPrice) next.set('max', maxPrice);
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, category, viewMode, sort, status, minPrice, maxPrice]);
 
   useEffect(() => {
     if (!user) { setSavedIds([]); return; }
@@ -56,50 +103,62 @@ export default function Marketplace() {
     }
   };
 
+  // Featured creators only need loading once
   useEffect(() => {
+    let cancelled = false;
+    api.get('/users')
+      .then(users => { if (!cancelled) setFeaturedArtists(users.filter(u => u.accountType === 'artist').slice(0, 5)); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  // Artworks are searched, filtered and sorted by the server
+  useEffect(() => {
+    if (priceError) { setLoading(false); return undefined; }
+    let cancelled = false;
     setLoading(true);
     setLoadError('');
-    const q = category !== 'All' ? `?category=${category}` : '';
 
-    Promise.all([
-      api.get(`/artworks${q}`),
-      api.get('/users').catch(() => [])
-    ])
-      .then(([artworksData, usersData]) => {
-        let filtered = artworksData;
+    const params = new URLSearchParams({ sort });
+    if (category !== 'All') params.set('category', category);
+    if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim());
+    const effectiveStatus = viewMode === 'for_sale' ? 'for_sale' : status;
+    if (effectiveStatus) params.set('status', effectiveStatus);
+    if (minPrice) params.set('minPrice', minPrice);
+    if (maxPrice) params.set('maxPrice', maxPrice);
 
-        // View mode filter
-        if (viewMode === 'for_sale') {
-          filtered = filtered.filter(a => a.status === 'for_sale');
-        }
+    api.get(`/artworks?${params.toString()}`)
+      .then(data => { if (!cancelled) setArtworks(Array.isArray(data) ? data : []); })
+      .catch(error => { if (!cancelled) setLoadError(error.message || 'Unable to load the marketplace.'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
 
-        if (search) {
-          filtered = filtered.filter(a =>
-            a.title.toLowerCase().includes(search.toLowerCase()) ||
-            a.artistName.toLowerCase().includes(search.toLowerCase()) ||
-            (a.medium && a.medium.toLowerCase().includes(search.toLowerCase()))
-          );
-        }
+    return () => { cancelled = true; };
+  }, [category, debouncedSearch, sort, status, viewMode, minPrice, maxPrice, priceError, refreshKey]);
 
-        if (viewMode === 'for_sale') {
-          filtered = filtered.filter(a =>
-            !a.price || (a.price >= priceRange[0] && a.price <= priceRange[1])
-          );
-        }
+  const cleanPrice = (value) => value.replace(/[^0-9.]/g, '').slice(0, 10);
 
-        if (sort === 'Most Liked') filtered.sort((a, b) => b.likes - a.likes);
-        if (sort === 'Price: Low to High') filtered.sort((a, b) => (a.price || 0) - (b.price || 0));
-        if (sort === 'Price: High to Low') filtered.sort((a, b) => (b.price || 0) - (a.price || 0));
+  const activeFilters = useMemo(() => {
+    const list = [];
+    if (debouncedSearch.trim()) list.push({ key: 'search', label: `“${debouncedSearch.trim()}”`, clear: () => setSearch('') });
+    if (category !== 'All') list.push({ key: 'category', label: category, clear: () => setCategory('All') });
+    if (viewMode === 'all' && status) list.push({ key: 'status', label: STATUS_OPTIONS.find(s => s.id === status)?.label, clear: () => setStatus('') });
+    if (minPrice || maxPrice) {
+      const label = minPrice && maxPrice ? `${money(minPrice)} – ${money(maxPrice)}` : minPrice ? `From ${money(minPrice)}` : `Up to ${money(maxPrice)}`;
+      list.push({ key: 'price', label, clear: () => { setMinPrice(''); setMaxPrice(''); } });
+    }
+    return list;
+  }, [debouncedSearch, category, viewMode, status, minPrice, maxPrice]);
 
-        setArtworks(filtered);
+  const panelFilterCount = (minPrice || maxPrice ? 1 : 0) + (viewMode === 'all' && status ? 1 : 0);
 
-        // Featured artists
-        const artists = usersData.filter(u => u.accountType === 'artist').slice(0, 5);
-        setFeaturedArtists(artists);
-      })
-      .catch(error => setLoadError(error.message || 'Unable to load the marketplace.'))
-      .finally(() => setLoading(false));
-  }, [category, search, sort, priceRange, viewMode, refreshKey]);
+  const resetFilters = () => {
+    setSearch('');
+    setDebouncedSearch('');
+    setCategory('All');
+    setStatus('');
+    setMinPrice('');
+    setMaxPrice('');
+  };
 
   return (
     <div className="marketplace-page page-wrapper">
@@ -118,12 +177,13 @@ export default function Marketplace() {
             <Search size={18} className="search-icon" />
             <input
               placeholder="Search artworks, artists, mediums..."
+              aria-label="Search artworks"
               value={search}
               onChange={e => setSearch(e.target.value)}
               maxLength={100}
             />
             {search && (
-              <button onClick={() => setSearch('')} className="clear-search-btn">
+              <button type="button" onClick={() => setSearch('')} className="clear-search-btn" aria-label="Clear search">
                 <X size={16} />
               </button>
             )}
@@ -133,7 +193,7 @@ export default function Marketplace() {
 
       <div className="container marketplace-body">
         {/* 2. Featured Creators Strip */}
-        {featuredArtists.length > 0 && !search && category === 'All' && (
+        {featuredArtists.length > 0 && activeFilters.length === 0 && !search && (
           <div className="featured-creators-strip">
             <div className="creators-strip-header">
               <div className="creators-title">
@@ -167,19 +227,13 @@ export default function Marketplace() {
           <div className="mode-toggle-group">
             <button
               className={`mode-toggle-btn ${viewMode === 'for_sale' ? 'active' : ''}`}
-              onClick={() => {
-                setViewMode('for_sale');
-                setSearchParams(p => { p.set('mode', 'for_sale'); return p; });
-              }}
+              onClick={() => setViewMode('for_sale')}
             >
-              <ShoppingBag size={15} /> For Sale ({artworks.length})
+              <ShoppingBag size={15} /> For Sale
             </button>
             <button
               className={`mode-toggle-btn ${viewMode === 'all' ? 'active' : ''}`}
-              onClick={() => {
-                setViewMode('all');
-                setSearchParams(p => { p.set('mode', 'all'); return p; });
-              }}
+              onClick={() => setViewMode('all')}
             >
               <Eye size={15} /> All Artworks & Exhibition
             </button>
@@ -202,39 +256,110 @@ export default function Marketplace() {
               value={sort}
               onChange={e => setSort(e.target.value)}
               className="sort-select"
+              aria-label="Sort artworks"
             >
-              {SORT_OPTIONS.map(s => (
-                <option key={s} value={s}>{s}</option>
+              {SORTS.map(s => (
+                <option key={s.id} value={s.id}>{s.label}</option>
               ))}
             </select>
-            {viewMode === 'for_sale' && (
-              <button
-                className={`filter-btn btn-outline ${filtersOpen ? 'active' : ''}`}
-                onClick={() => setFiltersOpen(!filtersOpen)}
-              >
-                <SlidersHorizontal size={15} /> Filters
-              </button>
-            )}
+            <button
+              className={`filter-btn btn-outline ${filtersOpen ? 'active' : ''}`}
+              onClick={() => setFiltersOpen(open => !open)}
+              aria-expanded={filtersOpen}
+            >
+              <SlidersHorizontal size={15} /> Filters
+              {panelFilterCount > 0 && <span className="filter-badge">{panelFilterCount}</span>}
+            </button>
           </div>
         </div>
 
-        {/* 4. Filter Panel (Price slider when in For Sale mode) */}
-        {filtersOpen && viewMode === 'for_sale' && (
+        {/* 4. Filter Panel */}
+        {filtersOpen && (
           <div className="filters-panel card">
-            <div className="filter-group">
-              <label>Price Range: ${priceRange[0]} – ${priceRange[1]}</label>
-              <input
-                type="range"
-                min="0"
-                max="1000"
-                step="10"
-                value={priceRange[1]}
-                onChange={e => setPriceRange([priceRange[0], Number(e.target.value)])}
-                className="price-slider"
-              />
+            <div className="filters-panel-grid">
+              <div className="filter-group">
+                <label htmlFor="mk-min-price">Price range (USD)</label>
+                <div className="price-inputs">
+                  <div className="price-field">
+                    <span aria-hidden="true">$</span>
+                    <input
+                      id="mk-min-price"
+                      type="number"
+                      inputMode="decimal"
+                      min="0"
+                      placeholder="Min"
+                      value={minPrice}
+                      onChange={e => setMinPrice(cleanPrice(e.target.value))}
+                      aria-label="Minimum price"
+                    />
+                  </div>
+                  <span className="price-dash" aria-hidden="true">–</span>
+                  <div className="price-field">
+                    <span aria-hidden="true">$</span>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      min="0"
+                      placeholder="Max"
+                      value={maxPrice}
+                      onChange={e => setMaxPrice(cleanPrice(e.target.value))}
+                      aria-label="Maximum price"
+                    />
+                  </div>
+                </div>
+                {priceError && <p className="filter-error" role="alert">{priceError}</p>}
+                <div className="price-presets">
+                  {PRICE_PRESETS.map(p => (
+                    <button
+                      key={p.label}
+                      type="button"
+                      className={`preset-chip ${minPrice === p.min && maxPrice === p.max ? 'active' : ''}`}
+                      onClick={() => { setMinPrice(p.min); setMaxPrice(p.max); }}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {viewMode === 'all' && (
+                <div className="filter-group">
+                  <label>Availability</label>
+                  <div className="price-presets">
+                    {STATUS_OPTIONS.map(s => (
+                      <button
+                        key={s.id || 'any'}
+                        type="button"
+                        className={`preset-chip ${status === s.id ? 'active' : ''}`}
+                        onClick={() => setStatus(s.id)}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
+            <p className="filter-hint">Price filters only match pieces that have a listed price.</p>
           </div>
         )}
+
+        {/* Results summary + active filters */}
+        <div className="results-line" aria-live="polite">
+          <span>
+            {loading ? 'Searching…' : (
+              <><strong>{artworks.length}</strong> {artworks.length === 1 ? 'artwork' : 'artworks'}</>
+            )}
+          </span>
+          {activeFilters.map(f => (
+            <button key={f.key} type="button" className="active-chip" onClick={f.clear} aria-label={`Remove filter ${f.label}`}>
+              {f.label} <X size={12} />
+            </button>
+          ))}
+          {activeFilters.length > 1 && (
+            <button type="button" className="clear-all-link" onClick={resetFilters}>Clear all</button>
+          )}
+        </div>
 
         {/* 5. Artworks Grid */}
         {loading ? (
@@ -267,18 +392,21 @@ export default function Marketplace() {
           <div className="empty-state card">
             <div className="empty-icon"><IconTile Icon={SearchX} size="lg" tone="soft" /></div>
             <h3>No artworks found</h3>
-            <p>Try adjusting your search query, price filter, or switch to All Artworks mode.</p>
-            <button
-              className="btn-primary"
-              onClick={() => {
-                setSearch('');
-                setCategory('All');
-                setViewMode('all');
-                setPriceRange([0, 1000]);
-              }}
-            >
-              View All Artworks
-            </button>
+            <p>
+              {priceError
+                ? priceError
+                : activeFilters.length > 0 || viewMode === 'for_sale'
+                  ? 'Try a different word, widen the price range, or clear your filters.'
+                  : 'Nothing has been shared yet. Check back soon.'}
+            </p>
+            {(activeFilters.length > 0 || viewMode === 'for_sale') && (
+              <button
+                className="btn-primary"
+                onClick={() => { resetFilters(); setViewMode('all'); }}
+              >
+                Clear filters & view all artworks
+              </button>
+            )}
           </div>
         )}
       </div>
