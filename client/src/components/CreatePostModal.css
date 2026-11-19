@@ -70,7 +70,28 @@
   color: var(--text-dark);
   cursor: pointer;
 }
-.for-sale-toggle input { width: 16px; height: 16px; accent-color: var(--primary); }
+.for-sale-toggle input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1.5px solid var(--border);
+  border-radius: 5px;
+  background-color: var(--input-bg, #fff);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 12px 12px;
+  cursor: pointer;
+}
+[data-theme="dark"] .for-sale-toggle input[type="checkbox"] { border-color: rgba(255, 255, 255, 0.28); }
+.for-sale-toggle input[type="checkbox"]:checked {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+}
+.for-sale-toggle input[type="checkbox"]:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 35%, transparent); }
 
 .post-submit { justify-content: center; width: 100%; }
 .post-more-btn {
