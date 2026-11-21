@@ -907,12 +907,65 @@ app.patch('/api/artworks/:id', auth, async (req, res) => {
   try {
     const validationError = validateArtworkPayload(req.body, { partial: true });
     if (validationError) return res.status(400).json({ error: validationError });
+
+    const before = await Artwork.findOne({ _id: req.params.id, artistId: req.userId });
+    if (!before) return res.status(404).json({ error: 'Artwork not found or unauthorized' });
+
+    const update = { ...req.body };
+    const toPrice = (value) => (value === null || value === undefined || value === '' || !Number.isFinite(Number(value)) ? null : Number(value));
+    const oldPrice = toPrice(before.price);
+    const oldStatus = before.status;
+    const newStatus = update.status !== undefined ? update.status : oldStatus;
+    const newPrice = update.price !== undefined ? toPrice(update.price) : oldPrice;
+    if (update.price !== undefined && newPrice !== null) update.price = newPrice;
+
+    // A lowered price on a piece that stays for sale is a "price drop"; anything else clears an old drop badge.
+    const priceDropped = oldStatus === 'for_sale' && oldPrice !== null
+      && newStatus === 'for_sale' && newPrice !== null && newPrice < oldPrice;
+    const becameAvailable = oldStatus !== 'for_sale' && newStatus === 'for_sale';
+    if (priceDropped) {
+      update.previousPrice = oldPrice;
+      update.priceDroppedAt = Date.now();
+    } else if (newPrice !== oldPrice || newStatus !== oldStatus) {
+      update.previousPrice = null;
+      update.priceDroppedAt = null;
+    }
+
     const artwork = await Artwork.findOneAndUpdate(
       { _id: req.params.id, artistId: req.userId },
-      req.body,
+      update,
       { new: true }
     );
     if (!artwork) return res.status(404).json({ error: 'Artwork not found or unauthorized' });
+
+    // Tell everyone who saved this piece. A failed alert must never fail the edit itself.
+    if (priceDropped || becameAvailable) {
+      try {
+        const artist = await User.findById(req.userId);
+        const saves = await SavedArtwork.find({ artworkId: artwork.id });
+        const recipients = [...new Set(saves.map(record => String(record.userId)))]
+          .filter(userId => userId !== req.userId)
+          .slice(0, 500);
+        const actorName = artist
+          ? (`${artist.firstName || ''} ${artist.lastName || ''}`.trim() || artist.username)
+          : artwork.artistName;
+        await Promise.all(recipients.map(userId => Notification.create({
+          userId,
+          type: priceDropped ? 'price_drop' : 'now_available',
+          actorName,
+          actorUsername: artist?.username || artwork.artistUsername,
+          text: priceDropped ? 'lowered the price of' : 'made a piece you saved available:',
+          targetTitle: artwork.title,
+          targetId: artwork.id,
+          targetPrice: newPrice === null ? undefined : newPrice,
+          previousPrice: priceDropped ? oldPrice : undefined,
+          targetColor: artwork.color
+        })));
+      } catch (notifyError) {
+        console.error('Could not send saved-artwork alerts:', notifyError.message);
+      }
+    }
+
     res.json(artwork.toJSON());
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1359,8 +1412,8 @@ app.get('/api/notifications', auth, async (req, res) => {
     const user = await User.findById(req.userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
     const types = user.accountType === 'collector'
-      ? ['purchase', 'new_artwork', 'reply']
-      : ['like', 'comment', 'reply', 'sale', 'follow', 'feature', 'new_artwork', 'purchase'];
+      ? ['purchase', 'new_artwork', 'reply', 'price_drop', 'now_available']
+      : ['like', 'comment', 'reply', 'sale', 'follow', 'feature', 'new_artwork', 'purchase', 'price_drop', 'now_available'];
     const list = await Notification.find({ userId: req.userId, type: { $in: types } }).sort({ createdAt: -1 }).limit(50);
     res.json(list.map(n => n.toJSON()));
   } catch (err) {
