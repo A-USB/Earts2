@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, MessageCircle, ShoppingBag, UserPlus, Sparkles, CheckCheck, Trash2, Tag, ArrowRight, Bell, BellOff } from 'lucide-react';
+import { Heart, MessageCircle, ShoppingBag, UserPlus, Sparkles, CheckCheck, Trash2, Tag, ArrowRight, Bell, BellOff, TrendingDown } from 'lucide-react';
 import { api } from '../utils/api';
 import Avatar from '../components/Avatar';
 import { useAuth } from '../context/AuthContext';
@@ -13,6 +13,7 @@ const FILTER_TABS = [
   { id: 'interactions', label: 'Likes & Comments' },
   { id: 'sales', label: 'Sales & Orders' },
   { id: 'network', label: 'Followers' },
+  { id: 'saved', label: 'Saved pieces' },
 ];
 
 function formatTimeAgo(timestamp) {
@@ -31,7 +32,7 @@ export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
   const tabs = isExplorer
-    ? [{ id: 'all', label: 'All' }, { id: 'purchases', label: 'Demo orders' }, { id: 'artists', label: 'Artists you follow' }]
+    ? [{ id: 'all', label: 'All' }, { id: 'purchases', label: 'Demo orders' }, { id: 'artists', label: 'Artists you follow' }, { id: 'saved', label: 'Saved pieces' }]
     : FILTER_TABS;
 
   useEffect(() => {
@@ -77,6 +78,7 @@ export default function Notifications() {
     if (activeTab === 'interactions') return n.type === 'like' || n.type === 'comment' || n.type === 'reply';
     if (activeTab === 'sales') return n.type === 'sale';
     if (activeTab === 'network') return n.type === 'follow';
+    if (activeTab === 'saved') return n.type === 'price_drop' || n.type === 'now_available';
     return true;
   });
 
@@ -92,6 +94,10 @@ export default function Notifications() {
         return <ShoppingBag size={16} color="#10B981" />;
       case 'new_artwork':
         return <Sparkles size={16} color="#5B4BF5" />;
+      case 'price_drop':
+        return <TrendingDown size={16} color="#10B981" />;
+      case 'now_available':
+        return <Tag size={16} color="#F59E0B" />;
       case 'follow':
         return <UserPlus size={16} color="#8B5CF6" />;
       case 'feature':
@@ -187,6 +193,16 @@ export default function Notifications() {
                     {(item.type === 'sale' || item.type === 'purchase') && (
                       <span className="notif-sale-tag">
                         <Tag size={12} /> Demo · ${item.targetPrice}
+                      </span>
+                    )}
+                    {item.type === 'price_drop' && item.targetPrice !== undefined && (
+                      <span className="notif-sale-tag">
+                        <TrendingDown size={12} /> {item.previousPrice !== undefined && <s>${item.previousPrice}</s>} ${item.targetPrice}
+                      </span>
+                    )}
+                    {item.type === 'now_available' && item.targetPrice !== undefined && (
+                      <span className="notif-sale-tag">
+                        <Tag size={12} /> Now ${item.targetPrice}
                       </span>
                     )}
                   </div>
