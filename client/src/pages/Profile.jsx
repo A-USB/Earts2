@@ -11,6 +11,7 @@ import '../components/PurchaseModal.css';
 import '../components/CreatePostModal.css';
 import ArtworkCard from '../components/ArtworkCard';
 import SalesPanel from '../components/SalesPanel';
+import SavedPieces from '../components/SavedPieces';
 import CreatePostModal from '../components/CreatePostModal';
 import IconTile from '../components/IconTile';
 import { formatCompact } from '../utils/formatCount';
@@ -141,10 +142,8 @@ export default function Profile() {
   }, [username, me, navigate, refreshKey]);
 
   useEffect(() => {
-    if (isOwn && isCollector) {
-      api.get('/users/me/saved').then(setSaved).catch(() => {});
-      api.get('/users/me/orders').then(setOrders).catch(() => {});
-    }
+    if (isOwn) api.get('/users/me/saved').then(setSaved).catch(() => {});
+    if (isOwn && isCollector) api.get('/users/me/orders').then(setOrders).catch(() => {});
   }, [isOwn, isCollector]);
 
   useEffect(() => {
@@ -466,18 +465,7 @@ export default function Profile() {
                   </div>
 
                   {collectorTab === 'Saved' ? (
-                    saved.length > 0 ? (
-                      <div className="profile-artworks-grid">
-                        {saved.map(a => <ArtCard key={a.id} artwork={a} />)}
-                      </div>
-                    ) : (
-                      <div className="empty-collection card">
-                        <Heart size={32} />
-                        <h4>No saved artworks yet</h4>
-                        <p>Artworks you save while browsing will appear here.</p>
-                        <Link to="/marketplace" className="btn-outline">Explore Marketplace</Link>
-                      </div>
-                    )
+                    <SavedPieces items={saved} onChange={setSaved} />
                   ) : (
                     orders.length > 0 ? (
                       <div className="profile-artworks-grid">
@@ -531,7 +519,7 @@ export default function Profile() {
                 <div className="artwork-section-header">
                   <h3>Portfolio</h3>
                   <div className="artwork-tabs">
-                    {['All', 'For Sale', 'Sold', 'Collections', ...(isOwn ? ['Orders'] : [])].map(t => (
+                    {['All', 'For Sale', 'Sold', 'Collections', ...(isOwn ? ['Orders', 'Saved'] : [])].map(t => (
                       <button
                         key={t}
                         className={`art-tab ${tab === t ? 'active' : ''}`}
@@ -545,6 +533,8 @@ export default function Profile() {
 
                 {tab === 'Orders' && isOwn ? (
                   <SalesPanel />
+                ) : tab === 'Saved' && isOwn ? (
+                  <SavedPieces items={saved} onChange={setSaved} />
                 ) : tab === 'Collections' ? (
                   <>
                     {isOwn && (
