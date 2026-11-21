@@ -57,3 +57,14 @@ article.wc .wc-label {
 }
 
 .wc-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Price drop: old price struck through plus the percentage off */
+.wc-status.has-drop { flex-wrap: wrap; white-space: normal; row-gap: 0; }
+.wc-was { font-size: 12px; font-weight: 500; color: var(--text-light); }
+.wc-drop {
+  padding: 1px 7px; border-radius: 999px;
+  font-size: 11px; font-weight: 800;
+  color: #1E8E5A; background: rgba(30, 142, 90, 0.14);
+}
+[data-theme="dark"] .wc-drop { color: #4FD08F; background: rgba(79, 208, 143, 0.16); }
+
