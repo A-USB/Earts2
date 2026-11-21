@@ -2,13 +2,14 @@ const mongoose = require('mongoose');
 
 const notificationSchema = new mongoose.Schema({
   userId: { type: String, required: true, index: true }, // recipient
-  type: { type: String, enum: ['like', 'comment', 'sale', 'follow', 'feature', 'purchase', 'new_artwork', 'reply'], required: true },
+  type: { type: String, enum: ['like', 'comment', 'sale', 'follow', 'feature', 'purchase', 'new_artwork', 'reply', 'price_drop', 'now_available'], required: true },
   actorName: { type: String, required: true },
   actorUsername: { type: String },
   text: { type: String, required: true },
   targetTitle: { type: String },
   targetId: { type: String },
   targetPrice: { type: Number },
+  previousPrice: { type: Number },
   targetColor: { type: String },
   read: { type: Boolean, default: false },
   createdAt: { type: Number, default: () => Date.now() }
