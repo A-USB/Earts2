@@ -306,3 +306,10 @@
   .notif-dismiss-btn { opacity: 1; width: 36px; height: 36px; }
 }
 @media (hover: none) { .notif-dismiss-btn { opacity: 1; } }
+
+.notif-type-price_drop { background: #D1FAE5; }
+.notif-type-now_available { background: #FEF3C7; }
+[data-theme="dark"] .notif-type-price_drop { background: rgba(16, 185, 129, 0.25); }
+[data-theme="dark"] .notif-type-now_available { background: rgba(245, 158, 11, 0.25); }
+.notif-sale-tag s { opacity: .7; }
+
