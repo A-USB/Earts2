@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Bookmark, Droplet, ShoppingCart, Users } from 'lucide-react';
 import './ArtworkCard.css';
 import { formatCompact } from '../utils/formatCount';
+import { getPriceDrop } from '../utils/priceDrop';
 
 const formatCount = formatCompact;
 
@@ -25,6 +26,7 @@ export default function ArtworkCard({
     : null;
   const hasImage = Boolean(artwork.imageUrl);
 
+  const drop = getPriceDrop(artwork);
   const status = artwork.status === 'for_sale'
     ? { key: 'avail', text: `$${artwork.price}` }
     : artwork.status === 'sold'
@@ -61,7 +63,15 @@ export default function ArtworkCard({
         )}
 
         <div className="wc-row">
-          <span className="wc-status"><i className={`wc-dot ${status.key}`} aria-hidden="true" />{status.text}</span>
+          <span className={`wc-status${drop ? ' has-drop' : ''}`}>
+            <i className={`wc-dot ${status.key}`} aria-hidden="true" />{status.text}
+            {drop && (
+              <>
+                <s className="wc-was" aria-label={`was $${drop.previous}`}>${drop.previous}</s>
+                <span className="wc-drop" title={`Price lowered from $${drop.previous}`}>−{drop.percent}%</span>
+              </>
+            )}
+          </span>
           {onBuyClick && artwork.status === 'for_sale' && (
             <button type="button" className="wc-buy" onClick={() => onBuyClick(artwork)}>
               <ShoppingCart size={14} aria-hidden="true" /> Buy
