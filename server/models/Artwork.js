@@ -14,6 +14,8 @@ const artworkSchema = new mongoose.Schema({
   artistName: { type: String, required: true, maxlength: 161 },
   artistUsername: { type: String },
   price: { type: Number, default: null },
+  previousPrice: { type: Number, default: null },     // set when the price is lowered, so cards can show the drop
+  priceDroppedAt: { type: Number, default: null },
   category: { type: String, required: true, index: true },
   status: { type: String, enum: ['for_sale', 'not_for_sale', 'sold'], default: 'for_sale', index: true },
   color: { type: String, default: '#6025EA' },
