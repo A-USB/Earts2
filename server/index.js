@@ -23,7 +23,8 @@ const {
   Product,
   Report,
   Message,
-  Commission
+  Commission,
+  CollabInvite
 } = require('./db');
 
 const app = express();
@@ -151,6 +152,11 @@ const requireModerator = (req, res, next) => {
   next();
 };
 
+const COLLAB_ROLES = [
+  'Co-Creator', 'Illustrator', 'Colorist', 'Line Artist',
+  '3D Sculptor', 'Art Director', 'Concept Artist', 'Visual Designer'
+];
+
 function validateArtworkPayload(payload, { partial = false } = {}) {
   const allowed = new Set(['title', 'description', 'category', 'medium', 'year', 'color', 'imageUrl', 'status', 'price', 'collaborators']);
   const unknown = Object.keys(payload).find(key => !allowed.has(key));
@@ -177,16 +183,21 @@ function validateArtworkPayload(payload, { partial = false } = {}) {
   ].filter(Boolean);
   if (errors.length) return errors[0];
   if (payload.collaborators) {
+    const seen = new Set();
+    let totalShare = 0;
     for (const collaborator of payload.collaborators) {
       if (!collaborator || typeof collaborator !== 'object') return 'Collaborator details are invalid';
-      const collaboratorError = [
-        validateText(collaborator.id || collaborator.userId || '', 'Collaborator ID', 100, { required: true }),
-        validateText(collaborator.username || '', 'Collaborator username', 40, { required: true }),
-        validateText(collaborator.name || '', 'Collaborator name', 100, { required: true }),
-        validateText(collaborator.role || '', 'Collaborator role', 60, { required: true })
-      ].find(Boolean);
-      if (collaboratorError) return collaboratorError;
+      const id = String(collaborator.id || collaborator.userId || '');
+      const idError = validateText(id, 'Collaborator', 100, { required: true });
+      if (idError) return idError;
+      if (seen.has(id)) return 'Each collaborator can only be added once';
+      seen.add(id);
+      if (!COLLAB_ROLES.includes(collaborator.role)) return 'Choose a valid collaborator role';
+      const share = collaborator.sharePercent === undefined || collaborator.sharePercent === '' ? 0 : Number(collaborator.sharePercent);
+      if (!Number.isInteger(share) || share < 0 || share > 100) return 'Revenue shares must be whole numbers between 0 and 100';
+      totalShare += share;
     }
+    if (totalShare > 100) return 'The revenue shares add up to more than 100%';
   }
   return null;
 }
@@ -663,22 +674,28 @@ const ORDER_STATUS_TEXT = {
   cancelled: 'cancelled your order for'
 };
 
-// Orders received by the signed-in artist
+// Orders for pieces the signed-in artist sells, plus orders where they hold a co-creator share
 app.get('/api/users/me/sales', auth, async (req, res) => {
   try {
     const mine = await Artwork.find({ artistId: req.userId });
     const artworkIds = mine.map(a => String(a.id));
-    const filter = artworkIds.length
-      ? { $or: [{ sellerId: req.userId }, { artworkId: { $in: artworkIds } }] }
-      : { sellerId: req.userId };
-    const orders = await Order.find(filter).sort({ createdAt: -1 });
+    const clauses = [{ sellerId: req.userId }, { participantIds: req.userId }];
+    if (artworkIds.length) clauses.push({ artworkId: { $in: artworkIds } });
+    const orders = await Order.find({ $or: clauses }).sort({ createdAt: -1 });
 
     const items = await Promise.all(orders.map(async (o) => {
       const [artwork, buyer] = await Promise.all([Artwork.findById(o.artworkId), User.findById(o.buyerId)]);
       const json = o.toJSON();
+      const isSeller = json.sellerId === req.userId || artwork?.artistId === req.userId;
+      const split = Array.isArray(json.split) ? json.split : [];
+      const myShare = split.find(entry => String(entry.userId) === req.userId) || null;
       return {
         ...json,
-        allowedStatuses: ORDER_TRANSITIONS[json.status] || [],
+        viewerRole: isSeller ? 'seller' : 'collaborator',
+        allowedStatuses: isSeller ? (ORDER_TRANSITIONS[json.status] || []) : [],
+        myShare,
+        // What this person earns from the order: their snapshot share, or the full price for older orders
+        myAmount: myShare ? myShare.amount : (isSeller ? Number(json.price) || 0 : 0),
         artwork: artwork ? (({ id, title, color, imageUrl, price }) => ({ id, title, color, imageUrl, price }))(withImageUrl(req, artwork.toJSON())) : null,
         buyer: buyer
           ? { id: buyer.id, username: buyer.username, firstName: buyer.firstName, lastName: buyer.lastName, avatar: buyer.avatar || null, avatarSeed: buyer.avatarSeed || null }
@@ -693,7 +710,7 @@ app.get('/api/users/me/sales', auth, async (req, res) => {
         total: items.length,
         open: items.filter(o => ['demo', 'confirmed', 'shipped'].includes(o.status)).length,
         delivered: items.filter(o => o.status === 'delivered').length,
-        revenue: counted.reduce((sum, o) => sum + (Number(o.price) || 0), 0)
+        revenue: counted.reduce((sum, o) => sum + (Number(o.myAmount) || 0), 0)
       }
     });
   } catch (err) {
@@ -950,6 +967,151 @@ app.patch('/api/commissions/:id/action', auth, async (req, res) => {
   }
 });
 
+// ================= CO-CREATION INVITES =================
+const displayName = (user) => `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username;
+
+// Turns the browser's collaborator list into real artist accounts. Names and usernames are never trusted from the client.
+async function resolveCollaborators(ownerId, incoming) {
+  const list = [];
+  for (const entry of incoming || []) {
+    const id = String(entry.id || entry.userId);
+    if (id === String(ownerId)) return { error: 'You cannot add yourself as a collaborator.' };
+    let user = null;
+    try { user = await User.findById(id); } catch { user = null; }
+    if (!user || user.accountType !== 'artist') return { error: 'One of the collaborators could not be found.' };
+    const share = entry.sharePercent === undefined || entry.sharePercent === '' ? 0 : Number(entry.sharePercent);
+    list.push({ user, role: entry.role, sharePercent: share });
+  }
+  return { list };
+}
+
+async function notifyCollab(recipientId, actor, type, text, artwork, extra = {}) {
+  try {
+    await Notification.create({
+      userId: recipientId,
+      type,
+      actorName: displayName(actor),
+      actorUsername: actor.username,
+      text,
+      targetTitle: artwork.title,
+      targetId: artwork.id,
+      targetColor: artwork.color,
+      ...extra
+    });
+  } catch (err) {
+    console.error('Could not send collaboration notification:', err.message);
+  }
+}
+
+// Only accepted co-creators appear on the public artwork
+async function refreshPublicCollaborators(artworkId) {
+  const accepted = await CollabInvite.find({ artworkId, status: 'accepted' });
+  await Artwork.findOneAndUpdate(
+    { _id: artworkId },
+    { collaborators: accepted.map(inv => ({ userId: inv.userId, username: inv.username, name: inv.name, role: inv.role })) }
+  );
+}
+
+// Makes the invites match the owner's list: new people are invited, changed terms need fresh consent, removed people are dropped
+async function syncCollabInvites(artwork, owner, resolved) {
+  const existing = await CollabInvite.find({ artworkId: artwork.id });
+  const keep = new Set(resolved.map(item => String(item.user.id)));
+  for (const invite of existing) {
+    if (!keep.has(String(invite.userId))) await CollabInvite.findOneAndDelete({ _id: invite.id });
+  }
+  for (const item of resolved) {
+    const prior = existing.find(invite => String(invite.userId) === String(item.user.id));
+    const extra = { collabRole: item.role, sharePercent: item.sharePercent };
+    if (!prior) {
+      await CollabInvite.create({
+        artworkId: artwork.id,
+        ownerId: owner.id,
+        userId: item.user.id,
+        username: item.user.username,
+        name: displayName(item.user),
+        role: item.role,
+        sharePercent: item.sharePercent,
+        status: 'pending',
+        invitedAt: Date.now()
+      });
+      await notifyCollab(item.user.id, owner, 'collab_invite', 'invited you to co-create', artwork, extra);
+    } else if (prior.role !== item.role || prior.sharePercent !== item.sharePercent) {
+      await CollabInvite.findOneAndUpdate(
+        { _id: prior.id },
+        { role: item.role, sharePercent: item.sharePercent, status: 'pending', respondedAt: null, invitedAt: Date.now() }
+      );
+      await notifyCollab(item.user.id, owner, 'collab_invite', 'updated the terms of your co-creation invite for', artwork, extra);
+    }
+  }
+  await refreshPublicCollaborators(artwork.id);
+}
+
+// Owner sees every invite and the split; an invitee only sees their own invite
+app.get('/api/artworks/:id/collab', auth, async (req, res) => {
+  try {
+    const artwork = await Artwork.findById(req.params.id);
+    if (!artwork) return res.status(404).json({ error: 'Artwork not found' });
+    const invites = await CollabInvite.find({ artworkId: artwork.id });
+    if (artwork.artistId === req.userId) {
+      const sum = (list) => list.reduce((total, inv) => total + (Number(inv.sharePercent) || 0), 0);
+      return res.json({
+        role: 'owner',
+        invites: invites.map(inv => inv.toJSON()),
+        ownerPercent: 100 - sum(invites.filter(inv => inv.status === 'accepted')),
+        plannedOwnerPercent: 100 - sum(invites)
+      });
+    }
+    const mine = invites.find(inv => String(inv.userId) === req.userId);
+    if (!mine) return res.status(404).json({ error: 'No invitation found' });
+    res.json({ role: 'collaborator', invite: mine.toJSON() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/artworks/:id/collab/respond', auth, async (req, res) => {
+  try {
+    if (typeof req.body?.accept !== 'boolean') return res.status(400).json({ error: 'Choose accept or decline.' });
+    const artwork = await Artwork.findById(req.params.id);
+    if (!artwork) return res.status(404).json({ error: 'Artwork not found' });
+    const invite = await CollabInvite.findOne({ artworkId: artwork.id, userId: req.userId });
+    if (!invite) return res.status(404).json({ error: 'No invitation found' });
+
+    const status = req.body.accept ? 'accepted' : 'declined';
+    if (invite.status !== status) {
+      invite.status = status;
+      invite.respondedAt = Date.now();
+      await invite.save();
+      await refreshPublicCollaborators(artwork.id);
+      const me = await User.findById(req.userId);
+      if (me) {
+        await notifyCollab(
+          artwork.artistId, me, 'collab_response',
+          req.body.accept ? 'accepted your co-creation invite for' : 'declined your co-creation invite for',
+          artwork
+        );
+      }
+    }
+    res.json({ status });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/artworks/:id/collab/:userId', auth, async (req, res) => {
+  try {
+    const artwork = await Artwork.findOne({ _id: req.params.id, artistId: req.userId });
+    if (!artwork) return res.status(404).json({ error: 'Artwork not found or unauthorized' });
+    const invite = await CollabInvite.findOne({ artworkId: artwork.id, userId: req.params.userId });
+    if (!invite) return res.status(404).json({ error: 'Invitation not found' });
+    await CollabInvite.findOneAndDelete({ _id: invite.id });
+    await refreshPublicCollaborators(artwork.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ================= ARTWORKS ROUTES =================
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -1057,8 +1219,17 @@ app.post('/api/artworks', auth, async (req, res) => {
     const artistName = `${user.firstName} ${user.lastName}`;
     const artistUsername = user.username;
 
+    const { collaborators: incomingCollaborators, ...artworkFields } = req.body;
+    let resolvedCollaborators = [];
+    if (Array.isArray(incomingCollaborators) && incomingCollaborators.length) {
+      const resolved = await resolveCollaborators(req.userId, incomingCollaborators);
+      if (resolved.error) return res.status(400).json({ error: resolved.error });
+      resolvedCollaborators = resolved.list;
+    }
+
     const artwork = await Artwork.create({
-      ...req.body,
+      ...artworkFields,
+      collaborators: [],
       artistId: req.userId,
       artistName,
       artistUsername,
@@ -1068,6 +1239,8 @@ app.post('/api/artworks', auth, async (req, res) => {
       pinned: false,
       createdAt: Date.now()
     });
+
+    if (resolvedCollaborators.length) await syncCollabInvites(artwork, user, resolvedCollaborators);
 
     const followers = await Follow.find({ followingId: req.userId });
     if (followers.length) {
@@ -1113,7 +1286,15 @@ app.patch('/api/artworks/:id', auth, async (req, res) => {
     const before = await Artwork.findOne({ _id: req.params.id, artistId: req.userId });
     if (!before) return res.status(404).json({ error: 'Artwork not found or unauthorized' });
 
+    let resolvedCollaborators = null;
+    if (req.body.collaborators !== undefined) {
+      const resolved = await resolveCollaborators(req.userId, req.body.collaborators);
+      if (resolved.error) return res.status(400).json({ error: resolved.error });
+      resolvedCollaborators = resolved.list;
+    }
+
     const update = { ...req.body };
+    delete update.collaborators; // invites decide who is shown, never the request body
     const toPrice = (value) => (value === null || value === undefined || value === '' || !Number.isFinite(Number(value)) ? null : Number(value));
     const oldPrice = toPrice(before.price);
     const oldStatus = before.status;
@@ -1139,6 +1320,11 @@ app.patch('/api/artworks/:id', auth, async (req, res) => {
       { new: true }
     );
     if (!artwork) return res.status(404).json({ error: 'Artwork not found or unauthorized' });
+
+    if (resolvedCollaborators) {
+      const owner = await User.findById(req.userId);
+      if (owner) await syncCollabInvites(artwork, owner, resolvedCollaborators);
+    }
 
     // Tell everyone who saved this piece. A failed alert must never fail the edit itself.
     if (priceDropped || becameAvailable) {
@@ -1168,7 +1354,8 @@ app.patch('/api/artworks/:id', auth, async (req, res) => {
       }
     }
 
-    res.json(artwork.toJSON());
+    const fresh = resolvedCollaborators ? await Artwork.findById(artwork.id) : artwork;
+    res.json((fresh || artwork).toJSON());
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1569,10 +1756,35 @@ app.post('/api/artworks/:id/purchase', auth, async (req, res) => {
     const buyer = await User.findById(req.userId);
     if (!buyer) return res.status(404).json({ error: 'User not found.' });
 
+    // Divide the sale between the owner and co-creators who accepted (pending / declined invites earn nothing)
+    const accepted = await CollabInvite.find({ artworkId: artwork.id, status: 'accepted' });
+    const totalCents = Math.round((Number(artwork.price) || 0) * 100);
+    const split = [];
+    let remainingCents = totalCents;
+    let sharedPercent = 0;
+    for (const invite of accepted) {
+      const percent = Number(invite.sharePercent) || 0;
+      if (percent <= 0) continue;
+      const cents = Math.floor(totalCents * percent / 100);
+      remainingCents -= cents;
+      sharedPercent += percent;
+      split.push({ userId: invite.userId, username: invite.username, name: invite.name, role: invite.role, percent, amount: cents / 100 });
+    }
+    split.unshift({
+      userId: artwork.artistId,
+      username: artwork.artistUsername,
+      name: artwork.artistName,
+      role: 'Owner',
+      percent: 100 - sharedPercent,
+      amount: remainingCents / 100
+    });
+
     const order = await Order.create({
       buyerId: req.userId,
       artworkId: artwork.id,
       sellerId: artwork.artistId,
+      split,
+      participantIds: split.map(entry => entry.userId),
       price: artwork.price || 0,
       status: 'demo',
       createdAt: Date.now(),
@@ -1590,6 +1802,18 @@ app.post('/api/artworks/:id/purchase', auth, async (req, res) => {
       targetPrice: artwork.price,
       targetColor: artwork.color
     });
+
+    await Promise.all(split.filter(entry => entry.userId !== artwork.artistId).map(entry => Notification.create({
+      userId: entry.userId,
+      type: 'sale',
+      actorName: `${buyer.firstName || ''} ${buyer.lastName || ''}`.trim() || buyer.username,
+      actorUsername: buyer.username,
+      text: `placed an order for a piece you co-created (your ${entry.percent}% share):`,
+      targetTitle: artwork.title,
+      targetId: artwork.id,
+      targetPrice: entry.amount,
+      targetColor: artwork.color
+    }).catch(() => null)));
 
     await Notification.create({
       userId: buyer.id,
@@ -1615,9 +1839,15 @@ app.get('/api/notifications', auth, async (req, res) => {
     if (!user) return res.status(404).json({ error: 'User not found' });
     const types = user.accountType === 'collector'
       ? ['purchase', 'new_artwork', 'reply', 'price_drop', 'now_available', 'commission']
-      : ['like', 'comment', 'reply', 'sale', 'follow', 'feature', 'new_artwork', 'purchase', 'price_drop', 'now_available', 'commission'];
+      : ['like', 'comment', 'reply', 'sale', 'follow', 'feature', 'new_artwork', 'purchase', 'price_drop', 'now_available', 'commission', 'collab_invite', 'collab_response'];
     const list = await Notification.find({ userId: req.userId, type: { $in: types } }).sort({ createdAt: -1 }).limit(50);
-    res.json(list.map(n => n.toJSON()));
+    const invites = await CollabInvite.find({ userId: req.userId });
+    const inviteStatusByArtwork = new Map(invites.map(invite => [String(invite.artworkId), invite.status]));
+    res.json(list.map(n => {
+      const json = n.toJSON();
+      if (json.type === 'collab_invite') json.inviteStatus = inviteStatusByArtwork.get(String(json.targetId)) || 'removed';
+      return json;
+    }));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
