@@ -312,4 +312,6 @@
 [data-theme="dark"] .notif-type-price_drop { background: rgba(16, 185, 129, 0.25); }
 [data-theme="dark"] .notif-type-now_available { background: rgba(245, 158, 11, 0.25); }
 .notif-sale-tag s { opacity: .7; }
+.notif-type-commission { background: #EDE9FE; }
+[data-theme="dark"] .notif-type-commission { background: rgba(139, 92, 246, 0.25); }
 
