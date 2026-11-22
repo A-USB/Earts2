@@ -230,6 +230,7 @@ export default function UploadArtwork() {
         name: `${targetUser.firstName} ${targetUser.lastName}`,
         avatar: targetUser.avatar,
         role: selectedRole,
+        sharePercent: 0,
       }
     ]);
     setCollabSearch('');
@@ -239,6 +240,13 @@ export default function UploadArtwork() {
   const removeCollaborator = (id) => {
     setCollaborators(prev => prev.filter(c => c.id !== id));
   };
+
+  const updateCollaboratorShare = (id, value) => {
+    const clean = value === '' ? '' : String(Math.max(0, Math.min(100, Math.round(Number(value) || 0))));
+    setCollaborators(prev => prev.map(c => (c.id === id ? { ...c, sharePercent: clean } : c)));
+  };
+
+  const totalShare = collaborators.reduce((sum, c) => sum + (Number(c.sharePercent) || 0), 0);
 
   const filteredUsers = allUsers.filter(u => {
     const query = collabSearch.toLowerCase();
@@ -254,6 +262,10 @@ export default function UploadArtwork() {
     const problem = validateArtwork(form, imageData);
     if (problem) {
       setError(problem);
+      return;
+    }
+    if (totalShare > 100) {
+      setError('The revenue shares add up to more than 100%. Lower one of them.');
       return;
     }
 
@@ -607,6 +619,19 @@ export default function UploadArtwork() {
                           <span className="collab-chip-name">{c.name}</span>
                           <span className="collab-chip-role">{c.role}</span>
                         </div>
+                        <label className="collab-chip-share" title="Their share of each sale">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="1"
+                            inputMode="numeric"
+                            value={c.sharePercent}
+                            onChange={(e) => updateCollaboratorShare(c.id, e.target.value)}
+                            aria-label={`Revenue share for ${c.name}, percent`}
+                          />
+                          <span aria-hidden="true">%</span>
+                        </label>
                         <button
                           type="button"
                           className="collab-chip-remove"
@@ -618,6 +643,15 @@ export default function UploadArtwork() {
                       </div>
                     ))}
                   </div>
+                )}
+
+                {collaborators.length > 0 && (
+                  <p className={`collab-split-summary${totalShare > 100 ? ' over' : ''}`}>
+                    {totalShare > 100
+                      ? 'The shares add up to more than 100%.'
+                      : <>You keep <strong>{100 - totalShare}%</strong> of each sale.</>}
+                    {' '}Co-creators are invited when you publish and only appear on the artwork, and earn their share, once they accept.
+                  </p>
                 )}
 
                 {/* Search & Tag Collaborators */}

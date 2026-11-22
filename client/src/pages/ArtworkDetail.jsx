@@ -7,6 +7,7 @@ import Avatar from '../components/Avatar';
 import PurchaseModal from '../components/PurchaseModal';
 import ReportAction from '../components/ReportAction';
 import LoadError from '../components/LoadError';
+import CollabManager from '../components/CollabManager';
 import './ArtworkDetail.css';
 import { formatCompact } from '../utils/formatCount';
 
@@ -146,7 +147,7 @@ export default function ArtworkDetail() {
                     <div className="collaborators-detail-list">
                       {artwork.collaborators.map((c) => (
                         <Link
-                          key={c.id}
+                          key={c.userId || c.id || c.username}
                           to={`/profile/${c.username}`}
                           className="collab-detail-card card"
                         >
@@ -162,6 +163,12 @@ export default function ArtworkDetail() {
                 )}
               </div>
             )}
+
+            <CollabManager
+              artworkId={artwork.id}
+              isOwner={Boolean(user?.id) && user.id === artwork.artistId}
+              onChange={() => setRefreshKey(key => key + 1)}
+            />
 
             {artwork.description && (
               <div className="artwork-desc">

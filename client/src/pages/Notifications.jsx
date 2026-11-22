@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, MessageCircle, ShoppingBag, UserPlus, Sparkles, CheckCheck, Trash2, Tag, ArrowRight, Bell, BellOff, TrendingDown, Palette } from 'lucide-react';
+import { Heart, MessageCircle, ShoppingBag, UserPlus, Sparkles, CheckCheck, Trash2, Tag, ArrowRight, Bell, BellOff, TrendingDown, Palette, Users } from 'lucide-react';
 import { api } from '../utils/api';
 import Avatar from '../components/Avatar';
 import { useAuth } from '../context/AuthContext';
@@ -15,6 +15,7 @@ const FILTER_TABS = [
   { id: 'network', label: 'Followers' },
   { id: 'saved', label: 'Saved pieces' },
   { id: 'commissions', label: 'Commissions' },
+  { id: 'collabs', label: 'Collaborations' },
 ];
 
 function formatTimeAgo(timestamp) {
@@ -54,6 +55,26 @@ export default function Notifications() {
     } catch {}
   };
 
+  // Accepting or declining a co-creation invite straight from the notification
+  const [inviteStatuses, setInviteStatuses] = useState({});
+  const [inviteErrors, setInviteErrors] = useState({});
+  const [inviteBusy, setInviteBusy] = useState('');
+
+  const respondToInvite = async (e, item, accept) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setInviteBusy(item.id);
+    setInviteErrors(prev => ({ ...prev, [item.id]: '' }));
+    try {
+      const result = await api.post(`/artworks/${item.targetId}/collab/respond`, { accept });
+      setInviteStatuses(prev => ({ ...prev, [item.id]: result.status }));
+    } catch (err) {
+      setInviteErrors(prev => ({ ...prev, [item.id]: err.message || 'Unable to respond right now.' }));
+    } finally {
+      setInviteBusy('');
+    }
+  };
+
   const markAsRead = async (id) => {
     try {
       await api.patch(`/notifications/${id}/read`);
@@ -80,6 +101,7 @@ export default function Notifications() {
     if (activeTab === 'sales') return n.type === 'sale';
     if (activeTab === 'network') return n.type === 'follow';
     if (activeTab === 'commissions') return n.type === 'commission';
+    if (activeTab === 'collabs') return n.type === 'collab_invite' || n.type === 'collab_response';
     if (activeTab === 'saved') return n.type === 'price_drop' || n.type === 'now_available';
     return true;
   });
@@ -96,6 +118,9 @@ export default function Notifications() {
         return <ShoppingBag size={16} color="#10B981" />;
       case 'new_artwork':
         return <Sparkles size={16} color="#5B4BF5" />;
+      case 'collab_invite':
+      case 'collab_response':
+        return <Users size={16} color="#8B5CF6" />;
       case 'commission':
         return <Palette size={16} color="#8B5CF6" />;
       case 'price_drop':
@@ -209,6 +234,27 @@ export default function Notifications() {
                         <Tag size={12} /> ${item.targetPrice}
                       </span>
                     )}
+                    {item.type === 'collab_invite' && (() => {
+                      const inviteStatus = inviteStatuses[item.id] || item.inviteStatus;
+                      return (
+                        <div className="notif-collab">
+                          <span className="notif-sale-tag">
+                            <Users size={12} /> {item.collabRole}{item.sharePercent > 0 ? ` · ${item.sharePercent}% of sales` : ' · no revenue share'}
+                          </span>
+                          {inviteStatus === 'pending' ? (
+                            <div className="notif-collab-actions">
+                              <button type="button" className="btn-primary" disabled={inviteBusy === item.id} onClick={(e) => respondToInvite(e, item, true)}>Accept</button>
+                              <button type="button" className="btn-outline" disabled={inviteBusy === item.id} onClick={(e) => respondToInvite(e, item, false)}>Decline</button>
+                            </div>
+                          ) : (
+                            <span className={`notif-collab-status status-${inviteStatus}`}>
+                              {inviteStatus === 'accepted' ? 'You accepted' : inviteStatus === 'declined' ? 'You declined' : 'No longer available'}
+                            </span>
+                          )}
+                          {inviteErrors[item.id] && <span className="notif-collab-error" role="alert">{inviteErrors[item.id]}</span>}
+                        </div>
+                      );
+                    })()}
                     {item.type === 'price_drop' && item.targetPrice !== undefined && (
                       <span className="notif-sale-tag">
                         <TrendingDown size={12} /> {item.previousPrice !== undefined && <s>${item.previousPrice}</s>} ${item.targetPrice}

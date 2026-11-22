@@ -35,6 +35,11 @@ export function buildArtworkPayload(form, imageData, collaborators = []) {
     imageUrl: imageData,
     status: form.forSale ? 'for_sale' : 'not_for_sale',
     price: form.forSale ? Number(form.price) : null,
-    collaborators,
+    // Only ids, roles and shares are sent: the server looks up the real people and asks them to accept.
+    collaborators: collaborators.map(item => ({
+      id: item.id,
+      role: item.role,
+      sharePercent: Math.round(Number(item.sharePercent) || 0),
+    })),
   };
 }
