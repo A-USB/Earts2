@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, MessageCircle, ShoppingBag, UserPlus, Sparkles, CheckCheck, Trash2, Tag, ArrowRight, Bell, BellOff, TrendingDown } from 'lucide-react';
+import { Heart, MessageCircle, ShoppingBag, UserPlus, Sparkles, CheckCheck, Trash2, Tag, ArrowRight, Bell, BellOff, TrendingDown, Palette } from 'lucide-react';
 import { api } from '../utils/api';
 import Avatar from '../components/Avatar';
 import { useAuth } from '../context/AuthContext';
@@ -14,6 +14,7 @@ const FILTER_TABS = [
   { id: 'sales', label: 'Sales & Orders' },
   { id: 'network', label: 'Followers' },
   { id: 'saved', label: 'Saved pieces' },
+  { id: 'commissions', label: 'Commissions' },
 ];
 
 function formatTimeAgo(timestamp) {
@@ -32,7 +33,7 @@ export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
   const tabs = isExplorer
-    ? [{ id: 'all', label: 'All' }, { id: 'purchases', label: 'Demo orders' }, { id: 'artists', label: 'Artists you follow' }, { id: 'saved', label: 'Saved pieces' }]
+    ? [{ id: 'all', label: 'All' }, { id: 'purchases', label: 'Demo orders' }, { id: 'artists', label: 'Artists you follow' }, { id: 'saved', label: 'Saved pieces' }, { id: 'commissions', label: 'Commissions' }]
     : FILTER_TABS;
 
   useEffect(() => {
@@ -78,6 +79,7 @@ export default function Notifications() {
     if (activeTab === 'interactions') return n.type === 'like' || n.type === 'comment' || n.type === 'reply';
     if (activeTab === 'sales') return n.type === 'sale';
     if (activeTab === 'network') return n.type === 'follow';
+    if (activeTab === 'commissions') return n.type === 'commission';
     if (activeTab === 'saved') return n.type === 'price_drop' || n.type === 'now_available';
     return true;
   });
@@ -94,6 +96,8 @@ export default function Notifications() {
         return <ShoppingBag size={16} color="#10B981" />;
       case 'new_artwork':
         return <Sparkles size={16} color="#5B4BF5" />;
+      case 'commission':
+        return <Palette size={16} color="#8B5CF6" />;
       case 'price_drop':
         return <TrendingDown size={16} color="#10B981" />;
       case 'now_available':
@@ -186,6 +190,11 @@ export default function Notifications() {
                         "{item.targetTitle}"
                       </Link>
                     )}
+                    {item.targetTitle && !item.targetId && item.type === 'commission' && (
+                      <Link to="/commissions" className="notif-target-title" onClick={(e) => e.stopPropagation()}>
+                        "{item.targetTitle}"
+                      </Link>
+                    )}
                   </p>
 
                   <div className="notif-meta-row">
@@ -193,6 +202,11 @@ export default function Notifications() {
                     {(item.type === 'sale' || item.type === 'purchase') && (
                       <span className="notif-sale-tag">
                         <Tag size={12} /> Demo · ${item.targetPrice}
+                      </span>
+                    )}
+                    {item.type === 'commission' && item.targetPrice !== undefined && item.targetPrice !== null && (
+                      <span className="notif-sale-tag">
+                        <Tag size={12} /> ${item.targetPrice}
                       </span>
                     )}
                     {item.type === 'price_drop' && item.targetPrice !== undefined && (
@@ -209,7 +223,15 @@ export default function Notifications() {
                 </div>
 
                 {/* Target Artwork Thumbnail or Action */}
-                {item.targetId ? (
+                {item.type === 'commission' ? (
+                  <Link
+                    to="/commissions"
+                    className="btn-outline notif-action-pill"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    View <ArrowRight size={13} />
+                  </Link>
+                ) : item.targetId ? (
                   <Link
                     to={`/artwork/${item.targetId}`}
                     className="notif-thumb-link"
