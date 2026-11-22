@@ -357,6 +357,7 @@ const memoryStore = {
   products: new MemoryCollection('products'),
   comments: new MemoryCollection('comments'),
   orders: new MemoryCollection('orders'),
+  commissions: new MemoryCollection('commissions'),
   follows: new MemoryCollection('follows'),
   likes: new MemoryCollection('likes'),
   collections: new MemoryCollection('collections'),
