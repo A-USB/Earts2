@@ -180,6 +180,9 @@ function matchQuery(doc, query = {}) {
 
     if (key === '_id' || key === 'id') {
       if (String(docVal) !== String(val)) return false;
+    } else if (Array.isArray(docVal) && !Array.isArray(val)) {
+      // Same as MongoDB: a scalar matches when it is one of the array's values
+      if (!docVal.some(item => String(item).toLowerCase() === String(val).toLowerCase())) return false;
     } else if (typeof val === 'string' && typeof docVal === 'string') {
       if (docVal.toLowerCase() !== val.toLowerCase()) return false;
     } else if (docVal !== val) {
@@ -358,6 +361,7 @@ const memoryStore = {
   comments: new MemoryCollection('comments'),
   orders: new MemoryCollection('orders'),
   commissions: new MemoryCollection('commissions'),
+  collabInvites: new MemoryCollection('collabInvites'),
   follows: new MemoryCollection('follows'),
   likes: new MemoryCollection('likes'),
   collections: new MemoryCollection('collections'),
