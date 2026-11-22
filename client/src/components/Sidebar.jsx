@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import {
-  Rss, ShoppingBag, ImagePlus, User, Search, Bell, MessageSquare,
+  Rss, ShoppingBag, ImagePlus, User, Search, Bell, MessageSquare, Palette,
   PanelLeftClose, PanelLeftOpen, Settings as SettingsIcon, LogOut
 } from 'lucide-react';
 import Avatar from './Avatar';
@@ -34,6 +34,7 @@ export default function Sidebar() {
     { to: '/upload', label: 'Upload', icon: ImagePlus, show: user?.accountType !== 'collector' },
     { to: '/notifications', label: 'Notifications', icon: Bell, show: true },
     { to: '/messages', label: 'Messages', icon: MessageSquare, show: true },
+    { to: '/commissions', label: 'Commissions', icon: Palette, show: true },
     { to: user?.username ? `/profile/${user.username}` : '/login', label: 'My Profile', icon: User, show: true, active: isProfileActive },
     { to: '/settings', label: 'Settings', icon: SettingsIcon, show: true },
   ];
