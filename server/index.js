@@ -22,7 +22,8 @@ const {
   Notification,
   Product,
   Report,
-  Message
+  Message,
+  Commission
 } = require('./db');
 
 const app = express();
@@ -748,6 +749,207 @@ app.patch('/api/orders/:id/status', auth, async (req, res) => {
   }
 });
 
+// ================= COMMISSIONS =================
+// requested -> quoted -> in_progress -> delivered -> completed (or declined / cancelled along the way)
+const COMMISSION_ACTIONS = {
+  quote:    { from: ['requested', 'quoted'], by: 'artist', to: 'quoted' },
+  decline:  { from: ['requested', 'quoted'], by: 'artist', to: 'declined' },
+  accept:   { from: ['quoted'], by: 'client', to: 'in_progress' },
+  deliver:  { from: ['in_progress'], by: 'artist', to: 'delivered' },
+  revise:   { from: ['delivered'], by: 'client', to: 'in_progress' },
+  complete: { from: ['delivered'], by: 'client', to: 'completed' },
+  cancel:   { from: ['requested', 'quoted', 'in_progress'], by: 'either', to: 'cancelled' }
+};
+
+const COMMISSION_NOTIFICATION_TEXT = {
+  request: 'sent you a commission request:',
+  quote: 'sent you a quote for',
+  decline: 'declined your commission request:',
+  accept: 'accepted your quote for',
+  deliver: 'delivered your commission:',
+  revise: 'asked for changes on',
+  complete: 'marked this commission as completed:',
+  cancel: 'cancelled the commission'
+};
+
+const commissionAllowedActions = (commission, role) =>
+  Object.entries(COMMISSION_ACTIONS)
+    .filter(([, def]) => def.from.includes(commission.status) && (def.by === 'either' || def.by === role))
+    .map(([action]) => action);
+
+const commissionPerson = (user) => user
+  ? {
+      id: user.id,
+      username: user.username,
+      name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username,
+      avatar: user.avatar || null,
+      avatarSeed: user.avatarSeed || null
+    }
+  : null;
+
+async function notifyCommission(recipientId, actor, kind, commission, price) {
+  try {
+    await Notification.create({
+      userId: recipientId,
+      type: 'commission',
+      actorName: actor ? (`${actor.firstName || ''} ${actor.lastName || ''}`.trim() || actor.username) : 'Someone',
+      actorUsername: actor?.username,
+      text: COMMISSION_NOTIFICATION_TEXT[kind],
+      targetTitle: commission.title,
+      targetPrice: typeof price === 'number' ? price : undefined
+    });
+  } catch (err) {
+    console.error('Could not send commission notification:', err.message);
+  }
+}
+
+// Open a commission request with an artist
+app.post('/api/commissions', auth, async (req, res) => {
+  try {
+    const body = req.body || {};
+    const allowed = new Set(['artistId', 'title', 'brief', 'budget', 'deadline']);
+    if (Object.keys(body).some(key => !allowed.has(key))) return res.status(400).json({ error: 'One or more fields are not allowed' });
+
+    const titleError = validateText(body.title, 'Title', 100, { required: true });
+    if (titleError) return res.status(400).json({ error: titleError });
+    const briefError = validateText(body.brief, 'Brief', 2000, { required: true, multiline: true });
+    if (briefError) return res.status(400).json({ error: briefError });
+    if (String(body.title).trim().length < 3) return res.status(400).json({ error: 'Give your commission a short title (at least 3 characters).' });
+    if (String(body.brief).trim().length < 20) return res.status(400).json({ error: 'Describe what you would like in at least 20 characters so the artist can quote properly.' });
+
+    let budget = null;
+    if (body.budget !== undefined && body.budget !== null && body.budget !== '') {
+      budget = Number(body.budget);
+      if (!Number.isFinite(budget) || budget < 1 || budget > 1000000) return res.status(400).json({ error: 'Budget must be between $1 and $1,000,000.' });
+    }
+
+    let deadline = null;
+    if (body.deadline) {
+      const parsed = /^\d{4}-\d{2}-\d{2}$/.test(String(body.deadline)) ? Date.parse(`${body.deadline}T23:59:59Z`) : NaN;
+      if (!Number.isFinite(parsed)) return res.status(400).json({ error: 'Choose a valid deadline date.' });
+      if (parsed < Date.now()) return res.status(400).json({ error: 'The deadline must be in the future.' });
+      if (parsed > Date.now() + 2 * 365 * 24 * 60 * 60 * 1000) return res.status(400).json({ error: 'The deadline can be at most two years away.' });
+      deadline = parsed;
+    }
+
+    const artist = await User.findById(String(body.artistId || ''));
+    if (!artist || artist.accountType !== 'artist') return res.status(404).json({ error: 'Artist not found' });
+    if (artist.id === req.userId) return res.status(400).json({ error: 'You cannot commission yourself.' });
+    if (!(artist.availableFor || []).includes('Commissions')) {
+      return res.status(400).json({ error: 'This artist is not taking commissions right now.' });
+    }
+
+    const client = await User.findById(req.userId);
+    if (!client) return res.status(401).json({ error: 'Please sign in again.' });
+
+    const openStatuses = ['requested', 'quoted'];
+    const myOpen = await Commission.find({ clientId: req.userId, status: { $in: openStatuses } });
+    if (myOpen.length >= 10) return res.status(429).json({ error: 'You have 10 requests waiting for a reply. Wait for a response before sending more.' });
+    if (myOpen.filter(c => c.artistId === artist.id).length >= 3) {
+      return res.status(429).json({ error: 'You already have open requests with this artist. Wait for their reply first.' });
+    }
+
+    const now = Date.now();
+    const commission = await Commission.create({
+      clientId: req.userId,
+      artistId: artist.id,
+      title: String(body.title).trim(),
+      brief: String(body.brief).trim(),
+      budget,
+      deadline,
+      status: 'requested',
+      activity: [{ at: now, by: 'client', action: 'request', note: '' }],
+      createdAt: now,
+      updatedAt: now
+    });
+
+    await notifyCommission(artist.id, client, 'request', commission, budget === null ? undefined : budget);
+    res.status(201).json({ ...commission.toJSON(), role: 'client', allowedActions: commissionAllowedActions(commission, 'client') });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// role=sent (requests I made) or role=received (requests made to me as an artist)
+app.get('/api/commissions', auth, async (req, res) => {
+  try {
+    const role = req.query.role === 'received' ? 'artist' : 'client';
+    const filter = role === 'artist' ? { artistId: req.userId } : { clientId: req.userId };
+    const commissions = await Commission.find(filter).sort({ updatedAt: -1 });
+    const items = await Promise.all(commissions.map(async (c) => {
+      const [client, artist] = await Promise.all([User.findById(c.clientId), User.findById(c.artistId)]);
+      return {
+        ...c.toJSON(),
+        role,
+        allowedActions: commissionAllowedActions(c, role),
+        client: commissionPerson(client),
+        artist: commissionPerson(artist)
+      };
+    }));
+    res.json(items);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Move a commission along. body: { action, price?, days?, note? }
+app.patch('/api/commissions/:id/action', auth, async (req, res) => {
+  try {
+    const commission = await Commission.findById(req.params.id);
+    const role = commission
+      ? (commission.clientId === req.userId ? 'client' : commission.artistId === req.userId ? 'artist' : null)
+      : null;
+    if (!commission || !role) return res.status(404).json({ error: 'Commission not found' });
+
+    const { action } = req.body || {};
+    const def = COMMISSION_ACTIONS[action];
+    if (!def) return res.status(400).json({ error: 'Unknown action.' });
+    if (!def.from.includes(commission.status)) {
+      return res.status(400).json({ error: `This commission is ${commission.status.replace('_', ' ')}, so you cannot do that now.` });
+    }
+    if (def.by !== 'either' && def.by !== role) return res.status(403).json({ error: 'You cannot do that on this commission.' });
+
+    let note = '';
+    if (req.body.note !== undefined && req.body.note !== null && req.body.note !== '') {
+      if (typeof req.body.note !== 'string' || req.body.note.trim().length > 500) return res.status(400).json({ error: 'Notes must be 500 characters or fewer.' });
+      note = req.body.note.trim();
+    }
+    if (action === 'revise' && note.length < 5) return res.status(400).json({ error: 'Tell the artist what you would like changed.' });
+
+    let price = null;
+    if (action === 'quote') {
+      price = Number(req.body.price);
+      const days = Number(req.body.days);
+      if (!Number.isFinite(price) || price < 1 || price > 1000000) return res.status(400).json({ error: 'Quote a price between $1 and $1,000,000.' });
+      if (!Number.isInteger(days) || days < 1 || days > 365) return res.status(400).json({ error: 'Estimated time must be between 1 and 365 days.' });
+      commission.quotePrice = price;
+      commission.quoteDays = days;
+      commission.quoteNote = note;
+    }
+    if (action === 'accept' || action === 'complete') price = commission.quotePrice;
+
+    commission.status = def.to;
+    commission.updatedAt = Date.now();
+    commission.activity = [...(commission.activity || []), { at: Date.now(), by: role, action, note, price }].slice(-50);
+    await commission.save();
+
+    const actor = await User.findById(req.userId);
+    const recipientId = role === 'client' ? commission.artistId : commission.clientId;
+    await notifyCommission(recipientId, actor, action, commission, price === null ? undefined : price);
+
+    const [client, artist] = await Promise.all([User.findById(commission.clientId), User.findById(commission.artistId)]);
+    res.json({
+      ...commission.toJSON(),
+      role,
+      allowedActions: commissionAllowedActions(commission, role),
+      client: commissionPerson(client),
+      artist: commissionPerson(artist)
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ================= ARTWORKS ROUTES =================
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -1412,8 +1614,8 @@ app.get('/api/notifications', auth, async (req, res) => {
     const user = await User.findById(req.userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
     const types = user.accountType === 'collector'
-      ? ['purchase', 'new_artwork', 'reply', 'price_drop', 'now_available']
-      : ['like', 'comment', 'reply', 'sale', 'follow', 'feature', 'new_artwork', 'purchase', 'price_drop', 'now_available'];
+      ? ['purchase', 'new_artwork', 'reply', 'price_drop', 'now_available', 'commission']
+      : ['like', 'comment', 'reply', 'sale', 'follow', 'feature', 'new_artwork', 'purchase', 'price_drop', 'now_available', 'commission'];
     const list = await Notification.find({ userId: req.userId, type: { $in: types } }).sort({ createdAt: -1 }).limit(50);
     res.json(list.map(n => n.toJSON()));
   } catch (err) {
