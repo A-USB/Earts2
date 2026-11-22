@@ -12,6 +12,7 @@ import '../components/CreatePostModal.css';
 import ArtworkCard from '../components/ArtworkCard';
 import SalesPanel from '../components/SalesPanel';
 import SavedPieces from '../components/SavedPieces';
+import CommissionRequestModal from '../components/CommissionRequestModal';
 import CreatePostModal from '../components/CreatePostModal';
 import IconTile from '../components/IconTile';
 import { formatCompact } from '../utils/formatCount';
@@ -111,6 +112,7 @@ export default function Profile() {
   const [saved, setSaved] = useState([]);
   const [orders, setOrders] = useState([]);
   const [collectorTab, setCollectorTab] = useState('Saved');
+  const [showCommission, setShowCommission] = useState(false);
 
   // Artist-only extras
   const [collections, setCollections] = useState([]);
@@ -354,6 +356,14 @@ export default function Profile() {
                     >
                       <MessageSquare size={15} /> Message
                     </button>
+                    {!isCollector && profile.availableFor?.includes('Commissions') && (
+                      <button
+                        className="btn-outline profile-action-btn"
+                        onClick={() => (me ? setShowCommission(true) : navigate('/login'))}
+                      >
+                        <Palette size={15} /> Commission
+                      </button>
+                    )}
                     <button className="btn-ghost profile-action-icon" onClick={handleShare} title="Share profile link" aria-label="Copy profile link">
                       {copied ? <Check size={16} color="#27AE60" /> : <Share2 size={16} />}
                       {copied && <span className="copied-tooltip">Copied!</span>}
@@ -595,6 +605,13 @@ export default function Profile() {
             setShowHang(false);
             setArtworks(prev => [newArtwork, ...prev]);
           }}
+        />
+      )}
+
+      {showCommission && (
+        <CommissionRequestModal
+          artist={{ id: profile.id, firstName: profile.firstName, username: profile.username }}
+          onClose={() => setShowCommission(false)}
         />
       )}
 
