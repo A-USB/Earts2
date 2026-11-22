@@ -118,7 +118,7 @@ export default function SalesPanel() {
         <div className="sales-stat"><Inbox size={18} /><div><strong>{summary.total}</strong><span>Orders</span></div></div>
         <div className="sales-stat"><Package size={18} /><div><strong>{summary.open}</strong><span>Open</span></div></div>
         <div className="sales-stat"><CheckCircle2 size={18} /><div><strong>{summary.delivered}</strong><span>Delivered</span></div></div>
-        <div className="sales-stat"><DollarSign size={18} /><div><strong>{formatMoney(summary.revenue)}</strong><span>Order value</span></div></div>
+        <div className="sales-stat"><DollarSign size={18} /><div><strong>{formatMoney(summary.revenue)}</strong><span>Your share</span></div></div>
       </div>
 
       <div className="sales-filters" role="tablist" aria-label="Filter orders">
@@ -170,6 +170,7 @@ export default function SalesPanel() {
                         ? <Link to={`/artwork/${order.artwork.id}`} className="sales-title">{order.artwork.title}</Link>
                         : <span className="sales-title">Removed artwork</span>}
                       <span className={`sales-badge status-${order.status}`}>{STATUS_LABEL[order.status] || order.status}</span>
+                      {order.viewerRole === 'collaborator' && <span className="sales-co-badge">Co-creator share</span>}
                     </div>
                     <div className="sales-meta">
                       {order.buyer ? (
@@ -181,10 +182,18 @@ export default function SalesPanel() {
                       <span aria-hidden="true">·</span>
                       <span>{formatDate(order.createdAt)}</span>
                     </div>
+                    {order.split?.length > 1 && (
+                      <p className="sales-split">
+                        Split: {order.split.map(entry => `${entry.name || entry.username} ${entry.percent}%`).join(' · ')}
+                      </p>
+                    )}
                     {order.trackingNote && <p className="sales-note">Note to buyer: {order.trackingNote}</p>}
                   </div>
 
-                  <div className="sales-price">{formatMoney(order.price)}</div>
+                  <div className="sales-price">
+                    {formatMoney(order.myAmount ?? order.price)}
+                    {order.split?.length > 1 && <small>of {formatMoney(order.price)}</small>}
+                  </div>
                 </div>
 
                 {order.allowedStatuses?.length > 0 && (
