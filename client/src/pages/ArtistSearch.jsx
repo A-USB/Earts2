@@ -4,6 +4,7 @@ import { ImageIcon, MapPin, Palette, Search, Users } from 'lucide-react';
 import { api } from '../utils/api';
 import Avatar from '../components/Avatar';
 import ArtworkCard from '../components/ArtworkCard';
+import StarRating from '../components/StarRating';
 import LoadError from '../components/LoadError';
 import './ArtistSearch.css';
 import { formatCompact } from '../utils/formatCount';
@@ -172,6 +173,12 @@ export default function ArtistSearch() {
                       <div className="artist-result-meta">
                         {artist.location && <span><MapPin size={14} />{artist.location}</span>}
                         <span><Users size={14} />{formatCompact(artist.followers)} followers</span>
+                        {artist.ratingCount > 0 && (
+                          <span className="artist-result-rating">
+                            <StarRating value={artist.ratingAverage} size={13} />
+                            {artist.ratingAverage} ({artist.ratingCount})
+                          </span>
+                        )}
                       </div>
                       {artist.tags?.length > 0 && (
                         <div className="artist-result-tags"><Palette size={14} />{artist.tags.slice(0, 3).join(' · ')}</div>
