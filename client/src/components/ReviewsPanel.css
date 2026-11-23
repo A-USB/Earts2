@@ -1,0 +1,56 @@
+.rv-panel { display: flex; flex-direction: column; gap: 18px; }
+.rv-loading { padding: 32px 0; text-align: center; color: var(--text-mid); font-size: 14px; }
+.rv-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 36px 20px; text-align: center; color: var(--text-mid); }
+.rv-empty h4 { margin: 0; color: var(--text-dark); }
+.rv-empty p { margin: 0; max-width: 380px; font-size: 13px; line-height: 1.55; }
+
+.rv-summary { display: flex; align-items: center; gap: 32px; padding: 20px 24px; }
+.rv-score { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 110px; }
+.rv-score strong { font-size: 40px; line-height: 1; color: var(--text-dark); }
+.rv-score span { font-size: 12.5px; color: var(--text-mid); }
+.rv-bars { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.rv-bar-row { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-mid); }
+.rv-bar-row > span:first-child { width: 22px; }
+.rv-bar { flex: 1; height: 8px; border-radius: 999px; background: var(--border); overflow: hidden; }
+[data-theme="dark"] .rv-bar { background: rgba(255, 255, 255, 0.1); }
+.rv-bar > div { height: 100%; border-radius: 999px; background: #F5A524; }
+.rv-bar-count { width: 22px; text-align: right; }
+
+.rv-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.rv-item { padding: 18px 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); }
+.rv-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.rv-person { display: flex; align-items: center; gap: 10px; min-width: 0; color: var(--text-dark); }
+.rv-person > span { display: flex; flex-direction: column; min-width: 0; }
+.rv-person strong { font-size: 14px; }
+.rv-person small { font-size: 12px; color: var(--text-light); }
+a.rv-person:hover strong { color: var(--primary); }
+.rv-context { margin: 10px 0 0; font-size: 12.5px; color: var(--text-mid); overflow-wrap: anywhere; }
+.rv-comment { margin: 8px 0 0; font-size: 14px; line-height: 1.6; color: var(--text-dark); white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.rv-reply { margin-top: 14px; padding: 12px 14px; border-left: 3px solid var(--primary); background: color-mix(in srgb, var(--primary) 6%, transparent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.rv-reply strong { font-size: 12.5px; color: var(--primary); }
+[data-theme="dark"] .rv-reply strong { color: #C9C2FF; }
+.rv-reply p { margin: 4px 0 0; font-size: 13.5px; line-height: 1.55; color: var(--text-dark); white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.rv-reply-form { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.rv-reply-form label { font-size: 13px; font-weight: 700; color: var(--text-dark); }
+.rv-reply-form textarea { font-size: 13px; font-family: inherit; resize: vertical; }
+.rv-row-buttons { display: flex; justify-content: flex-end; gap: 10px; }
+.rv-row-buttons .btn-primary { padding: 8px 18px; font-size: 13px; }
+
+.rv-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin-top: 12px; }
+.rv-actions button, .rv-confirm button { display: inline-flex; align-items: center; gap: 5px; padding: 4px 0; background: none; color: var(--text-mid); font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.rv-actions button:hover:not(:disabled) { color: var(--primary); }
+.rv-actions .danger:hover:not(:disabled), .rv-confirm .danger { color: #C0392B; }
+[data-theme="dark"] .rv-actions .danger:hover:not(:disabled), [data-theme="dark"] .rv-confirm .danger { color: #FF8A6B; }
+.rv-confirm { display: inline-flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--text-dark); }
+.rv-actions button:disabled { opacity: .6; cursor: wait; }
+.rv-error { margin: 10px 0 0; font-size: 12.5px; color: #C0392B; }
+[data-theme="dark"] .rv-error { color: #FF9B8A; }
+
+@media (max-width: 560px) {
+  .rv-summary { flex-direction: column; align-items: stretch; gap: 18px; }
+  .rv-score { flex-direction: row; justify-content: center; gap: 12px; }
+  .rv-score strong { font-size: 32px; }
+  .rv-item { padding: 16px; }
+}

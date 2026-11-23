@@ -1,0 +1,6 @@
+.star-rating { position: relative; display: inline-flex; vertical-align: middle; line-height: 0; }
+.star-rating-base, .star-rating-fill { display: inline-flex; gap: 2px; }
+.star-rating-base { color: var(--border); }
+[data-theme="dark"] .star-rating-base { color: rgba(255, 255, 255, 0.2); }
+.star-rating-fill { position: absolute; top: 0; left: 0; overflow: hidden; color: #F5A524; white-space: nowrap; }
+.star-rating-fill svg { flex: none; }

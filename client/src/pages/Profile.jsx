@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Edit2, Share2, Plus, Heart, ShoppingBag, Pin, PinOff, FolderPlus, X, Camera, MapPin, Sparkles, Palette, MessageSquare, Check, Layers } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
@@ -13,6 +13,8 @@ import ArtworkCard from '../components/ArtworkCard';
 import SalesPanel from '../components/SalesPanel';
 import SavedPieces from '../components/SavedPieces';
 import CommissionRequestModal from '../components/CommissionRequestModal';
+import ReviewsPanel from '../components/ReviewsPanel';
+import PendingReviews from '../components/PendingReviews';
 import CreatePostModal from '../components/CreatePostModal';
 import IconTile from '../components/IconTile';
 import { formatCompact } from '../utils/formatCount';
@@ -102,7 +104,8 @@ export default function Profile() {
   const [profile, setProfile] = useState(null);
   const [artworks, setArtworks] = useState([]);
   const [showHang, setShowHang] = useState(false);
-  const [tab, setTab] = useState('All');
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState(searchParams.get('tab') === 'Reviews' ? 'Reviews' : 'All');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
@@ -267,6 +270,9 @@ export default function Profile() {
         { label: 'Followers', value: formatNum(profile.followers) },
         { label: 'Following', value: profile.following },
         { label: 'Artworks Sold', value: profile.artworksSold },
+        ...(profile.ratingCount > 0
+          ? [{ label: `${profile.ratingCount} ${profile.ratingCount === 1 ? 'review' : 'reviews'}`, value: `★ ${profile.ratingAverage}` }]
+          : []),
       ];
 
   // Cover mosaic: built from the artist's own artwork colors when available
@@ -474,6 +480,8 @@ export default function Profile() {
                     </div>
                   </div>
 
+                  {isOwn && <PendingReviews />}
+
                   {collectorTab === 'Saved' ? (
                     <SavedPieces items={saved} onChange={setSaved} />
                   ) : (
@@ -529,7 +537,7 @@ export default function Profile() {
                 <div className="artwork-section-header">
                   <h3>Portfolio</h3>
                   <div className="artwork-tabs">
-                    {['All', 'For Sale', 'Sold', 'Collections', ...(isOwn ? ['Orders', 'Saved'] : [])].map(t => (
+                    {['All', 'For Sale', 'Sold', 'Collections', 'Reviews', ...(isOwn ? ['Orders', 'Saved'] : [])].map(t => (
                       <button
                         key={t}
                         className={`art-tab ${tab === t ? 'active' : ''}`}
@@ -543,6 +551,8 @@ export default function Profile() {
 
                 {tab === 'Orders' && isOwn ? (
                   <SalesPanel />
+                ) : tab === 'Reviews' ? (
+                  <ReviewsPanel username={profile.username} isOwn={isOwn} meId={me?.id} />
                 ) : tab === 'Saved' && isOwn ? (
                   <SavedPieces items={saved} onChange={setSaved} />
                 ) : tab === 'Collections' ? (

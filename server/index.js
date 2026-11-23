@@ -24,7 +24,8 @@ const {
   Report,
   Message,
   Commission,
-  CollabInvite
+  CollabInvite,
+  Review
 } = require('./db');
 
 const app = express();
@@ -483,9 +484,12 @@ app.get('/api/users/search', async (req, res) => {
       .select('username firstName lastName role accountType bio location avatar avatarSeed followers tags tools')
       .sort({ followers: -1, createdAt: -1 })
       .limit(40);
+    const ids = artists.map(artist => artist.id);
+    const allReviews = ids.length ? await Review.find({ artistId: { $in: ids } }) : [];
     res.json(artists.map(artist => {
       const { id, username, firstName, lastName, role, accountType, bio, location, avatar, avatarSeed, followers, tags, tools } = artist.toJSON();
-      return { id, username, firstName, lastName, role, accountType, bio, location, avatar, avatarSeed, followers, tags, tools };
+      const rating = summarizeReviews(allReviews.filter(review => review.artistId === id));
+      return { id, username, firstName, lastName, role, accountType, bio, location, avatar, avatarSeed, followers, tags, tools, ratingAverage: rating.average, ratingCount: rating.count };
     }));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -501,7 +505,13 @@ app.get('/api/users/:username', async (req, res) => {
       $or: [{ artistId: user.id }, { artistUsername: user.username }]
     }).sort({ pinned: -1, createdAt: -1 });
 
-    res.json({ ...user.toJSON(), artworks: artworks.map(a => withImageUrl(req, a.toJSON())) });
+    const rating = user.accountType === 'artist' ? summarizeReviews(await Review.find({ artistId: user.id })) : null;
+    res.json({
+      ...user.toJSON(),
+      ratingAverage: rating ? rating.average : null,
+      ratingCount: rating ? rating.count : 0,
+      artworks: artworks.map(a => withImageUrl(req, a.toJSON()))
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1107,6 +1117,235 @@ app.delete('/api/artworks/:id/collab/:userId', auth, async (req, res) => {
     await CollabInvite.findOneAndDelete({ _id: invite.id });
     await refreshPublicCollaborators(artwork.id);
     res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ================= REVIEWS =================
+function summarizeReviews(list) {
+  const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  let total = 0;
+  for (const review of list) {
+    const rating = Number(review.rating);
+    if (distribution[rating] !== undefined) {
+      distribution[rating] += 1;
+      total += rating;
+    }
+  }
+  const count = list.length;
+  return { count, average: count ? Math.round((total / count) * 10) / 10 : null, distribution };
+}
+
+// A review is only allowed for a delivered order or a completed commission that belongs to the reviewer
+async function findReviewTarget(userId, source, sourceId) {
+  try {
+    if (source === 'order') {
+      const order = await Order.findById(sourceId);
+      if (!order || order.buyerId !== userId) return { error: 'We could not find that purchase.' };
+      if (order.status !== 'delivered') return { error: 'You can review a purchase once the artist has marked it delivered.' };
+      const artwork = await Artwork.findById(order.artworkId);
+      const artistId = order.sellerId || artwork?.artistId;
+      if (!artistId) return { error: 'We could not find the artist for that purchase.' };
+      return { artistId, context: artwork?.title || 'Artwork' };
+    }
+    if (source === 'commission') {
+      const commission = await Commission.findById(sourceId);
+      if (!commission || commission.clientId !== userId) return { error: 'We could not find that commission.' };
+      if (commission.status !== 'completed') return { error: 'You can review a commission once it is completed.' };
+      return { artistId: commission.artistId, context: commission.title };
+    }
+  } catch {
+    return { error: 'We could not find that purchase.' };
+  }
+  return { error: 'Choose what you are reviewing.' };
+}
+
+function validateReviewFields({ rating, comment }, { requireRating }) {
+  if (requireRating || rating !== undefined) {
+    const value = Number(rating);
+    if (!Number.isInteger(value) || value < 1 || value > 5) return 'Choose a rating from 1 to 5 stars.';
+  }
+  if (comment !== undefined && comment !== null) {
+    if (typeof comment !== 'string') return 'Your review must be text.';
+    if (comment.trim().length > 1000) return 'Reviews can be at most 1000 characters.';
+  }
+  return null;
+}
+
+const reviewerCard = (user) => user
+  ? { id: user.id, username: user.username, name: displayName(user), avatar: user.avatar || null, avatarSeed: user.avatarSeed || null }
+  : null;
+
+// What the signed-in person can still review
+app.get('/api/reviews/pending', auth, async (req, res) => {
+  try {
+    const [orders, commissions, mine] = await Promise.all([
+      Order.find({ buyerId: req.userId, status: 'delivered' }),
+      Commission.find({ clientId: req.userId, status: 'completed' }),
+      Review.find({ reviewerId: req.userId })
+    ]);
+    const done = new Set(mine.map(review => `${review.source}:${review.sourceId}`));
+    const pending = [];
+
+    for (const order of orders) {
+      if (done.has(`order:${order.id}`)) continue;
+      const artwork = await Artwork.findById(order.artworkId);
+      const artist = await User.findById(order.sellerId || artwork?.artistId);
+      if (!artist) continue;
+      pending.push({ source: 'order', sourceId: order.id, title: artwork?.title || 'Artwork', completedAt: order.updatedAt || order.createdAt, artist: reviewerCard(artist) });
+    }
+    for (const commission of commissions) {
+      if (done.has(`commission:${commission.id}`)) continue;
+      const artist = await User.findById(commission.artistId);
+      if (!artist) continue;
+      pending.push({ source: 'commission', sourceId: commission.id, title: commission.title, completedAt: commission.updatedAt, artist: reviewerCard(artist) });
+    }
+    pending.sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0));
+    res.json(pending);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Public: an artist's reviews and rating summary
+app.get('/api/users/:username/reviews', async (req, res) => {
+  try {
+    const artist = await User.findOne({ username: req.params.username });
+    if (!artist || artist.accountType !== 'artist') return res.status(404).json({ error: 'Artist not found' });
+    const reviews = (await Review.find({ artistId: artist.id })).sort((a, b) => b.createdAt - a.createdAt);
+
+    const reviewerIds = [...new Set(reviews.map(review => review.reviewerId))];
+    const reviewers = await Promise.all(reviewerIds.map(id => User.findById(id).catch(() => null)));
+    const byId = new Map(reviewers.filter(Boolean).map(user => [user.id, reviewerCard(user)]));
+
+    res.json({
+      ...summarizeReviews(reviews),
+      items: reviews.map(review => ({ ...review.toJSON(), reviewer: byId.get(review.reviewerId) || null }))
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/reviews', auth, async (req, res) => {
+  try {
+    const body = req.body || {};
+    if (Object.keys(body).some(key => !['source', 'sourceId', 'rating', 'comment'].includes(key))) {
+      return res.status(400).json({ error: 'One or more fields are not allowed' });
+    }
+    const fieldError = validateReviewFields(body, { requireRating: true });
+    if (fieldError) return res.status(400).json({ error: fieldError });
+
+    const target = await findReviewTarget(req.userId, body.source, String(body.sourceId || ''));
+    if (target.error) return res.status(400).json({ error: target.error });
+    if (target.artistId === req.userId) return res.status(400).json({ error: 'You cannot review yourself.' });
+
+    const existing = await Review.findOne({ source: body.source, sourceId: String(body.sourceId) });
+    if (existing) return res.status(409).json({ error: 'You already reviewed this one. You can edit your review on the artist’s profile.' });
+
+    const now = Date.now();
+    const review = await Review.create({
+      artistId: target.artistId,
+      reviewerId: req.userId,
+      source: body.source,
+      sourceId: String(body.sourceId),
+      context: String(target.context).slice(0, 120),
+      rating: Number(body.rating),
+      comment: (body.comment || '').trim(),
+      createdAt: now,
+      updatedAt: now
+    });
+
+    const reviewer = await User.findById(req.userId);
+    if (reviewer) {
+      await Notification.create({
+        userId: target.artistId,
+        type: 'review',
+        actorName: displayName(reviewer),
+        actorUsername: reviewer.username,
+        text: `left a ${review.rating}-star review for "${review.context}"`
+      }).catch(() => null);
+    }
+    res.status(201).json(review.toJSON());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.patch('/api/reviews/:id', auth, async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.id);
+    if (!review || review.reviewerId !== req.userId) return res.status(404).json({ error: 'Review not found' });
+    const body = req.body || {};
+    if (Object.keys(body).some(key => !['rating', 'comment'].includes(key))) {
+      return res.status(400).json({ error: 'One or more fields are not allowed' });
+    }
+    const fieldError = validateReviewFields(body, { requireRating: false });
+    if (fieldError) return res.status(400).json({ error: fieldError });
+
+    if (body.rating !== undefined) review.rating = Number(body.rating);
+    if (body.comment !== undefined) review.comment = String(body.comment || '').trim();
+    review.edited = true;
+    review.updatedAt = Date.now();
+    await review.save();
+    res.json(review.toJSON());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/reviews/:id', auth, async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.id);
+    if (!review || review.reviewerId !== req.userId) return res.status(404).json({ error: 'Review not found' });
+    await Review.findOneAndDelete({ _id: review.id });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// The artist answers a review (one public reply, which they can edit or remove)
+app.put('/api/reviews/:id/reply', auth, async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.id);
+    if (!review || review.artistId !== req.userId) return res.status(404).json({ error: 'Review not found' });
+    const reply = typeof req.body?.reply === 'string' ? req.body.reply.trim() : '';
+    if (reply.length < 2) return res.status(400).json({ error: 'Write a short reply.' });
+    if (reply.length > 500) return res.status(400).json({ error: 'Replies can be at most 500 characters.' });
+
+    const isNew = !review.reply;
+    review.reply = reply;
+    review.repliedAt = Date.now();
+    await review.save();
+
+    if (isNew) {
+      const artist = await User.findById(req.userId);
+      if (artist) {
+        await Notification.create({
+          userId: review.reviewerId,
+          type: 'review_reply',
+          actorName: displayName(artist),
+          actorUsername: artist.username,
+          text: `replied to your review of "${review.context}"`
+        }).catch(() => null);
+      }
+    }
+    res.json(review.toJSON());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/reviews/:id/reply', auth, async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.id);
+    if (!review || review.artistId !== req.userId) return res.status(404).json({ error: 'Review not found' });
+    review.reply = '';
+    review.repliedAt = null;
+    await review.save();
+    res.json(review.toJSON());
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1838,8 +2077,8 @@ app.get('/api/notifications', auth, async (req, res) => {
     const user = await User.findById(req.userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
     const types = user.accountType === 'collector'
-      ? ['purchase', 'new_artwork', 'reply', 'price_drop', 'now_available', 'commission']
-      : ['like', 'comment', 'reply', 'sale', 'follow', 'feature', 'new_artwork', 'purchase', 'price_drop', 'now_available', 'commission', 'collab_invite', 'collab_response'];
+      ? ['purchase', 'new_artwork', 'reply', 'price_drop', 'now_available', 'commission', 'review_reply']
+      : ['like', 'comment', 'reply', 'sale', 'follow', 'feature', 'new_artwork', 'purchase', 'price_drop', 'now_available', 'commission', 'collab_invite', 'collab_response', 'review', 'review_reply'];
     const list = await Notification.find({ userId: req.userId, type: { $in: types } }).sort({ createdAt: -1 }).limit(50);
     const invites = await CollabInvite.find({ userId: req.userId });
     const inviteStatusByArtwork = new Map(invites.map(invite => [String(invite.artworkId), invite.status]));
