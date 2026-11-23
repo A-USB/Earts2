@@ -326,4 +326,5 @@
 [data-theme="dark"] .notif-collab-status.status-declined { color: #FF8A6B; }
 .notif-collab-error { flex-basis: 100%; font-size: 12.5px; color: #C0392B; }
 [data-theme="dark"] .notif-collab-error { color: #FF9B8A; }
-
+.notif-type-review, .notif-type-review_reply { background: #FEF3C7; }
+[data-theme="dark"] .notif-type-review, [data-theme="dark"] .notif-type-review_reply { background: rgba(245, 158, 11, 0.25); }
