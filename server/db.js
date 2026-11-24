@@ -13,6 +13,7 @@ const Notification = require('./models/Notification');
 const Order = require('./models/Order');
 const Commission = require('./models/Commission');
 const CollabInvite = require('./models/CollabInvite');
+const VerificationRequest = require('./models/VerificationRequest');
 const Follow = require('./models/Follow');
 const Like = require('./models/Like');
 const Collection = require('./models/Collection');
@@ -122,6 +123,7 @@ const ProxiedNotification = createModelProxy('Notification', Notification, memor
 const ProxiedOrder = createModelProxy('Order', Order, memoryStore.orders);
 const ProxiedCommission = createModelProxy('Commission', Commission, memoryStore.commissions);
 const ProxiedCollabInvite = createModelProxy('CollabInvite', CollabInvite, memoryStore.collabInvites);
+const ProxiedVerificationRequest = createModelProxy('VerificationRequest', VerificationRequest, memoryStore.verificationRequests);
 const ProxiedFollow = createModelProxy('Follow', Follow, memoryStore.follows);
 const ProxiedLike = createModelProxy('Like', Like, memoryStore.likes);
 const ProxiedCollection = createModelProxy('Collection', Collection, memoryStore.collections);
@@ -140,6 +142,7 @@ module.exports = {
   Order: ProxiedOrder,
   Commission: ProxiedCommission,
   CollabInvite: ProxiedCollabInvite,
+  VerificationRequest: ProxiedVerificationRequest,
   Follow: ProxiedFollow,
   Like: ProxiedLike,
   Collection: ProxiedCollection,
