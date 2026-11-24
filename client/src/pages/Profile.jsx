@@ -13,6 +13,7 @@ import ArtworkCard from '../components/ArtworkCard';
 import SalesPanel from '../components/SalesPanel';
 import SavedPieces from '../components/SavedPieces';
 import CommissionRequestModal from '../components/CommissionRequestModal';
+import VerifiedBadge from '../components/VerifiedBadge';
 import CreatePostModal from '../components/CreatePostModal';
 import IconTile from '../components/IconTile';
 import { formatCompact } from '../utils/formatCount';
@@ -376,7 +377,7 @@ export default function Profile() {
             {/* Profile Identity (Name below avatar, headline, location, tags, stats) */}
             <div className="profile-identity">
               <div className="profile-name-row">
-                <h1 className="profile-fullname">{profile.firstName} {profile.lastName}</h1>
+                <h1 className="profile-fullname">{profile.firstName} {profile.lastName}{profile.verified && <VerifiedBadge size={22} />}</h1>
                 <span className={`profile-badge-pill ${isCollector ? 'collector-pill' : 'artist-pill'}`}>
                   {isCollector ? <Sparkles size={12} /> : <Palette size={12} />}
                   {isCollector ? 'Explorer' : profile.role || 'Artist'}

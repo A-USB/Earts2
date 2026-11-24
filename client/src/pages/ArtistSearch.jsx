@@ -4,6 +4,7 @@ import { ImageIcon, MapPin, Palette, Search, Users } from 'lucide-react';
 import { api } from '../utils/api';
 import Avatar from '../components/Avatar';
 import ArtworkCard from '../components/ArtworkCard';
+import VerifiedBadge from '../components/VerifiedBadge';
 import LoadError from '../components/LoadError';
 import './ArtistSearch.css';
 import { formatCompact } from '../utils/formatCount';
@@ -166,7 +167,7 @@ export default function ArtistSearch() {
                   <Link to={`/profile/${artist.username}`} className="artist-result-card" key={artist.id}>
                     <Avatar seed={artist.avatarSeed || `${artist.firstName}${artist.lastName}`} src={artist.avatar} size={64} />
                     <div className="artist-result-info">
-                      <h3>{artist.firstName} {artist.lastName}</h3>
+                      <h3>{artist.firstName} {artist.lastName}{artist.verified && <VerifiedBadge size={15} />}</h3>
                       <span className="artist-result-username">@{artist.username}</span>
                       <p>{artist.bio || artist.role || 'Earts artist'}</p>
                       <div className="artist-result-meta">
