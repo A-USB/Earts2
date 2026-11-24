@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Save, User, Palette, Bell, Lock, LogOut, Camera, Check } from 'lucide-react';
+import { Save, User, Palette, Bell, Lock, LogOut, Camera, Check, BadgeCheck } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
 import AvatarPicker from '../components/AvatarPicker';
+import VerificationCard from '../components/VerificationCard';
 import { AVATAR_PRESETS } from '../utils/avatarPresets';
 import AvatarCropModal from '../components/AvatarCropModal';
 import { validateAvatarFile } from '../utils/cropAvatarImage';
@@ -14,6 +15,7 @@ const TABS = [
   { id: 'profile', label: 'Profile', icon: <User size={16}/> },
   { id: 'appearance', label: 'Appearance', icon: <Palette size={16}/> },
   { id: 'notifications', label: 'Notifications', icon: <Bell size={16}/> },
+  { id: 'verification', label: 'Verification', icon: <BadgeCheck size={16}/>, artistOnly: true },
   { id: 'security', label: 'Security', icon: <Lock size={16}/> },
 ];
 
@@ -130,7 +132,7 @@ export default function Settings() {
 
         <div className="settings-layout">
           <aside className="settings-sidebar">
-            {TABS.map(t => (
+            {TABS.filter(t => !t.artistOnly || user.accountType === 'artist').map(t => (
               <button
                 key={t.id}
                 className={`settings-tab ${tab === t.id ? 'active' : ''}`}
@@ -245,6 +247,14 @@ export default function Settings() {
                     <div className="preview-label">Cover preview</div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {tab === 'verification' && user.accountType === 'artist' && (
+              <div className="settings-section">
+                <h3>Verification</h3>
+                <p className="section-desc">Get the blue tick that shows your profile is genuine.</p>
+                <VerificationCard />
               </div>
             )}
 
