@@ -239,4 +239,4 @@
 .search-more { margin-top: 24px; text-align: center; font-size: 13px; color: var(--text-secondary); }
 .search-more a, .artist-search-empty a { color: var(--primary); font-weight: 700; text-decoration: underline; }
 .search-switch { background: none; padding: 0; color: var(--primary); font-weight: 700; text-decoration: underline; cursor: pointer; }
-
+.artist-result-rating { display: inline-flex; align-items: center; gap: 6px; }

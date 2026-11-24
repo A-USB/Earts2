@@ -5,6 +5,7 @@ import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
 import LoadError from '../components/LoadError';
+import PendingReviews from '../components/PendingReviews';
 import './Commissions.css';
 
 const STATUS_LABEL = {
@@ -257,6 +258,8 @@ export default function Commissions() {
             <p>{isArtist ? 'Requests from clients, and the custom work you have asked others to make.' : 'Custom work you have requested from artists.'}</p>
           </div>
         </div>
+
+        <PendingReviews />
 
         <p className="commissions-banner">Payments aren’t processed on Earts yet. A quote is a record of what you agreed.</p>
 

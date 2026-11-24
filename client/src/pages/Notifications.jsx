@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, MessageCircle, ShoppingBag, UserPlus, Sparkles, CheckCheck, Trash2, Tag, ArrowRight, Bell, BellOff, TrendingDown, Palette, Users, BadgeCheck } from 'lucide-react';
+import { Heart, MessageCircle, ShoppingBag, UserPlus, Sparkles, CheckCheck, Trash2, Tag, ArrowRight, Bell, BellOff, TrendingDown, Palette, Users, BadgeCheck, Star } from 'lucide-react';
 import { api } from '../utils/api';
 import Avatar from '../components/Avatar';
+import PendingReviews from '../components/PendingReviews';
 import { useAuth } from '../context/AuthContext';
 import { announceNotificationsChanged } from '../hooks/useUnreadNotificationCount';
 import './Notifications.css';
@@ -97,7 +98,7 @@ export default function Notifications() {
   const filtered = notifications.filter(n => {
     if (activeTab === 'purchases') return n.type === 'purchase';
     if (activeTab === 'artists') return n.type === 'new_artwork';
-    if (activeTab === 'interactions') return n.type === 'like' || n.type === 'comment' || n.type === 'reply';
+    if (activeTab === 'interactions') return n.type === 'like' || n.type === 'comment' || n.type === 'reply' || n.type === 'review' || n.type === 'review_reply';
     if (activeTab === 'sales') return n.type === 'sale';
     if (activeTab === 'network') return n.type === 'follow';
     if (activeTab === 'commissions') return n.type === 'commission';
@@ -120,6 +121,9 @@ export default function Notifications() {
         return <Sparkles size={16} color="#5B4BF5" />;
       case 'verification':
         return <BadgeCheck size={16} color="#2D7FF9" />;
+      case 'review':
+      case 'review_reply':
+        return <Star size={16} color="#F5A524" fill="#F5A524" />;
       case 'collab_invite':
       case 'collab_response':
         return <Users size={16} color="#8B5CF6" />;
@@ -160,6 +164,8 @@ export default function Notifications() {
             </button>
           )}
         </div>
+
+        <PendingReviews />
 
         {/* Filter Tabs */}
         <div className="notifications-tabs">
@@ -271,7 +277,15 @@ export default function Notifications() {
                 </div>
 
                 {/* Target Artwork Thumbnail or Action */}
-                {item.type === 'commission' ? (
+                {item.type === 'review' || item.type === 'review_reply' ? (
+                  <Link
+                    to={`/profile/${item.type === 'review' ? user?.username : item.actorUsername}?tab=Reviews`}
+                    className="btn-outline notif-action-pill"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    View <ArrowRight size={13} />
+                  </Link>
+                ) : item.type === 'commission' ? (
                   <Link
                     to="/commissions"
                     className="btn-outline notif-action-pill"

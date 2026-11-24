@@ -329,3 +329,5 @@
 .notif-type-verification { background: #DBEAFE; }
 [data-theme="dark"] .notif-type-verification { background: rgba(45, 127, 249, 0.25); }
 
+.notif-type-review, .notif-type-review_reply { background: #FEF3C7; }
+[data-theme="dark"] .notif-type-review, [data-theme="dark"] .notif-type-review_reply { background: rgba(245, 158, 11, 0.25); }
