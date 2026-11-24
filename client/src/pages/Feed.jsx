@@ -1,3 +1,4 @@
+import VerifiedBadge from '../components/VerifiedBadge';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Droplet, StickyNote, ShoppingBag, ImagePlus, Bookmark } from 'lucide-react';
@@ -66,6 +67,7 @@ function Piece({ post, isFollowing, onToggleFollow, liked, onToggleLike, saved, 
               <Link to={profile} className="wall-artist">
                 <Avatar seed={post.artistAvatarSeed || post.artistName} src={post.artistAvatar} size={22} />
                 {post.artistName}
+                {post.artistVerified && <VerifiedBadge size={14} />}
               </Link>
               <span className="wall-meta">{[post.medium, timeAgo(post.createdAt)].filter(Boolean).join(' · ')}</span>
             </p>

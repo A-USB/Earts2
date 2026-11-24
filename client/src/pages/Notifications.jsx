@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, MessageCircle, ShoppingBag, UserPlus, Sparkles, CheckCheck, Trash2, Tag, ArrowRight, Bell, BellOff, TrendingDown, Palette, Users } from 'lucide-react';
+import { Heart, MessageCircle, ShoppingBag, UserPlus, Sparkles, CheckCheck, Trash2, Tag, ArrowRight, Bell, BellOff, TrendingDown, Palette, Users, BadgeCheck } from 'lucide-react';
 import { api } from '../utils/api';
 import Avatar from '../components/Avatar';
 import { useAuth } from '../context/AuthContext';
@@ -118,6 +118,8 @@ export default function Notifications() {
         return <ShoppingBag size={16} color="#10B981" />;
       case 'new_artwork':
         return <Sparkles size={16} color="#5B4BF5" />;
+      case 'verification':
+        return <BadgeCheck size={16} color="#2D7FF9" />;
       case 'collab_invite':
       case 'collab_response':
         return <Users size={16} color="#8B5CF6" />;
