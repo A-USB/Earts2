@@ -22,6 +22,8 @@ const userSchema = new mongoose.Schema({
   followers: { type: Number, default: 0 },
   following: { type: Number, default: 0 },
   artworksSold: { type: Number, default: 0 },
+  verified: { type: Boolean, default: false },
+  verifiedAt: { type: Number, default: null },
   coverColor: { type: String, default: 'linear-gradient(135deg, #5B4BF5 0%, #FF6B9D 100%)' },
   createdAt: { type: Date, default: Date.now }
 }, {
