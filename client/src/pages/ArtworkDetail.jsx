@@ -8,6 +8,7 @@ import PurchaseModal from '../components/PurchaseModal';
 import ReportAction from '../components/ReportAction';
 import LoadError from '../components/LoadError';
 import CollabManager from '../components/CollabManager';
+import VerifiedBadge from '../components/VerifiedBadge';
 import './ArtworkDetail.css';
 import { formatCompact } from '../utils/formatCount';
 
@@ -136,7 +137,7 @@ export default function ArtworkDetail() {
                 <Link to={`/profile/${artwork.artist.username}`} className="artist-link card">
                   <Avatar seed={artwork.artist.avatarSeed || (artwork.artist.firstName||'')+(artwork.artist.lastName||'')} src={artwork.artist.avatar} size={46} />
                   <div>
-                    <strong>{artwork.artist.firstName} {artwork.artist.lastName}</strong>
+                    <strong>{artwork.artist.firstName} {artwork.artist.lastName}{(artwork.artist.verified || artwork.artistVerified) && <VerifiedBadge size={15} />}</strong>
                     <span>{artwork.artist.role}</span>
                   </div>
                 </Link>

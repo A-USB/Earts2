@@ -3,6 +3,7 @@ import { Bookmark, Droplet, ShoppingCart, Users } from 'lucide-react';
 import './ArtworkCard.css';
 import { formatCompact } from '../utils/formatCount';
 import { getPriceDrop } from '../utils/priceDrop';
+import VerifiedBadge from './VerifiedBadge';
 
 const formatCount = formatCompact;
 
@@ -53,7 +54,7 @@ export default function ArtworkCard({
 
         {(showArtist || collabs) && (
           <p className="wc-by">
-            {showArtist && <span>by {artwork.artistName}</span>}
+            {showArtist && <span>by {artwork.artistName}{artwork.artistVerified && <VerifiedBadge size={13} />}</span>}
             {collabs && (
               <span className="wc-collab" title={`Collaboration with ${collabs}`}>
                 <Users size={12} aria-hidden="true" /> × {collabs}

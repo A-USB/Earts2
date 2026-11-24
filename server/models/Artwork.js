@@ -12,6 +12,7 @@ const artworkSchema = new mongoose.Schema({
   description: { type: String, default: '', maxlength: 3000 },
   artistId: { type: String, required: true, index: true },
   artistName: { type: String, required: true, maxlength: 161 },
+  artistVerified: { type: Boolean, default: false },
   artistUsername: { type: String },
   price: { type: Number, default: null },
   previousPrice: { type: Number, default: null },     // set when the price is lowered, so cards can show the drop

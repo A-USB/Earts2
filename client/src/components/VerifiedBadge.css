@@ -1,0 +1,2 @@
+.verified-badge { display: inline-flex; align-items: center; flex: none; margin-left: 5px; vertical-align: middle; line-height: 0; color: #2D7FF9; }
+[data-theme="dark"] .verified-badge { color: #4C9AFF; }

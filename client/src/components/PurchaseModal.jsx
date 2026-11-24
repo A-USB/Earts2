@@ -1,3 +1,4 @@
+import VerifiedBadge from './VerifiedBadge';
 import { useState } from 'react';
 import { X, ShoppingBag, CheckCircle2, Info } from 'lucide-react';
 import { api } from '../utils/api';
@@ -40,7 +41,7 @@ export default function PurchaseModal({ artwork, onClose }) {
               <div className="purchase-thumb" style={{ background: artwork.color || '#C8C8E8' }} />
               <div>
                 <h3>{artwork.title}</h3>
-                <span>by {artwork.artistName}</span>
+                <span>by {artwork.artistName}{artwork.artistVerified && <VerifiedBadge size={13} />}</span>
               </div>
               <div className="purchase-price">${artwork.price}</div>
             </div>

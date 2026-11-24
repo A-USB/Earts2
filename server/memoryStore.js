@@ -362,6 +362,7 @@ const memoryStore = {
   orders: new MemoryCollection('orders'),
   commissions: new MemoryCollection('commissions'),
   collabInvites: new MemoryCollection('collabInvites'),
+  verificationRequests: new MemoryCollection('verificationRequests'),
   reviews: new MemoryCollection('reviews'),
   follows: new MemoryCollection('follows'),
   likes: new MemoryCollection('likes'),

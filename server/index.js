@@ -25,7 +25,8 @@ const {
   Message,
   Commission,
   CollabInvite,
-  Review
+  Review,
+  VerificationRequest
 } = require('./db');
 
 const app = express();
@@ -481,15 +482,15 @@ app.get('/api/users/search', async (req, res) => {
       ];
     }
     const artists = await User.find(filter)
-      .select('username firstName lastName role accountType bio location avatar avatarSeed followers tags tools')
+      .select('username firstName lastName role accountType bio location avatar avatarSeed followers tags tools verified')
       .sort({ followers: -1, createdAt: -1 })
       .limit(40);
     const ids = artists.map(artist => artist.id);
     const allReviews = ids.length ? await Review.find({ artistId: { $in: ids } }) : [];
     res.json(artists.map(artist => {
-      const { id, username, firstName, lastName, role, accountType, bio, location, avatar, avatarSeed, followers, tags, tools } = artist.toJSON();
+      const { id, username, firstName, lastName, role, accountType, bio, location, avatar, avatarSeed, followers, tags, tools, verified } = artist.toJSON();
       const rating = summarizeReviews(allReviews.filter(review => review.artistId === id));
-      return { id, username, firstName, lastName, role, accountType, bio, location, avatar, avatarSeed, followers, tags, tools, ratingAverage: rating.average, ratingCount: rating.count };
+      return { id, username, firstName, lastName, role, accountType, bio, location, avatar, avatarSeed, followers, tags, tools, verified: Boolean(verified), ratingAverage: rating.average, ratingCount: rating.count };
     }));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1351,6 +1352,183 @@ app.delete('/api/reviews/:id/reply', auth, async (req, res) => {
   }
 });
 
+// ================= VERIFICATION =================
+const VERIFICATION_MIN_ARTWORKS = 3;
+const VERIFICATION_MIN_BIO = 30;
+const VERIFICATION_MIN_ACCOUNT_DAYS = 7;
+const VERIFICATION_RETRY_DAYS = 14;
+
+async function verificationEligibility(user) {
+  const artworkCount = (await Artwork.find({ artistId: user.id })).length;
+  const ageDays = (Date.now() - new Date(user.createdAt || Date.now()).getTime()) / 86400000;
+  const checks = [
+    { id: 'photo', label: 'Upload a profile photo', met: Boolean(user.avatar) },
+    { id: 'bio', label: `Write a bio of at least ${VERIFICATION_MIN_BIO} characters`, met: String(user.bio || '').trim().length >= VERIFICATION_MIN_BIO },
+    { id: 'artworks', label: `Share at least ${VERIFICATION_MIN_ARTWORKS} artworks`, met: artworkCount >= VERIFICATION_MIN_ARTWORKS },
+    { id: 'age', label: `Have an account that is at least ${VERIFICATION_MIN_ACCOUNT_DAYS} days old`, met: ageDays >= VERIFICATION_MIN_ACCOUNT_DAYS }
+  ];
+  return { checks, eligible: checks.every(check => check.met), artworkCount };
+}
+
+async function setArtistVerified(user, verified) {
+  user.verified = verified;
+  user.verifiedAt = verified ? Date.now() : null;
+  await user.save();
+  // Artworks carry a copy of the flag so every card and feed can show the badge without extra lookups
+  await Artwork.updateMany({ artistId: user.id }, { artistVerified: verified });
+}
+
+async function notifyVerification(userId, text, actorName = 'Earts team') {
+  try {
+    await Notification.create({ userId, type: 'verification', actorName, text });
+  } catch (err) {
+    console.error('Could not send verification notification:', err.message);
+  }
+}
+
+// The signed-in artist's verification status, application and what they still need
+app.get('/api/verification/me', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.accountType !== 'artist') return res.status(403).json({ error: 'Only artist accounts can be verified.' });
+
+    const requests = (await VerificationRequest.find({ userId: user.id })).sort((a, b) => b.createdAt - a.createdAt);
+    const latest = requests[0] || null;
+    const eligibility = await verificationEligibility(user);
+
+    let retryAfter = null;
+    if (latest && latest.status === 'rejected') {
+      const until = (latest.resolvedAt || latest.createdAt) + VERIFICATION_RETRY_DAYS * 86400000;
+      if (until > Date.now()) retryAfter = until;
+    }
+    res.json({
+      verified: Boolean(user.verified),
+      verifiedAt: user.verifiedAt || null,
+      request: latest ? latest.toJSON() : null,
+      checks: eligibility.checks,
+      canApply: !user.verified && eligibility.eligible && !(latest && latest.status === 'pending') && !retryAfter,
+      retryAfter
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/verification', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.accountType !== 'artist') return res.status(403).json({ error: 'Only artist accounts can be verified.' });
+    if (user.verified) return res.status(400).json({ error: 'Your account is already verified.' });
+
+    const body = req.body || {};
+    if (Object.keys(body).some(key => !['statement', 'links'].includes(key))) return res.status(400).json({ error: 'One or more fields are not allowed' });
+    const statement = typeof body.statement === 'string' ? body.statement.trim() : '';
+    if (statement.length < 20) return res.status(400).json({ error: 'Tell us a little about yourself and your work (at least 20 characters).' });
+    if (statement.length > 600) return res.status(400).json({ error: 'Keep your statement under 600 characters.' });
+
+    const rawLinks = Array.isArray(body.links) ? body.links : [];
+    if (rawLinks.length > 3) return res.status(400).json({ error: 'Add at most 3 links.' });
+    const links = [];
+    for (const raw of rawLinks) {
+      const value = String(raw || '').trim();
+      if (!value) continue;
+      let parsed;
+      try { parsed = new URL(value); } catch { return res.status(400).json({ error: `"${value.slice(0, 40)}" is not a valid link.` }); }
+      if (!['http:', 'https:'].includes(parsed.protocol) || value.length > 200) return res.status(400).json({ error: 'Links must start with http:// or https:// and be under 200 characters.' });
+      links.push(parsed.toString());
+    }
+
+    const requests = await VerificationRequest.find({ userId: user.id });
+    if (requests.some(request => request.status === 'pending')) return res.status(409).json({ error: 'You already have a request waiting for review.' });
+    const lastRejected = requests.filter(request => request.status === 'rejected').sort((a, b) => b.createdAt - a.createdAt)[0];
+    if (lastRejected && (lastRejected.resolvedAt || lastRejected.createdAt) + VERIFICATION_RETRY_DAYS * 86400000 > Date.now()) {
+      return res.status(429).json({ error: `You can apply again ${VERIFICATION_RETRY_DAYS} days after a decision.` });
+    }
+
+    const eligibility = await verificationEligibility(user);
+    if (!eligibility.eligible) return res.status(400).json({ error: 'Finish the requirements below before applying.' });
+
+    const request = await VerificationRequest.create({ userId: user.id, statement, links, status: 'pending', createdAt: Date.now() });
+    await Promise.all([...moderatorUserIds].map(id => notifyVerification(id, 'requested a verified badge', displayName(user))));
+    res.status(201).json(request.toJSON());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/moderation/verifications', auth, requireModerator, async (req, res) => {
+  try {
+    const status = ['pending', 'approved', 'rejected', 'revoked'].includes(req.query.status) ? req.query.status : 'pending';
+    const requests = (await VerificationRequest.find({ status })).sort((a, b) => b.createdAt - a.createdAt).slice(0, 100);
+    const items = await Promise.all(requests.map(async (request) => {
+      const user = await User.findById(request.userId).catch(() => null);
+      const artworks = user ? await Artwork.find({ artistId: user.id }) : [];
+      return {
+        ...request.toJSON(),
+        user: user ? {
+          id: user.id,
+          username: user.username,
+          name: displayName(user),
+          avatar: user.avatar || null,
+          avatarSeed: user.avatarSeed || null,
+          role: user.role,
+          location: user.location,
+          followers: user.followers,
+          artworksSold: user.artworksSold,
+          joinedAt: new Date(user.createdAt || Date.now()).getTime(),
+          artworkCount: artworks.length
+        } : null
+      };
+    }));
+    res.json(items);
+  } catch (err) {
+    res.status(500).json({ error: 'Unable to load verification requests right now.' });
+  }
+});
+
+// decision: approve | reject (pending requests) or revoke (approved requests)
+app.patch('/api/moderation/verifications/:id', auth, requireModerator, async (req, res) => {
+  try {
+    const body = req.body || {};
+    if (Object.keys(body).some(key => !['decision', 'note'].includes(key))) return res.status(400).json({ error: 'One or more fields are not allowed' });
+    const note = typeof body.note === 'string' ? body.note.trim() : '';
+    if (note.length > 300) return res.status(400).json({ error: 'Notes can be at most 300 characters.' });
+
+    const request = await VerificationRequest.findById(req.params.id);
+    if (!request) return res.status(404).json({ error: 'Request not found.' });
+    const user = await User.findById(request.userId);
+    if (!user) return res.status(404).json({ error: 'This account no longer exists.' });
+
+    const transitions = { approve: ['pending', 'approved'], reject: ['pending', 'rejected'], revoke: ['approved', 'revoked'] };
+    const transition = transitions[body.decision];
+    if (!transition) return res.status(400).json({ error: 'Choose approve, reject or revoke.' });
+    if (request.status !== transition[0]) return res.status(400).json({ error: `This request is already ${request.status}.` });
+    if (body.decision === 'reject' && note.length < 3) return res.status(400).json({ error: 'Give the artist a short reason so they know what to improve.' });
+
+    request.status = transition[1];
+    request.reviewerId = req.userId;
+    request.reviewerNote = note;
+    request.resolvedAt = Date.now();
+    await request.save();
+
+    if (body.decision === 'approve') await setArtistVerified(user, true);
+    if (body.decision === 'revoke') await setArtistVerified(user, false);
+
+    const messages = {
+      approve: 'approved your verification request. Your profile now has the verified badge.',
+      reject: `did not approve your verification request this time${note ? `: ${note}` : '.'}`,
+      revoke: `removed your verified badge${note ? `: ${note}` : '.'}`
+    };
+    await notifyVerification(user.id, messages[body.decision]);
+    res.json(request.toJSON());
+  } catch (err) {
+    if (err?.name === 'CastError') return res.status(404).json({ error: 'Request not found.' });
+    res.status(500).json({ error: 'Unable to update this request right now.' });
+  }
+});
+
 // ================= ARTWORKS ROUTES =================
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -1471,6 +1649,7 @@ app.post('/api/artworks', auth, async (req, res) => {
       collaborators: [],
       artistId: req.userId,
       artistName,
+      artistVerified: Boolean(user.verified),
       artistUsername,
       likes: 0,
       trending: false,
@@ -2077,8 +2256,8 @@ app.get('/api/notifications', auth, async (req, res) => {
     const user = await User.findById(req.userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
     const types = user.accountType === 'collector'
-      ? ['purchase', 'new_artwork', 'reply', 'price_drop', 'now_available', 'commission', 'review_reply']
-      : ['like', 'comment', 'reply', 'sale', 'follow', 'feature', 'new_artwork', 'purchase', 'price_drop', 'now_available', 'commission', 'collab_invite', 'collab_response', 'review', 'review_reply'];
+      ? ['purchase', 'new_artwork', 'reply', 'price_drop', 'now_available', 'commission', 'review_reply', 'verification']
+      : ['like', 'comment', 'reply', 'sale', 'follow', 'feature', 'new_artwork', 'purchase', 'price_drop', 'now_available', 'commission', 'collab_invite', 'collab_response', 'review', 'review_reply', 'verification'];
     const list = await Notification.find({ userId: req.userId, type: { $in: types } }).sort({ createdAt: -1 }).limit(50);
     const invites = await CollabInvite.find({ userId: req.userId });
     const inviteStatusByArtwork = new Map(invites.map(invite => [String(invite.artworkId), invite.status]));

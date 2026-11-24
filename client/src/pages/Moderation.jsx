@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ExternalLink, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { api } from '../utils/api';
+import VerificationQueue from '../components/VerificationQueue';
 import './Moderation.css';
 
 const STATUS_OPTIONS = [
@@ -20,6 +21,7 @@ const REASON_LABELS = {
 };
 
 export default function Moderation() {
+  const [section, setSection] = useState('reports');
   const [status, setStatus] = useState('open');
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -51,6 +53,31 @@ export default function Moderation() {
     }
   };
 
+  const sectionTabs = (
+    <div className="moderation-sections" role="tablist" aria-label="Moderation sections">
+      <button type="button" role="tab" aria-selected={section === 'reports'} className={`moderation-section-tab${section === 'reports' ? ' active' : ''}`} onClick={() => setSection('reports')}>Reports</button>
+      <button type="button" role="tab" aria-selected={section === 'verification'} className={`moderation-section-tab${section === 'verification' ? ' active' : ''}`} onClick={() => setSection('verification')}>Verification requests</button>
+    </div>
+  );
+
+  if (section === 'verification') {
+    return (
+      <div className="moderation-page page-wrapper">
+        <div className="container moderation-container">
+          <header className="moderation-header">
+            <div>
+              <span className="moderation-eyebrow"><ShieldAlert size={15} /> Trust &amp; Safety</span>
+              <h1>Verification requests</h1>
+              <p>Approve genuine artists, or tell them what to improve.</p>
+            </div>
+          </header>
+          {sectionTabs}
+          <VerificationQueue />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="moderation-page page-wrapper">
       <div className="container moderation-container">
@@ -67,6 +94,8 @@ export default function Moderation() {
             </select>
           </label>
         </header>
+
+        {sectionTabs}
 
         {error && <div className="moderation-error" role="alert">{error}</div>}
         {loading ? (
