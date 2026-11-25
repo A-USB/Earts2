@@ -26,7 +26,8 @@ const {
   Commission,
   CollabInvite,
   Review,
-  VerificationRequest
+  VerificationRequest,
+  ArtworkView
 } = require('./db');
 
 const app = express();
@@ -1529,6 +1530,136 @@ app.patch('/api/moderation/verifications/:id', auth, requireModerator, async (re
   }
 });
 
+// ================= ANALYTICS =================
+const dayKey = (timestamp) => new Date(timestamp).toISOString().slice(0, 10);
+
+// The signed-in user's id if a valid token was sent; never rejects (public pages call this)
+function optionalUserId(req) {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return null;
+  try { return jwt.verify(token, SECRET).id; } catch { return null; }
+}
+
+// Counts one view of an artwork. The owner's own visits are ignored, and repeat visits from one address are throttled.
+app.post('/api/artworks/:id/view', limitAuthRequests(3, 60 * 60 * 1000), async (req, res) => {
+  try {
+    const artwork = await Artwork.findById(req.params.id);
+    if (!artwork) return res.status(404).json({ error: 'Artwork not found' });
+    if (optionalUserId(req) === artwork.artistId) return res.json({ counted: false });
+
+    const day = dayKey(Date.now());
+    const row = await ArtworkView.findOne({ artworkId: artwork.id, day });
+    if (row) {
+      row.count = (Number(row.count) || 0) + 1;
+      await row.save();
+    } else {
+      await ArtworkView.create({ artworkId: artwork.id, artistId: artwork.artistId, day, count: 1 });
+    }
+    res.json({ counted: true });
+  } catch (err) {
+    if (err?.name === 'CastError') return res.status(404).json({ error: 'Artwork not found' });
+    res.status(500).json({ error: 'Unable to record this view.' });
+  }
+});
+
+// Artist insights: views, likes, new followers and sales over the last 7 / 30 / 90 days, compared with the period before
+app.get('/api/analytics', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.accountType !== 'artist') return res.status(403).json({ error: 'Insights are available to artist accounts.' });
+
+    const days = [7, 30, 90].includes(Number(req.query.days)) ? Number(req.query.days) : 30;
+    const DAY = 86400000;
+    const now = Date.now();
+    const todayStart = Date.parse(`${dayKey(now)}T00:00:00Z`);
+    const from = todayStart - (days - 1) * DAY;          // first day of this period (UTC)
+    const prevFrom = from - days * DAY;                   // first day of the previous period
+
+    const artworks = await Artwork.find({ artistId: user.id });
+    const artworkIds = artworks.map(a => String(a.id));
+    const artworkById = new Map(artworks.map(a => [String(a.id), a]));
+
+    const [viewRows, likes, follows, saves, orders] = await Promise.all([
+      ArtworkView.find({ artistId: user.id }),
+      artworkIds.length ? Like.find({ artworkId: { $in: artworkIds } }) : [],
+      Follow.find({ followingId: user.id }),
+      artworkIds.length ? SavedArtwork.find({ artworkId: { $in: artworkIds } }) : [],
+      Order.find({ $or: [{ sellerId: user.id }, { participantIds: user.id }, ...(artworkIds.length ? [{ artworkId: { $in: artworkIds } }] : [])] })
+    ]);
+
+    const empty = () => ({ views: 0, likes: 0, saves: 0, followers: 0, orders: 0, revenue: 0 });
+    const current = empty();
+    const previous = empty();
+    const series = [];
+    const byDay = new Map();
+    for (let i = 0; i < days; i += 1) {
+      const key = dayKey(from + i * DAY);
+      const point = { date: key, views: 0, likes: 0, followers: 0, revenue: 0, orders: 0 };
+      series.push(point);
+      byDay.set(key, point);
+    }
+
+    const perArtwork = new Map(artworkIds.map(id => [id, { views: 0, likes: 0, orders: 0, revenue: 0 }]));
+    const bucket = (timestamp) => (timestamp >= from ? 'current' : timestamp >= prevFrom ? 'previous' : null);
+    const add = (timestamp, field, amount = 1, artworkId = null) => {
+      const which = bucket(timestamp);
+      if (!which) return;
+      (which === 'current' ? current : previous)[field] += amount;
+      if (which === 'current') {
+        const point = byDay.get(dayKey(timestamp));
+        if (point && field in point) point[field] += amount;
+        const stats = artworkId ? perArtwork.get(String(artworkId)) : null;
+        if (stats && field in stats) stats[field] += amount;
+      }
+    };
+
+    for (const row of viewRows) add(Date.parse(`${row.day}T12:00:00Z`), 'views', Number(row.count) || 0, row.artworkId);
+    for (const like of likes) add(Number(like.createdAt), 'likes', 1, like.artworkId);
+    for (const save of saves) add(Number(save.createdAt), 'saves');
+    for (const follow of follows) add(Number(follow.createdAt), 'followers');
+    for (const order of orders) {
+      if (order.status === 'cancelled') continue;
+      const split = Array.isArray(order.split) ? order.split : [];
+      const mine = split.find(entry => String(entry.userId) === user.id);
+      const amount = mine ? Number(mine.amount) || 0 : (order.sellerId === user.id || artworkById.get(String(order.artworkId)) ? Number(order.price) || 0 : 0);
+      const timestamp = Number(order.createdAt);
+      add(timestamp, 'orders', 1, order.artworkId);
+      add(timestamp, 'revenue', amount, order.artworkId);
+    }
+
+    const round2 = (value) => Math.round(value * 100) / 100;
+    current.revenue = round2(current.revenue);
+    previous.revenue = round2(previous.revenue);
+    series.forEach(point => { point.revenue = round2(point.revenue); });
+
+    const topArtworks = [...perArtwork.entries()]
+      .map(([id, stats]) => {
+        const artwork = artworkById.get(id);
+        const base = artwork ? withImageUrl(req, artwork.toJSON()) : {};
+        return { id, title: artwork?.title || 'Artwork', color: artwork?.color, imageUrl: base.imageUrl, ...stats, revenue: round2(stats.revenue) };
+      })
+      .filter(item => item.views || item.likes || item.orders)
+      .sort((a, b) => (b.views + b.likes * 3 + b.orders * 10) - (a.views + a.likes * 3 + a.orders * 10))
+      .slice(0, 5);
+
+    const rating = summarizeReviews(await Review.find({ artistId: user.id }));
+    res.json({
+      days,
+      from: dayKey(from),
+      to: dayKey(todayStart),
+      current,
+      previous,
+      series,
+      topArtworks,
+      rating: { average: rating.average, count: rating.count },
+      totals: { artworks: artworks.length, followers: user.followers || 0, sold: user.artworksSold || 0 }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ================= ARTWORKS ROUTES =================
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -1649,8 +1780,8 @@ app.post('/api/artworks', auth, async (req, res) => {
       collaborators: [],
       artistId: req.userId,
       artistName,
-      artistVerified: Boolean(user.verified),
       artistUsername,
+      artistVerified: Boolean(user.verified),
       likes: 0,
       trending: false,
       featured: false,

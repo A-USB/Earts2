@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import {
   Rss, ShoppingBag, ImagePlus, User, Search, Bell, MessageSquare,
-  Settings as SettingsIcon, LogOut, Moon, Sun, X, Palette,
+  Settings as SettingsIcon, LogOut, Moon, Sun, X, Palette, BarChart3,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -114,6 +114,9 @@ export default function MobileNav() {
             </div>
             <Link ref={firstItemRef} to={profilePath} className="mnav-sheet-item"><User size={20} /> My profile</Link>
             <Link to="/commissions" className="mnav-sheet-item"><Palette size={20} /> Commissions</Link>
+            {user?.accountType !== 'collector' && (
+              <Link to="/analytics" className="mnav-sheet-item"><BarChart3 size={20} /> Insights</Link>
+            )}
             <Link to="/settings" className="mnav-sheet-item"><SettingsIcon size={20} /> Settings</Link>
             <button type="button" className="mnav-sheet-item" onClick={toggleTheme}>
               {isDark ? <Sun size={20} /> : <Moon size={20} />} {isDark ? 'Light mode' : 'Dark mode'}
