@@ -46,6 +46,19 @@ export default function ArtworkDetail() {
       .finally(() => setLoading(false));
   }, [id, user?.id, navigate, refreshKey]);
 
+  // Count one view per visitor session (the server ignores the owner's own visits)
+  useEffect(() => {
+    if (!artwork?.id) return;
+    try {
+      const key = `earts_viewed_${artwork.id}`;
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, '1');
+    } catch {
+      // storage unavailable: still counts once per page load
+    }
+    api.post(`/artworks/${artwork.id}/view`).catch(() => {});
+  }, [artwork?.id]);
+
   const handleLike = async () => {
     if (!user) { navigate('/login'); return; }
 
