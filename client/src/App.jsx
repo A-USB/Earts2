@@ -21,6 +21,7 @@ import Settings from './pages/Settings'
 import Notifications from './pages/Notifications'
 import Messages from './pages/Messages'
 import Commissions from './pages/Commissions'
+import Analytics from './pages/Analytics'
 import Logout from './pages/Logout'
 import NotFound from './pages/NotFound'
 import Moderation from './pages/Moderation'
@@ -78,6 +79,7 @@ function Layout() {
       <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
       <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
       <Route path="/messages/:username" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+      <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
       <Route path="/commissions" element={<ProtectedRoute><Commissions /></ProtectedRoute>} />
       <Route path="/moderation" element={<ProtectedRoute><Moderation /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
