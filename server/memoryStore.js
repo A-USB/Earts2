@@ -366,6 +366,7 @@ const memoryStore = {
   verificationRequests: new MemoryCollection('verificationRequests'),
   artworkViews: new MemoryCollection('artworkViews'),
   tagFollows: new MemoryCollection('tagFollows'),
+  processPosts: new MemoryCollection('processPosts'),
   follows: new MemoryCollection('follows'),
   likes: new MemoryCollection('likes'),
   collections: new MemoryCollection('collections'),

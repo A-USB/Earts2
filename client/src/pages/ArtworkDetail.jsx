@@ -9,6 +9,7 @@ import ReportAction from '../components/ReportAction';
 import LoadError from '../components/LoadError';
 import CollabManager from '../components/CollabManager';
 import VerifiedBadge from '../components/VerifiedBadge';
+import ProcessGallery from '../components/ProcessGallery';
 import './ArtworkDetail.css';
 import { formatCompact } from '../utils/formatCount';
 
@@ -190,6 +191,14 @@ export default function ArtworkDetail() {
                 <p>{artwork.description}</p>
               </div>
             )}
+
+            <ProcessGallery
+              artworkId={artwork.id}
+              artistId={artwork.artistId}
+              isOwner={Boolean(user?.id) && user.id === artwork.artistId}
+              ownArtworks={[{ id: artwork.id, title: artwork.title }]}
+              layout="strip"
+            />
 
             {artwork.tags?.length > 0 && (
               <div className="artwork-tags" aria-label="Tags">

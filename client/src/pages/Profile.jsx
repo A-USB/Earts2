@@ -13,8 +13,9 @@ import ArtworkCard from '../components/ArtworkCard';
 import SalesPanel from '../components/SalesPanel';
 import SavedPieces from '../components/SavedPieces';
 import CommissionRequestModal from '../components/CommissionRequestModal';
-import VerifiedBadge from '../components/VerifiedBadge';
 import ReviewsPanel from '../components/ReviewsPanel';
+import VerifiedBadge from '../components/VerifiedBadge';
+import ProcessGallery from '../components/ProcessGallery';
 import PendingReviews from '../components/PendingReviews';
 import CreatePostModal from '../components/CreatePostModal';
 import IconTile from '../components/IconTile';
@@ -538,7 +539,7 @@ export default function Profile() {
                 <div className="artwork-section-header">
                   <h3>Portfolio</h3>
                   <div className="artwork-tabs">
-                    {['All', 'For Sale', 'Sold', 'Collections', 'Reviews', ...(isOwn ? ['Orders', 'Saved'] : [])].map(t => (
+                    {['All', 'For Sale', 'Sold', 'Collections', 'Process', 'Reviews', ...(isOwn ? ['Orders', 'Saved'] : [])].map(t => (
                       <button
                         key={t}
                         className={`art-tab ${tab === t ? 'active' : ''}`}
@@ -552,6 +553,8 @@ export default function Profile() {
 
                 {tab === 'Orders' && isOwn ? (
                   <SalesPanel />
+                ) : tab === 'Process' ? (
+                  <ProcessGallery artistId={profile.id} isOwner={isOwn} ownArtworks={profile.artworks || []} layout="grid" />
                 ) : tab === 'Reviews' ? (
                   <ReviewsPanel username={profile.username} isOwn={isOwn} meId={me?.id} />
                 ) : tab === 'Saved' && isOwn ? (
