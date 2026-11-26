@@ -17,6 +17,7 @@ const Review = require('./models/Review');
 const VerificationRequest = require('./models/VerificationRequest');
 const ArtworkView = require('./models/ArtworkView');
 const TagFollow = require('./models/TagFollow');
+const ProcessPost = require('./models/ProcessPost');
 const Follow = require('./models/Follow');
 const Like = require('./models/Like');
 const Collection = require('./models/Collection');
@@ -130,6 +131,7 @@ const ProxiedReview = createModelProxy('Review', Review, memoryStore.reviews);
 const ProxiedVerificationRequest = createModelProxy('VerificationRequest', VerificationRequest, memoryStore.verificationRequests);
 const ProxiedArtworkView = createModelProxy('ArtworkView', ArtworkView, memoryStore.artworkViews);
 const ProxiedTagFollow = createModelProxy('TagFollow', TagFollow, memoryStore.tagFollows);
+const ProxiedProcessPost = createModelProxy('ProcessPost', ProcessPost, memoryStore.processPosts);
 const ProxiedFollow = createModelProxy('Follow', Follow, memoryStore.follows);
 const ProxiedLike = createModelProxy('Like', Like, memoryStore.likes);
 const ProxiedCollection = createModelProxy('Collection', Collection, memoryStore.collections);
@@ -152,6 +154,7 @@ module.exports = {
   VerificationRequest: ProxiedVerificationRequest,
   ArtworkView: ProxiedArtworkView,
   TagFollow: ProxiedTagFollow,
+  ProcessPost: ProxiedProcessPost,
   Follow: ProxiedFollow,
   Like: ProxiedLike,
   Collection: ProxiedCollection,
