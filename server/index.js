@@ -27,7 +27,8 @@ const {
   CollabInvite,
   Review,
   VerificationRequest,
-  ArtworkView
+  ArtworkView,
+  TagFollow
 } = require('./db');
 
 const app = express();
@@ -160,8 +161,30 @@ const COLLAB_ROLES = [
   '3D Sculptor', 'Art Director', 'Concept Artist', 'Visual Designer'
 ];
 
+// Tags are lowercase words (letters, numbers, hyphens), 2-24 characters, at most 5 per artwork
+const MAX_TAGS = 5;
+const TAG_PATTERN = /^[\p{L}\p{N}][\p{L}\p{N}-]{1,23}$/u;
+
+function normalizeTag(raw) {
+  return String(raw ?? '').trim().replace(/^#+/, '').toLowerCase().replace(/\s+/g, '-').replace(/-{2,}/g, '-').replace(/-$/, '');
+}
+
+function parseTags(raw) {
+  if (!Array.isArray(raw)) return { error: 'Tags must be a list.' };
+  if (raw.length > MAX_TAGS) return { error: `Use at most ${MAX_TAGS} tags.` };
+  const tags = [];
+  for (const item of raw) {
+    if (typeof item !== 'string') return { error: 'Tags must be text.' };
+    const tag = normalizeTag(item);
+    if (!tag) continue;
+    if (!TAG_PATTERN.test(tag)) return { error: `"${item.slice(0, 24)}" is not a valid tag. Use 2-24 letters, numbers or hyphens.` };
+    if (!tags.includes(tag)) tags.push(tag);
+  }
+  return { tags };
+}
+
 function validateArtworkPayload(payload, { partial = false } = {}) {
-  const allowed = new Set(['title', 'description', 'category', 'medium', 'year', 'color', 'imageUrl', 'status', 'price', 'collaborators']);
+  const allowed = new Set(['title', 'description', 'category', 'medium', 'year', 'color', 'imageUrl', 'status', 'price', 'collaborators', 'tags']);
   const unknown = Object.keys(payload).find(key => !allowed.has(key));
   if (unknown) return 'One or more artwork fields are not allowed';
   const errors = [
@@ -180,6 +203,7 @@ function validateArtworkPayload(payload, { partial = false } = {}) {
       ? 'Choose a valid artwork status'
       : null,
     payload.price !== undefined ? validatePrice(payload.price, { required: payload.status === 'for_sale' }) : null,
+    payload.tags !== undefined ? (parseTags(payload.tags).error || null) : null,
     payload.collaborators !== undefined && (!Array.isArray(payload.collaborators) || payload.collaborators.length > 10)
       ? 'An artwork can have at most 10 collaborators'
       : null
@@ -1660,6 +1684,69 @@ app.get('/api/analytics', auth, async (req, res) => {
   }
 });
 
+// ================= TAGS =================
+const MAX_FOLLOWED_TAGS = 30;
+
+// The most used tags on recent artworks
+app.get('/api/tags/popular', async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 12, 1), 30);
+    const recent = await Artwork.find({}).sort({ createdAt: -1 }).limit(500);
+    const counts = new Map();
+    for (const artwork of recent) {
+      for (const tag of Array.isArray(artwork.tags) ? artwork.tags : []) counts.set(tag, (counts.get(tag) || 0) + 1);
+    }
+    res.json([...counts.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .slice(0, limit)
+      .map(([tag, count]) => ({ tag, count })));
+  } catch (err) {
+    res.status(500).json({ error: 'Unable to load tags right now.' });
+  }
+});
+
+// Tags the signed-in person follows
+app.get('/api/tags/following', auth, async (req, res) => {
+  try {
+    const follows = (await TagFollow.find({ userId: req.userId })).sort((a, b) => a.tag.localeCompare(b.tag));
+    res.json(follows.map(f => f.tag));
+  } catch (err) {
+    res.status(500).json({ error: 'Unable to load your tags right now.' });
+  }
+});
+
+app.get('/api/tags/:tag', async (req, res) => {
+  try {
+    const tag = normalizeTag(req.params.tag);
+    if (!TAG_PATTERN.test(tag)) return res.status(400).json({ error: 'That is not a valid tag.' });
+    const count = (await Artwork.find({ tags: tag })).length;
+    const userId = optionalUserId(req);
+    const following = userId ? Boolean(await TagFollow.findOne({ userId, tag })) : false;
+    res.json({ tag, count, following });
+  } catch (err) {
+    res.status(500).json({ error: 'Unable to load this tag right now.' });
+  }
+});
+
+// Follow / unfollow a tag
+app.post('/api/tags/:tag/follow', auth, async (req, res) => {
+  try {
+    const tag = normalizeTag(req.params.tag);
+    if (!TAG_PATTERN.test(tag)) return res.status(400).json({ error: 'That is not a valid tag.' });
+    const existing = await TagFollow.findOne({ userId: req.userId, tag });
+    if (existing) {
+      await TagFollow.findOneAndDelete({ _id: existing.id });
+      return res.json({ following: false });
+    }
+    const mine = await TagFollow.find({ userId: req.userId });
+    if (mine.length >= MAX_FOLLOWED_TAGS) return res.status(400).json({ error: `You can follow up to ${MAX_FOLLOWED_TAGS} tags. Unfollow one first.` });
+    await TagFollow.create({ userId: req.userId, tag, createdAt: Date.now() });
+    res.json({ following: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Unable to update this tag right now.' });
+  }
+});
+
 // ================= ARTWORKS ROUTES =================
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -1681,6 +1768,10 @@ app.get('/api/artworks', async (req, res) => {
     if (trending === 'true') filter.trending = true;
     if (featured === 'true') filter.featured = true;
     if (artistId) filter.artistId = String(artistId);
+    if (req.query.tag) {
+      const tag = normalizeTag(req.query.tag);
+      if (TAG_PATTERN.test(tag)) filter.tags = tag;
+    }
     if (['for_sale', 'not_for_sale', 'sold'].includes(status)) filter.status = status;
 
     const minPrice = req.query.minPrice !== undefined && req.query.minPrice !== '' ? Number(req.query.minPrice) : null;
@@ -1708,6 +1799,7 @@ app.get('/api/artworks', async (req, res) => {
             { artistUsername: match },
             { medium: match },
             { category: match },
+            { tags: word },
             { description: match }
           ]
         };
@@ -1767,7 +1859,8 @@ app.post('/api/artworks', auth, async (req, res) => {
     const artistName = `${user.firstName} ${user.lastName}`;
     const artistUsername = user.username;
 
-    const { collaborators: incomingCollaborators, ...artworkFields } = req.body;
+    const { collaborators: incomingCollaborators, tags: incomingTags, ...artworkFields } = req.body;
+    const tags = incomingTags === undefined ? [] : parseTags(incomingTags).tags;
     let resolvedCollaborators = [];
     if (Array.isArray(incomingCollaborators) && incomingCollaborators.length) {
       const resolved = await resolveCollaborators(req.userId, incomingCollaborators);
@@ -1777,6 +1870,7 @@ app.post('/api/artworks', auth, async (req, res) => {
 
     const artwork = await Artwork.create({
       ...artworkFields,
+      tags,
       collaborators: [],
       artistId: req.userId,
       artistName,
@@ -1844,6 +1938,7 @@ app.patch('/api/artworks/:id', auth, async (req, res) => {
 
     const update = { ...req.body };
     delete update.collaborators; // invites decide who is shown, never the request body
+    if (update.tags !== undefined) update.tags = parseTags(update.tags).tags;
     const toPrice = (value) => (value === null || value === undefined || value === '' || !Number.isFinite(Number(value)) ? null : Number(value));
     const oldPrice = toPrice(before.price);
     const oldStatus = before.status;
@@ -2271,8 +2366,11 @@ app.get('/api/feed', auth, async (req, res) => {
 
     const follows = await Follow.find({ followerId: req.userId });
     const followingIds = new Set(follows.map(f => String(f.followingId)));
-    // Within a page, work from people you follow comes first
-    const ordered = [...page.filter(a => followingIds.has(String(a.artistId))), ...page.filter(a => !followingIds.has(String(a.artistId)))];
+    const followedTags = new Set((await TagFollow.find({ userId: req.userId })).map(f => f.tag));
+    const matchedTagsOf = (a) => (Array.isArray(a.tags) ? a.tags.filter(tag => followedTags.has(tag)) : []);
+    // Within a page: people you follow first, then pieces with a tag you follow, then the rest
+    const rank = (a) => (followingIds.has(String(a.artistId)) ? 0 : matchedTagsOf(a).length ? 1 : 2);
+    const ordered = [...page].sort((a, b) => rank(a) - rank(b));
 
     const artistIds = [...new Set(page.map(artwork => artwork.artistId).filter(Boolean))];
     const artists = await User.find({ _id: { $in: artistIds } });
@@ -2282,7 +2380,8 @@ app.get('/api/feed', auth, async (req, res) => {
       return withImageUrl(req, {
         ...artwork.toJSON(),
         artistAvatar: artist?.avatar || null,
-        artistAvatarSeed: artist?.avatarSeed || null
+        artistAvatarSeed: artist?.avatarSeed || null,
+        matchedTags: matchedTagsOf(artwork)
       });
     });
     res.json({ items, nextCursor: hasMore ? page[page.length - 1].createdAt : null });

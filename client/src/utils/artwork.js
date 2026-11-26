@@ -24,12 +24,13 @@ export function validateArtwork(form, imageData) {
   return '';
 }
 
-export function buildArtworkPayload(form, imageData, collaborators = []) {
+export function buildArtworkPayload(form, imageData, collaborators = [], tags = []) {
   return {
     title: form.title.trim(),
     description: (form.description || '').trim(),
     category: form.category,
     medium: (form.medium || '').trim() || form.category,
+    tags,
     year: Number(form.year) || new Date().getFullYear(),
     color: form.color,
     imageUrl: imageData,

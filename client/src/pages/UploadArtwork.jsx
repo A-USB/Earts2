@@ -8,6 +8,7 @@ import {
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
+import TagInput from '../components/TagInput';
 import { CATEGORIES, buildArtworkPayload, emptyArtworkForm, validateArtwork } from '../utils/artwork';
 import { ACCEPT_ATTR, formatBytes, processArtworkFile } from '../utils/artworkImage';
 import './UploadArtwork.css';
@@ -112,6 +113,7 @@ export default function UploadArtwork() {
   const [allUsers, setAllUsers] = useState([]);
   const [collabSearch, setCollabSearch] = useState('');
   const [collaborators, setCollaborators] = useState([]);
+  const [tags, setTags] = useState([]);
   const [selectedRole, setSelectedRole] = useState('Co-Creator');
   const [showCollabDropdown, setShowCollabDropdown] = useState(false);
 
@@ -273,7 +275,7 @@ export default function UploadArtwork() {
     setError('');
 
     try {
-      const payload = buildArtworkPayload(form, imageData, collaborators);
+      const payload = buildArtworkPayload(form, imageData, collaborators, tags);
       const artwork = await api.post('/artworks', payload);
       navigate(`/artwork/${artwork.id}`);
     } catch (err) {
@@ -583,6 +585,11 @@ export default function UploadArtwork() {
                       maxLength={80}
                     />
                   </div>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="artwork-tags">Tags</label>
+                  <TagInput id="artwork-tags" value={tags} onChange={setTags} />
                 </div>
 
                 <div className="form-group">

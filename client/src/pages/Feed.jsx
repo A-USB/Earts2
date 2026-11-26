@@ -76,6 +76,13 @@ function Piece({ post, isFollowing, onToggleFollow, liked, onToggleLike, saved, 
         </div>
 
         {post.description && <p className="wall-desc">{post.description}</p>}
+        {post.matchedTags?.length > 0 && (
+          <p className="wall-tagnote">
+            Because you follow {post.matchedTags.map((tag, i) => (
+              <span key={tag}>{i > 0 && ', '}<Link to={`/marketplace?mode=all&tag=${encodeURIComponent(tag)}`}>#{tag}</Link></span>
+            ))}
+          </p>
+        )}
 
         <div className="wall-actions">
           <button
@@ -170,6 +177,11 @@ export default function Feed() {
   };
 
   useEffect(() => { loadFeed(); }, []);
+
+  const [followedTags, setFollowedTags] = useState([]);
+  useEffect(() => {
+    api.get('/tags/following').then(setFollowedTags).catch(() => {});
+  }, []);
 
   // Load the next page of the wall (also triggered automatically as you near the bottom)
   const loadMore = useCallback(async () => {
@@ -296,6 +308,20 @@ export default function Feed() {
             ))}
           </div>
         </header>
+
+        <nav className="wall-tags" aria-label="Your tags">
+          {followedTags.length > 0 ? (
+            <>
+              <span className="wall-tags-label">Your tags</span>
+              {followedTags.map(tag => (
+                <Link key={tag} to={`/marketplace?mode=all&tag=${encodeURIComponent(tag)}`} className="wall-tag">#{tag}</Link>
+              ))}
+              <Link to="/marketplace?mode=all" className="wall-tag more">Browse tags</Link>
+            </>
+          ) : (
+            <span className="wall-tags-hint">Follow tags to see more of what you love here. <Link to="/marketplace?mode=all">Browse tags</Link></span>
+          )}
+        </nav>
 
         {loading ? (
           <div className="wall-columns" aria-hidden="true">

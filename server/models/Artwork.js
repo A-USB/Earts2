@@ -22,6 +22,7 @@ const artworkSchema = new mongoose.Schema({
   color: { type: String, default: '#6025EA' },
   imageUrl: { type: String, default: null, maxlength: 4300000 },
   medium: { type: String, default: '', maxlength: 80 },
+  tags: { type: [String], default: [], index: true },
   year: { type: Number, default: () => new Date().getFullYear() },
   likes: { type: Number, default: 0 },
   trending: { type: Boolean, default: false, index: true },
