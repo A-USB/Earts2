@@ -191,6 +191,14 @@ export default function ArtworkDetail() {
               </div>
             )}
 
+            {artwork.tags?.length > 0 && (
+              <div className="artwork-tags" aria-label="Tags">
+                {artwork.tags.map(tag => (
+                  <Link key={tag} to={`/marketplace?mode=all&tag=${encodeURIComponent(tag)}`} className="artwork-tag">#{tag}</Link>
+                ))}
+              </div>
+            )}
+
             <div className="artwork-meta-grid">
               {artwork.medium && <div className="meta-item"><span>Medium</span><strong>{artwork.medium}</strong></div>}
               {artwork.year && <div className="meta-item"><span>Year</span><strong>{artwork.year}</strong></div>}

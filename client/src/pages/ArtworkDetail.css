@@ -195,3 +195,9 @@
   background: #121224;
 }
 
+.artwork-tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+.artwork-tag { padding: 4px 12px; border-radius: 999px; background: var(--primary-light); color: var(--primary); font-size: 13px; font-weight: 700; }
+.artwork-tag:hover { background: var(--primary); color: #fff; }
+[data-theme="dark"] .artwork-tag { color: #D8D3FF; }
+[data-theme="dark"] .artwork-tag:hover { color: #fff; }
+
