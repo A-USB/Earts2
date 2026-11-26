@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
-import { Search, SlidersHorizontal, X, ShoppingBag, Sparkles, Users, ArrowRight, Eye, SearchX } from 'lucide-react';
+import { Search, SlidersHorizontal, X, ShoppingBag, Sparkles, Users, ArrowRight, Eye, SearchX, Hash, Plus, Check } from 'lucide-react';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import ArtworkCard from '../components/ArtworkCard';
 import PurchaseModal from '../components/PurchaseModal';
 import Avatar from '../components/Avatar';
 import LoadError from '../components/LoadError';
+import { normalizeTag, isValidTag } from '../utils/tags';
 import './Marketplace.css';
 import IconTile from '../components/IconTile';
 
@@ -56,6 +57,13 @@ export default function Marketplace() {
   const [debouncedSearch, setDebouncedSearch] = useState(search);
   const [sort, setSort] = useState(SORTS.some(s => s.id === searchParams.get('sort')) ? searchParams.get('sort') : 'latest');
   const [status, setStatus] = useState(STATUS_OPTIONS.some(s => s.id && s.id === searchParams.get('status')) ? searchParams.get('status') : '');
+  const [tag, setTag] = useState(() => {
+    const fromUrl = normalizeTag(searchParams.get('tag') || '');
+    return isValidTag(fromUrl) ? fromUrl : '';
+  });
+  const [popularTags, setPopularTags] = useState([]);
+  const [tagFollowing, setTagFollowing] = useState(false);
+  const [tagBusy, setTagBusy] = useState(false);
   const [minPrice, setMinPrice] = useState(searchParams.get('min') || '');
   const [maxPrice, setMaxPrice] = useState(searchParams.get('max') || '');
   const [filtersOpen, setFiltersOpen] = useState(Boolean(searchParams.get('min') || searchParams.get('max') || searchParams.get('status')));
@@ -80,11 +88,40 @@ export default function Marketplace() {
     if (viewMode !== 'for_sale') next.set('mode', viewMode);
     if (sort !== 'latest') next.set('sort', sort);
     if (status && viewMode === 'all') next.set('status', status);
+    if (tag) next.set('tag', tag);
     if (minPrice) next.set('min', minPrice);
     if (maxPrice) next.set('max', maxPrice);
     setSearchParams(next, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, category, viewMode, sort, status, minPrice, maxPrice]);
+  }, [debouncedSearch, category, viewMode, sort, status, minPrice, maxPrice, tag]);
+
+  // Popular tags for discovery, loaded once
+  useEffect(() => {
+    let cancelled = false;
+    api.get('/tags/popular?limit=10').then(list => { if (!cancelled) setPopularTags(list); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  // Whether the signed-in person follows the tag being browsed
+  useEffect(() => {
+    if (!tag || !user) { setTagFollowing(false); return undefined; }
+    let cancelled = false;
+    api.get(`/tags/${encodeURIComponent(tag)}`).then(info => { if (!cancelled) setTagFollowing(Boolean(info.following)); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [tag, user]);
+
+  const toggleTagFollow = async () => {
+    if (!user) { navigate('/login'); return; }
+    setTagBusy(true);
+    try {
+      const result = await api.post(`/tags/${encodeURIComponent(tag)}/follow`);
+      setTagFollowing(result.following);
+    } catch (error) {
+      console.error('Failed to follow tag:', error);
+    } finally {
+      setTagBusy(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) { setSavedIds([]); return; }
@@ -121,6 +158,7 @@ export default function Marketplace() {
 
     const params = new URLSearchParams({ sort });
     if (category !== 'All') params.set('category', category);
+    if (tag) params.set('tag', tag);
     if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim());
     const effectiveStatus = viewMode === 'for_sale' ? 'for_sale' : status;
     if (effectiveStatus) params.set('status', effectiveStatus);
@@ -133,7 +171,7 @@ export default function Marketplace() {
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
-  }, [category, debouncedSearch, sort, status, viewMode, minPrice, maxPrice, priceError, refreshKey]);
+  }, [category, debouncedSearch, sort, status, viewMode, minPrice, maxPrice, tag, priceError, refreshKey]);
 
   const cleanPrice = (value) => value.replace(/[^0-9.]/g, '').slice(0, 10);
 
@@ -141,13 +179,14 @@ export default function Marketplace() {
     const list = [];
     if (debouncedSearch.trim()) list.push({ key: 'search', label: `“${debouncedSearch.trim()}”`, clear: () => setSearch('') });
     if (category !== 'All') list.push({ key: 'category', label: category, clear: () => setCategory('All') });
+    if (tag) list.push({ key: 'tag', label: `#${tag}`, clear: () => setTag('') });
     if (viewMode === 'all' && status) list.push({ key: 'status', label: STATUS_OPTIONS.find(s => s.id === status)?.label, clear: () => setStatus('') });
     if (minPrice || maxPrice) {
       const label = minPrice && maxPrice ? `${money(minPrice)} – ${money(maxPrice)}` : minPrice ? `From ${money(minPrice)}` : `Up to ${money(maxPrice)}`;
       list.push({ key: 'price', label, clear: () => { setMinPrice(''); setMaxPrice(''); } });
     }
     return list;
-  }, [debouncedSearch, category, viewMode, status, minPrice, maxPrice]);
+  }, [debouncedSearch, category, viewMode, status, minPrice, maxPrice, tag]);
 
   const panelFilterCount = (minPrice || maxPrice ? 1 : 0) + (viewMode === 'all' && status ? 1 : 0);
 
@@ -155,6 +194,7 @@ export default function Marketplace() {
     setSearch('');
     setDebouncedSearch('');
     setCategory('All');
+    setTag('');
     setStatus('');
     setMinPrice('');
     setMaxPrice('');
@@ -273,6 +313,23 @@ export default function Marketplace() {
           </div>
         </div>
 
+        {popularTags.length > 0 && (
+          <div className="tag-strip" aria-label="Popular tags">
+            <span className="tag-strip-label"><Hash size={13} /> Popular tags</span>
+            {popularTags.map(item => (
+              <button
+                key={item.tag}
+                type="button"
+                className={`tag-strip-chip${tag === item.tag ? ' active' : ''}`}
+                aria-pressed={tag === item.tag}
+                onClick={() => { setTag(tag === item.tag ? '' : item.tag); setViewMode('all'); }}
+              >
+                #{item.tag} <small>{item.count}</small>
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* 4. Filter Panel */}
         {filtersOpen && (
           <div className="filters-panel card">
@@ -356,6 +413,17 @@ export default function Marketplace() {
               {f.label} <X size={12} />
             </button>
           ))}
+          {tag && (
+            <button
+              type="button"
+              className={`tag-follow-btn${tagFollowing ? ' following' : ''}`}
+              onClick={toggleTagFollow}
+              disabled={tagBusy}
+              aria-pressed={tagFollowing}
+            >
+              {tagFollowing ? <><Check size={13} /> Following #{tag}</> : <><Plus size={13} /> Follow #{tag}</>}
+            </button>
+          )}
           {activeFilters.length > 1 && (
             <button type="button" className="clear-all-link" onClick={resetFilters}>Clear all</button>
           )}

@@ -416,3 +416,17 @@
   .price-inputs { width: 100%; }
 }
 
+/* Tags */
+.tag-strip { display: flex; align-items: center; gap: 8px; margin: -4px 0 16px; padding-bottom: 4px; overflow-x: auto; scrollbar-width: thin; }
+.tag-strip-label { display: inline-flex; align-items: center; gap: 4px; flex: none; font-size: 12.5px; font-weight: 700; color: var(--text-secondary); }
+.tag-strip-chip { flex: none; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-secondary); font-size: 12.5px; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); }
+.tag-strip-chip small { margin-left: 4px; color: var(--text-muted); font-size: 11px; }
+.tag-strip-chip:hover { border-color: var(--primary); color: var(--primary); }
+.tag-strip-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.tag-strip-chip.active small { color: rgba(255, 255, 255, .8); }
+.tag-follow-btn { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 999px; border: 1.5px solid var(--primary); background: transparent; color: var(--primary); font-size: 12px; font-weight: 700; cursor: pointer; }
+.tag-follow-btn:hover:not(:disabled) { background: var(--primary-light); }
+.tag-follow-btn.following { background: var(--primary); color: #fff; }
+.tag-follow-btn:disabled { opacity: .6; cursor: wait; }
+[data-theme="dark"] .tag-follow-btn:not(.following) { color: #C9C2FF; border-color: #8F83FF; }
+
