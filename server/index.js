@@ -28,7 +28,8 @@ const {
   Review,
   VerificationRequest,
   ArtworkView,
-  TagFollow
+  TagFollow,
+  ProcessPost
 } = require('./db');
 
 const app = express();
@@ -1744,6 +1745,146 @@ app.post('/api/tags/:tag/follow', auth, async (req, res) => {
     res.json({ following: true });
   } catch (err) {
     res.status(500).json({ error: 'Unable to update this tag right now.' });
+  }
+});
+
+// ================= PROCESS POSTS =================
+const PROCESS_DAILY_LIMIT = 10;
+
+function processImageUrl(req, post) {
+  const json = post.toJSON ? post.toJSON() : post;
+  const img = json.imageUrl;
+  if (typeof img === 'string' && img.startsWith('data:image/')) {
+    return { ...json, imageUrl: `${req.protocol}://${req.get('host')}/api/process/${json.id}/image?v=${imageVersion(img)}` };
+  }
+  return json;
+}
+
+function validateProcessFields(body, { partial }) {
+  if (body.caption !== undefined && body.caption !== null) {
+    if (typeof body.caption !== 'string' || body.caption.trim().length > 500) return 'Captions can be at most 500 characters.';
+  }
+  if (body.stage !== undefined && body.stage !== null) {
+    if (typeof body.stage !== 'string' || body.stage.trim().length > 40) return 'The stage label can be at most 40 characters.';
+  }
+  if (!partial) {
+    const imageError = safeImage(body.imageUrl);
+    if (!body.imageUrl) return 'Add an image of your work in progress.';
+    if (imageError) return imageError;
+    if (body.color !== undefined && (typeof body.color !== 'string' || !/^#[\da-f]{3,8}$/i.test(body.color))) return 'Invalid image colour.';
+  }
+  return null;
+}
+
+// Someone's work-in-progress updates. ?artistId=, ?artworkId=, ?limit= (default 20)
+app.get('/api/process', async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 50);
+    const filter = {};
+    if (req.query.artistId) filter.artistId = String(req.query.artistId);
+    if (req.query.artworkId) filter.artworkId = String(req.query.artworkId);
+    if (!filter.artistId && !filter.artworkId) return res.status(400).json({ error: 'Choose an artist or an artwork.' });
+
+    const posts = await ProcessPost.find(filter).sort({ createdAt: -1 }).limit(limit);
+    const artworkIds = [...new Set(posts.map(post => post.artworkId).filter(Boolean))];
+    const linked = await Promise.all(artworkIds.map(id => Artwork.findById(id).catch(() => null)));
+    const artworksById = new Map(linked.filter(Boolean).map(a => [String(a.id), { id: a.id, title: a.title }]));
+
+    res.json(posts.map(post => ({ ...processImageUrl(req, post), artwork: post.artworkId ? artworksById.get(String(post.artworkId)) || null : null })));
+  } catch (err) {
+    res.status(500).json({ error: 'Unable to load process posts right now.' });
+  }
+});
+
+app.get('/api/process/:id/image', async (req, res) => {
+  try {
+    const post = await ProcessPost.findById(req.params.id);
+    const img = post?.imageUrl;
+    if (!img) return res.status(404).end();
+    const match = img.match(/^data:(image\/(?:png|jpeg|webp|gif));base64,(.+)$/i);
+    if (!match) return res.status(404).end();
+    res.set({ 'Content-Type': match[1], 'Cache-Control': 'public, max-age=31536000, immutable', 'Cross-Origin-Resource-Policy': 'cross-origin' });
+    res.send(Buffer.from(match[2], 'base64'));
+  } catch (err) {
+    res.status(404).end();
+  }
+});
+
+app.post('/api/process', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.accountType !== 'artist') return res.status(403).json({ error: 'Only artist accounts can share process posts.' });
+
+    const body = req.body || {};
+    if (Object.keys(body).some(key => !['caption', 'stage', 'artworkId', 'imageUrl', 'color'].includes(key))) {
+      return res.status(400).json({ error: 'One or more fields are not allowed' });
+    }
+    const fieldError = validateProcessFields(body, { partial: false });
+    if (fieldError) return res.status(400).json({ error: fieldError });
+
+    let artworkId = null;
+    if (body.artworkId) {
+      const artwork = await Artwork.findOne({ _id: String(body.artworkId), artistId: req.userId }).catch(() => null);
+      if (!artwork) return res.status(400).json({ error: 'You can only link a process post to your own artwork.' });
+      artworkId = artwork.id;
+    }
+
+    const since = Date.now() - 86400000;
+    const recent = (await ProcessPost.find({ artistId: req.userId })).filter(post => post.createdAt >= since);
+    if (recent.length >= PROCESS_DAILY_LIMIT) return res.status(429).json({ error: `You can share up to ${PROCESS_DAILY_LIMIT} process posts a day. Try again tomorrow.` });
+
+    const post = await ProcessPost.create({
+      artistId: req.userId,
+      artworkId,
+      caption: (body.caption || '').trim(),
+      stage: (body.stage || '').trim(),
+      imageUrl: body.imageUrl,
+      color: body.color || '#6025EA',
+      createdAt: Date.now()
+    });
+    res.status(201).json(processImageUrl(req, post));
+  } catch (err) {
+    res.status(500).json({ error: 'Unable to share this process post right now.' });
+  }
+});
+
+// Edit the caption / stage, or (un)link it to a finished artwork
+app.patch('/api/process/:id', auth, async (req, res) => {
+  try {
+    const post = await ProcessPost.findById(req.params.id);
+    if (!post || post.artistId !== req.userId) return res.status(404).json({ error: 'Process post not found' });
+    const body = req.body || {};
+    if (Object.keys(body).some(key => !['caption', 'stage', 'artworkId'].includes(key))) return res.status(400).json({ error: 'One or more fields are not allowed' });
+    const fieldError = validateProcessFields(body, { partial: true });
+    if (fieldError) return res.status(400).json({ error: fieldError });
+
+    if (body.caption !== undefined) post.caption = (body.caption || '').trim();
+    if (body.stage !== undefined) post.stage = (body.stage || '').trim();
+    if (body.artworkId !== undefined) {
+      if (body.artworkId === null || body.artworkId === '') {
+        post.artworkId = null;
+      } else {
+        const artwork = await Artwork.findOne({ _id: String(body.artworkId), artistId: req.userId }).catch(() => null);
+        if (!artwork) return res.status(400).json({ error: 'You can only link a process post to your own artwork.' });
+        post.artworkId = artwork.id;
+      }
+    }
+    await post.save();
+    res.json(processImageUrl(req, post));
+  } catch (err) {
+    res.status(500).json({ error: 'Unable to update this process post right now.' });
+  }
+});
+
+app.delete('/api/process/:id', auth, async (req, res) => {
+  try {
+    const post = await ProcessPost.findById(req.params.id);
+    if (!post || post.artistId !== req.userId) return res.status(404).json({ error: 'Process post not found' });
+    await ProcessPost.findOneAndDelete({ _id: post.id });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Unable to delete this process post right now.' });
   }
 });
 
