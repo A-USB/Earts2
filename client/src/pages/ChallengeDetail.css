@@ -1,0 +1,69 @@
+.cd-container { max-width: 980px; }
+.cd-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px; font-size: 13.5px; font-weight: 600; color: var(--text-mid); }
+.cd-back:hover { color: var(--primary); }
+.cd-loading { padding: 40px 0; text-align: center; color: var(--text-mid); }
+.cd-header { padding: 26px 28px; margin-bottom: 28px; }
+.cd-header-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.cd-time { font-size: 13px; font-weight: 600; color: var(--text-mid); }
+.cd-header h1 { margin: 0 0 12px; font-size: 28px; color: var(--text-dark); overflow-wrap: anywhere; }
+.cd-description { margin: 0; font-size: 15px; line-height: 1.7; color: var(--text-dark); white-space: pre-wrap; overflow-wrap: anywhere; }
+.cd-meta { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 16px; font-size: 13px; color: var(--text-mid); }
+.cd-meta span { display: inline-flex; align-items: center; gap: 6px; }
+.cd-tag { color: var(--primary); font-weight: 700; }
+.cd-tag:hover { text-decoration: underline; }
+[data-theme="dark"] .cd-tag { color: #C9C2FF; }
+.cd-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 20px; }
+.cd-actions .btn-primary { display: inline-flex; align-items: center; gap: 6px; padding: 11px 24px; }
+.cd-actions .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+.cd-hint { font-size: 13px; color: var(--text-mid); }
+.cd-delete { display: inline-flex; align-items: center; gap: 6px; padding: 8px 10px; background: transparent; color: #C0392B; font-size: 13px; font-weight: 600; border-radius: var(--radius-sm); cursor: pointer; }
+.cd-delete:hover { background: rgba(231, 76, 60, .1); }
+[data-theme="dark"] .cd-delete { color: #FF8A6B; }
+.cd-error { margin: 0 0 16px; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; color: #B42318; background: rgba(231, 76, 60, .1); border: 1px solid rgba(231, 76, 60, .3); }
+[data-theme="dark"] .cd-error { color: #FF9B8A; }
+
+.cd-badge { --badge: #B7791F; padding: 3px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; color: var(--badge); background: color-mix(in srgb, var(--badge) 14%, transparent); border: 1px solid color-mix(in srgb, var(--badge) 35%, transparent); }
+.cd-badge.status-open { --badge: #1E8E5A; }
+.cd-badge.status-closed { --badge: #6B7280; }
+[data-theme="dark"] .cd-badge { --badge: #F2B84B; }
+[data-theme="dark"] .cd-badge.status-open { --badge: #4FD08F; }
+[data-theme="dark"] .cd-badge.status-closed { --badge: #A1A1C0; }
+
+.challenge-detail h2 { margin: 0 0 14px; font-size: 18px; color: var(--text-dark); }
+.cd-winners { margin-bottom: 34px; }
+.cd-muted { margin: 0; font-size: 14px; color: var(--text-mid); }
+.cd-grid { list-style: none; margin: 0 0 8px; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 24px 20px; }
+.cd-entry { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.cd-entry-image { position: relative; display: block; aspect-ratio: 1; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); }
+.cd-entry-image img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .25s ease; }
+.cd-entry-image:hover img { transform: scale(1.03); }
+.cd-entry-image:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 45%, transparent); outline-offset: 2px; }
+.cd-rank { position: absolute; left: 10px; top: 10px; display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 999px; background: var(--medal); color: #1A1A2E; font-size: 12px; font-weight: 800; box-shadow: 0 2px 8px rgba(0, 0, 0, .25); }
+.cd-entry-body { display: flex; flex-direction: column; gap: 6px; }
+.cd-entry-title { font-size: 15px; font-weight: 700; color: var(--text-dark); overflow-wrap: anywhere; }
+.cd-entry-title:hover { color: var(--primary); }
+.cd-entry-artist { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--text-mid); }
+.cd-entry-artist:hover { color: var(--primary); }
+.cd-entry-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cd-votes { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--text-mid); }
+.cd-vote { padding: 6px 16px; border-radius: 999px; border: 1.5px solid var(--primary); background: transparent; color: var(--primary); font-size: 12.5px; font-weight: 700; cursor: pointer; transition: background-color .15s ease, color .15s ease; }
+[data-theme="dark"] .cd-vote:not(.voted) { color: #C9C2FF; border-color: #8F83FF; }
+.cd-vote:hover:not(:disabled) { background: var(--primary-light); }
+.cd-vote.voted { background: var(--primary); color: #fff; }
+.cd-vote:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 45%, transparent); outline-offset: 2px; }
+.cd-vote:disabled { opacity: .6; cursor: wait; }
+.cd-mine { font-size: 12px; font-weight: 700; color: var(--primary); }
+[data-theme="dark"] .cd-mine { color: #C9C2FF; }
+.cd-withdraw, .cd-confirm button { display: inline-flex; align-items: center; gap: 5px; padding: 2px 0; background: none; color: var(--text-mid); font-size: 12px; font-weight: 600; cursor: pointer; }
+.cd-withdraw { align-self: flex-start; }
+.cd-withdraw:hover { color: #C0392B; }
+.cd-confirm { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-dark); }
+.cd-confirm .danger { color: #C0392B; }
+[data-theme="dark"] .cd-withdraw:hover, [data-theme="dark"] .cd-confirm .danger { color: #FF8A6B; }
+.cd-confirm button:disabled { opacity: .6; cursor: wait; }
+.cd-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 34px 20px; text-align: center; color: var(--text-mid); }
+.cd-empty h4 { margin: 0; color: var(--text-dark); }
+.cd-empty p { margin: 0; font-size: 13px; }
+.cd-note { display: flex; align-items: flex-start; gap: 8px; margin: 28px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--text-light); }
+.cd-note svg { flex: none; margin-top: 3px; }
+@media (max-width: 560px) { .cd-header { padding: 20px 18px; } .cd-header h1 { font-size: 23px; } .cd-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 14px; } }

@@ -1,0 +1,33 @@
+.challenges-container { max-width: 980px; }
+.challenges-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 26px; }
+.challenges-header h1 { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; font-size: 26px; color: var(--text-dark); }
+.challenges-header h1 svg { color: #D98B00; }
+.challenges-header p { margin: 0; font-size: 14px; color: var(--text-mid); }
+.challenges-header .btn-primary { display: inline-flex; align-items: center; gap: 6px; }
+.ch-loading { padding: 40px 0; text-align: center; color: var(--text-mid); font-size: 14px; }
+.ch-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 40px 20px; text-align: center; color: var(--text-mid); }
+.ch-empty h4 { margin: 0; color: var(--text-dark); }
+.ch-empty p { margin: 0; max-width: 380px; font-size: 13px; line-height: 1.55; }
+
+.ch-section { margin-bottom: 34px; }
+.ch-section h2 { margin: 0 0 14px; font-size: 17px; color: var(--text-dark); }
+.ch-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+.ch-card { display: flex; flex-direction: column; gap: 10px; height: 100%; padding: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); color: var(--text-dark); transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease; }
+.ch-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.ch-card:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 45%, transparent); outline-offset: 2px; }
+.ch-card.status-closed { opacity: .88; }
+.ch-card-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ch-time { font-size: 12.5px; font-weight: 600; color: var(--text-mid); }
+.ch-card h3 { margin: 0; font-size: 18px; overflow-wrap: anywhere; }
+.ch-card p { margin: 0; font-size: 13.5px; line-height: 1.6; color: var(--text-mid); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.ch-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: auto; padding-top: 6px; font-size: 12px; color: var(--text-light); }
+.ch-meta span { display: inline-flex; align-items: center; gap: 5px; }
+.ch-tag { color: var(--primary); font-weight: 700; }
+[data-theme="dark"] .ch-tag { color: #C9C2FF; }
+
+.ch-badge { --badge: #B7791F; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; color: var(--badge); background: color-mix(in srgb, var(--badge) 14%, transparent); border: 1px solid color-mix(in srgb, var(--badge) 35%, transparent); }
+.ch-badge.status-open { --badge: #1E8E5A; }
+.ch-badge.status-closed { --badge: #6B7280; }
+[data-theme="dark"] .ch-badge { --badge: #F2B84B; }
+[data-theme="dark"] .ch-badge.status-open { --badge: #4FD08F; }
+[data-theme="dark"] .ch-badge.status-closed { --badge: #A1A1C0; }

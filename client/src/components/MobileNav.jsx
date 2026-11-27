@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import {
   Rss, ShoppingBag, ImagePlus, User, Search, Bell, MessageSquare,
-  Settings as SettingsIcon, LogOut, Moon, Sun, X, Palette, BarChart3,
+  Settings as SettingsIcon, LogOut, Moon, Sun, X, Palette, BarChart3, Trophy,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -113,6 +113,7 @@ export default function MobileNav() {
               </div>
             </div>
             <Link ref={firstItemRef} to={profilePath} className="mnav-sheet-item"><User size={20} /> My profile</Link>
+            <Link to="/challenges" className="mnav-sheet-item"><Trophy size={20} /> Challenges</Link>
             <Link to="/commissions" className="mnav-sheet-item"><Palette size={20} /> Commissions</Link>
             {user?.accountType !== 'collector' && (
               <Link to="/analytics" className="mnav-sheet-item"><BarChart3 size={20} /> Insights</Link>

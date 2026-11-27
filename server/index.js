@@ -29,7 +29,10 @@ const {
   VerificationRequest,
   ArtworkView,
   TagFollow,
-  ProcessPost
+  ProcessPost,
+  Challenge,
+  ChallengeEntry,
+  ChallengeVote
 } = require('./db');
 
 const app = express();
@@ -1888,6 +1891,260 @@ app.delete('/api/process/:id', auth, async (req, res) => {
   }
 });
 
+// ================= CHALLENGES =================
+const CHALLENGE_MAX_ENTRIES_PER_ARTIST = 3;
+const ORDINALS = ['1st', '2nd', '3rd'];
+
+const challengeStatus = (challenge) => {
+  const now = Date.now();
+  if (now < challenge.startsAt) return 'upcoming';
+  if (now <= challenge.endsAt) return 'open';
+  return 'closed';
+};
+
+// After a challenge ends the top 3 are fixed once (and told); no scheduler is needed because the first look triggers it
+async function finalizeChallenge(challenge) {
+  if (challenge.finalizedAt || challengeStatus(challenge) !== 'closed') return challenge;
+  const [entries, votes] = await Promise.all([
+    ChallengeEntry.find({ challengeId: challenge.id }),
+    ChallengeVote.find({ challengeId: challenge.id })
+  ]);
+  const tally = new Map();
+  for (const vote of votes) tally.set(String(vote.entryId), (tally.get(String(vote.entryId)) || 0) + 1);
+  const ranked = entries
+    .map(entry => ({ entry, votes: tally.get(String(entry.id)) || 0 }))
+    .filter(item => item.votes > 0)
+    .sort((a, b) => b.votes - a.votes || a.entry.createdAt - b.entry.createdAt)
+    .slice(0, 3);
+
+  challenge.winners = ranked.map((item, index) => ({
+    rank: index + 1,
+    entryId: item.entry.id,
+    artworkId: item.entry.artworkId,
+    artistId: item.entry.artistId,
+    votes: item.votes
+  }));
+  challenge.finalizedAt = Date.now();
+  await challenge.save();
+
+  for (const winner of challenge.winners) {
+    const artwork = await Artwork.findById(winner.artworkId).catch(() => null);
+    await Notification.create({
+      userId: winner.artistId,
+      type: 'challenge',
+      actorName: 'Earts team',
+      text: `picked your entry as ${ORDINALS[winner.rank - 1]} place in the "${challenge.title}" challenge:`,
+      targetTitle: artwork?.title || 'Your entry',
+      targetId: winner.artworkId,
+      targetColor: artwork?.color
+    }).catch(() => null);
+  }
+  return challenge;
+}
+
+const challengeSummary = (challenge, entryCount) => ({
+  ...challenge.toJSON(),
+  status: challengeStatus(challenge),
+  entryCount
+});
+
+app.get('/api/challenges', async (req, res) => {
+  try {
+    const userId = optionalUserId(req);
+    const [challenges, entries] = await Promise.all([Challenge.find({}), ChallengeEntry.find({})]);
+    const counts = new Map();
+    for (const entry of entries) counts.set(String(entry.challengeId), (counts.get(String(entry.challengeId)) || 0) + 1);
+
+    for (const challenge of challenges) await finalizeChallenge(challenge);
+
+    const order = { open: 0, upcoming: 1, closed: 2 };
+    const items = challenges
+      .map(challenge => challengeSummary(challenge, counts.get(String(challenge.id)) || 0))
+      .sort((a, b) => order[a.status] - order[b.status] || (a.status === 'closed' ? b.endsAt - a.endsAt : a.endsAt - b.endsAt));
+    res.json({ items, canManage: Boolean(userId) && moderatorUserIds.has(userId) });
+  } catch (err) {
+    res.status(500).json({ error: 'Unable to load challenges right now.' });
+  }
+});
+
+app.get('/api/challenges/:id', async (req, res) => {
+  try {
+    const userId = optionalUserId(req);
+    const challenge = await Challenge.findById(req.params.id).catch(() => null);
+    if (!challenge) return res.status(404).json({ error: 'Challenge not found' });
+    await finalizeChallenge(challenge);
+    const status = challengeStatus(challenge);
+
+    const [entryDocs, votes] = await Promise.all([
+      ChallengeEntry.find({ challengeId: challenge.id }),
+      ChallengeVote.find({ challengeId: challenge.id })
+    ]);
+    const tally = new Map();
+    for (const vote of votes) tally.set(String(vote.entryId), (tally.get(String(vote.entryId)) || 0) + 1);
+    const myVote = userId ? votes.find(vote => String(vote.voterId) === userId) : null;
+
+    const entries = (await Promise.all(entryDocs.map(async (entry) => {
+      const [artwork, artist] = await Promise.all([
+        Artwork.findById(entry.artworkId).catch(() => null),
+        User.findById(entry.artistId).catch(() => null)
+      ]);
+      if (!artwork) return null;
+      const json = withImageUrl(req, artwork.toJSON());
+      return {
+        id: entry.id,
+        createdAt: entry.createdAt,
+        votes: tally.get(String(entry.id)) || 0,
+        mine: userId === String(entry.artistId),
+        artwork: { id: json.id, title: json.title, color: json.color, imageUrl: json.imageUrl },
+        artist: artist
+          ? { id: artist.id, username: artist.username, name: displayName(artist), avatar: artist.avatar || null, avatarSeed: artist.avatarSeed || null, verified: Boolean(artist.verified) }
+          : null
+      };
+    }))).filter(Boolean);
+
+    entries.sort(status === 'open' || status === 'upcoming'
+      ? (a, b) => b.createdAt - a.createdAt
+      : (a, b) => b.votes - a.votes || a.createdAt - b.createdAt);
+
+    res.json({
+      challenge: challengeSummary(challenge, entries.length),
+      entries,
+      winners: (challenge.winners || []).map(winner => ({ ...winner, entry: entries.find(entry => String(entry.id) === String(winner.entryId)) || null })),
+      myVoteEntryId: myVote ? myVote.entryId : null,
+      myEntryCount: userId ? entries.filter(entry => entry.mine).length : 0,
+      maxEntries: CHALLENGE_MAX_ENTRIES_PER_ARTIST,
+      canManage: Boolean(userId) && moderatorUserIds.has(userId)
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Unable to load this challenge right now.' });
+  }
+});
+
+// Moderators open a new challenge
+app.post('/api/challenges', auth, requireModerator, async (req, res) => {
+  try {
+    const body = req.body || {};
+    if (Object.keys(body).some(key => !['title', 'description', 'tag', 'startDate', 'endDate'].includes(key))) {
+      return res.status(400).json({ error: 'One or more fields are not allowed' });
+    }
+    const title = typeof body.title === 'string' ? body.title.trim() : '';
+    const description = typeof body.description === 'string' ? body.description.trim() : '';
+    if (title.length < 3 || title.length > 80) return res.status(400).json({ error: 'The title must be 3 to 80 characters.' });
+    if (description.length < 20 || description.length > 2000) return res.status(400).json({ error: 'Describe the theme in 20 to 2000 characters.' });
+
+    const tag = normalizeTag(body.tag || title);
+    if (!TAG_PATTERN.test(tag)) return res.status(400).json({ error: 'Choose a tag of 2 to 24 letters, numbers or hyphens.' });
+    if ((await Challenge.find({ tag })).length) return res.status(409).json({ error: `A challenge already uses #${tag}. Pick another tag.` });
+
+    const dateOk = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''));
+    if (!dateOk(body.startDate) || !dateOk(body.endDate)) return res.status(400).json({ error: 'Choose a start and an end date.' });
+    const startsAt = Date.parse(`${body.startDate}T00:00:00Z`);
+    const endsAt = Date.parse(`${body.endDate}T23:59:59Z`);
+    const todayStart = Date.parse(`${dayKey(Date.now())}T00:00:00Z`);
+    if (!Number.isFinite(startsAt) || !Number.isFinite(endsAt)) return res.status(400).json({ error: 'Choose valid dates.' });
+    if (startsAt < todayStart) return res.status(400).json({ error: 'The start date cannot be in the past.' });
+    if (endsAt < startsAt) return res.status(400).json({ error: 'The end date must be after the start date.' });
+    if (endsAt - startsAt > 90 * 86400000) return res.status(400).json({ error: 'A challenge can run for at most 90 days.' });
+    if (startsAt - todayStart > 365 * 86400000) return res.status(400).json({ error: 'The start date is too far ahead.' });
+
+    const challenge = await Challenge.create({ title, description, tag, startsAt, endsAt, createdBy: req.userId, createdAt: Date.now() });
+    res.status(201).json(challengeSummary(challenge, 0));
+  } catch (err) {
+    res.status(500).json({ error: 'Unable to create this challenge right now.' });
+  }
+});
+
+app.delete('/api/challenges/:id', auth, requireModerator, async (req, res) => {
+  try {
+    const challenge = await Challenge.findById(req.params.id).catch(() => null);
+    if (!challenge) return res.status(404).json({ error: 'Challenge not found' });
+    if ((await ChallengeEntry.find({ challengeId: challenge.id })).length) {
+      return res.status(400).json({ error: 'A challenge with entries cannot be deleted.' });
+    }
+    await Challenge.findOneAndDelete({ _id: challenge.id });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Unable to delete this challenge right now.' });
+  }
+});
+
+app.post('/api/challenges/:id/entries', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user || user.accountType !== 'artist') return res.status(403).json({ error: 'Only artist accounts can enter challenges.' });
+    const challenge = await Challenge.findById(req.params.id).catch(() => null);
+    if (!challenge) return res.status(404).json({ error: 'Challenge not found' });
+    const status = challengeStatus(challenge);
+    if (status === 'upcoming') return res.status(400).json({ error: 'This challenge has not started yet.' });
+    if (status === 'closed') return res.status(400).json({ error: 'This challenge has ended.' });
+
+    const artwork = await Artwork.findOne({ _id: String(req.body?.artworkId || ''), artistId: req.userId }).catch(() => null);
+    if (!artwork) return res.status(400).json({ error: 'Choose one of your own artworks.' });
+    if (Number(artwork.createdAt) < challenge.startsAt) return res.status(400).json({ error: 'Entries must be new work, uploaded after the challenge started.' });
+
+    const existing = await ChallengeEntry.find({ challengeId: challenge.id });
+    if (existing.some(entry => String(entry.artworkId) === String(artwork.id))) return res.status(409).json({ error: 'This artwork is already entered.' });
+    if (existing.filter(entry => String(entry.artistId) === req.userId).length >= CHALLENGE_MAX_ENTRIES_PER_ARTIST) {
+      return res.status(400).json({ error: `You can enter up to ${CHALLENGE_MAX_ENTRIES_PER_ARTIST} pieces.` });
+    }
+
+    const entry = await ChallengeEntry.create({ challengeId: challenge.id, artworkId: artwork.id, artistId: req.userId, createdAt: Date.now() });
+
+    // Make it easy to find alongside the challenge, when there is room for another tag
+    const tags = Array.isArray(artwork.tags) ? artwork.tags : [];
+    if (!tags.includes(challenge.tag) && tags.length < MAX_TAGS) {
+      await Artwork.findOneAndUpdate({ _id: artwork.id }, { tags: [...tags, challenge.tag] });
+    }
+    res.status(201).json(entry.toJSON());
+  } catch (err) {
+    res.status(500).json({ error: 'Unable to enter this challenge right now.' });
+  }
+});
+
+app.delete('/api/challenges/:id/entries/:entryId', auth, async (req, res) => {
+  try {
+    const challenge = await Challenge.findById(req.params.id).catch(() => null);
+    if (!challenge) return res.status(404).json({ error: 'Challenge not found' });
+    if (challengeStatus(challenge) === 'closed') return res.status(400).json({ error: 'This challenge has ended, so entries are final.' });
+    const entry = await ChallengeEntry.findById(req.params.entryId).catch(() => null);
+    if (!entry || String(entry.challengeId) !== String(challenge.id) || String(entry.artistId) !== req.userId) {
+      return res.status(404).json({ error: 'Entry not found' });
+    }
+    const votes = await ChallengeVote.find({ entryId: entry.id });
+    for (const vote of votes) await ChallengeVote.findOneAndDelete({ _id: vote.id });
+    await ChallengeEntry.findOneAndDelete({ _id: entry.id });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Unable to withdraw this entry right now.' });
+  }
+});
+
+// One vote per person per challenge. Voting for the same entry again removes the vote; another entry moves it.
+app.post('/api/challenges/:id/vote', auth, async (req, res) => {
+  try {
+    const challenge = await Challenge.findById(req.params.id).catch(() => null);
+    if (!challenge) return res.status(404).json({ error: 'Challenge not found' });
+    const status = challengeStatus(challenge);
+    if (status === 'upcoming') return res.status(400).json({ error: 'Voting opens when the challenge starts.' });
+    if (status === 'closed') return res.status(400).json({ error: 'Voting has ended.' });
+
+    const entry = await ChallengeEntry.findById(String(req.body?.entryId || '')).catch(() => null);
+    if (!entry || String(entry.challengeId) !== String(challenge.id)) return res.status(404).json({ error: 'Entry not found' });
+    if (String(entry.artistId) === req.userId) return res.status(400).json({ error: 'You cannot vote for your own entry.' });
+
+    const mine = await ChallengeVote.findOne({ challengeId: challenge.id, voterId: req.userId });
+    if (mine && String(mine.entryId) === String(entry.id)) {
+      await ChallengeVote.findOneAndDelete({ _id: mine.id });
+      return res.json({ votedEntryId: null });
+    }
+    if (mine) await ChallengeVote.findOneAndDelete({ _id: mine.id });
+    await ChallengeVote.create({ challengeId: challenge.id, voterId: req.userId, entryId: entry.id, createdAt: Date.now() });
+    res.json({ votedEntryId: entry.id });
+  } catch (err) {
+    res.status(500).json({ error: 'Unable to record your vote right now.' });
+  }
+});
+
 // ================= ARTWORKS ROUTES =================
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -2627,8 +2884,8 @@ app.get('/api/notifications', auth, async (req, res) => {
     const user = await User.findById(req.userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
     const types = user.accountType === 'collector'
-      ? ['purchase', 'new_artwork', 'reply', 'price_drop', 'now_available', 'commission', 'review_reply', 'verification']
-      : ['like', 'comment', 'reply', 'sale', 'follow', 'feature', 'new_artwork', 'purchase', 'price_drop', 'now_available', 'commission', 'collab_invite', 'collab_response', 'review', 'review_reply', 'verification'];
+      ? ['purchase', 'new_artwork', 'reply', 'price_drop', 'now_available', 'commission', 'review_reply', 'verification', 'challenge']
+      : ['like', 'comment', 'reply', 'sale', 'follow', 'feature', 'new_artwork', 'purchase', 'price_drop', 'now_available', 'commission', 'collab_invite', 'collab_response', 'review', 'review_reply', 'verification', 'challenge'];
     const list = await Notification.find({ userId: req.userId, type: { $in: types } }).sort({ createdAt: -1 }).limit(50);
     const invites = await CollabInvite.find({ userId: req.userId });
     const inviteStatusByArtwork = new Map(invites.map(invite => [String(invite.artworkId), invite.status]));

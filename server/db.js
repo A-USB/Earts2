@@ -18,6 +18,9 @@ const VerificationRequest = require('./models/VerificationRequest');
 const ArtworkView = require('./models/ArtworkView');
 const TagFollow = require('./models/TagFollow');
 const ProcessPost = require('./models/ProcessPost');
+const Challenge = require('./models/Challenge');
+const ChallengeEntry = require('./models/ChallengeEntry');
+const ChallengeVote = require('./models/ChallengeVote');
 const Follow = require('./models/Follow');
 const Like = require('./models/Like');
 const Collection = require('./models/Collection');
@@ -132,6 +135,9 @@ const ProxiedVerificationRequest = createModelProxy('VerificationRequest', Verif
 const ProxiedArtworkView = createModelProxy('ArtworkView', ArtworkView, memoryStore.artworkViews);
 const ProxiedTagFollow = createModelProxy('TagFollow', TagFollow, memoryStore.tagFollows);
 const ProxiedProcessPost = createModelProxy('ProcessPost', ProcessPost, memoryStore.processPosts);
+const ProxiedChallenge = createModelProxy('Challenge', Challenge, memoryStore.challenges);
+const ProxiedChallengeEntry = createModelProxy('ChallengeEntry', ChallengeEntry, memoryStore.challengeEntries);
+const ProxiedChallengeVote = createModelProxy('ChallengeVote', ChallengeVote, memoryStore.challengeVotes);
 const ProxiedFollow = createModelProxy('Follow', Follow, memoryStore.follows);
 const ProxiedLike = createModelProxy('Like', Like, memoryStore.likes);
 const ProxiedCollection = createModelProxy('Collection', Collection, memoryStore.collections);
@@ -155,6 +161,9 @@ module.exports = {
   ArtworkView: ProxiedArtworkView,
   TagFollow: ProxiedTagFollow,
   ProcessPost: ProxiedProcessPost,
+  Challenge: ProxiedChallenge,
+  ChallengeEntry: ProxiedChallengeEntry,
+  ChallengeVote: ProxiedChallengeVote,
   Follow: ProxiedFollow,
   Like: ProxiedLike,
   Collection: ProxiedCollection,
