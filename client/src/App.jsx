@@ -22,6 +22,8 @@ import Notifications from './pages/Notifications'
 import Messages from './pages/Messages'
 import Commissions from './pages/Commissions'
 import Analytics from './pages/Analytics'
+import Challenges from './pages/Challenges'
+import ChallengeDetail from './pages/ChallengeDetail'
 import Logout from './pages/Logout'
 import NotFound from './pages/NotFound'
 import Moderation from './pages/Moderation'
@@ -73,6 +75,8 @@ function Layout() {
       <Route path="/feed" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
       <Route path="/marketplace" element={<Marketplace />} />
       <Route path="/search" element={<ArtistSearch />} />
+      <Route path="/challenges" element={<Challenges />} />
+      <Route path="/challenges/:id" element={<ChallengeDetail />} />
       <Route path="/profile/:username" element={<Profile />} />
       <Route path="/artwork/:id" element={<ArtworkDetail />} />
       <Route path="/upload" element={<ProtectedRoute><UploadArtwork /></ProtectedRoute>} />
